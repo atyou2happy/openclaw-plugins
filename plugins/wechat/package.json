@@ -1,0 +1,61 @@
+{
+  "name": "@openclaw/wechat",
+  "version": "2026.4.1-beta.1",
+  "private": true,
+  "description": "OpenClaw WeChat channel plugin (Official Account + WeCom)",
+  "type": "module",
+  "dependencies": {
+    "fast-xml-parser": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "openclaw": "file:../../../openclaw",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.4.1-beta.1"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "setupEntry": "./setup-entry.ts",
+    "channel": {
+      "id": "wechat",
+      "label": "WeChat",
+      "selectionLabel": "WeChat / 微信 (公众号 & 企业微信)",
+      "detailLabel": "WeChat Bot",
+      "docsPath": "/channels/wechat",
+      "docsLabel": "wechat",
+      "blurb": "WeChat Official Account and WeCom (企业微信) channel support.",
+      "aliases": [
+        "weixin",
+        "wecom",
+        "weixin-official"
+      ],
+      "order": 36
+    },
+    "install": {
+      "npmSpec": "@openclaw/wechat",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.4.1"
+    },
+    "bundle": {
+      "stageRuntimeDependencies": true
+    },
+    "release": {
+      "publishToNpm": true
+    }
+  }
+}

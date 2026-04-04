@@ -1,0 +1,38 @@
+{
+  "id": "dev-workflow",
+  "enabledByDefault": false,
+  "channels": ["dev-workflow"],
+  "skills": ["./skills"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "defaultMode": {
+        "type": "string",
+        "enum": ["quick", "standard", "full"],
+        "default": "standard",
+        "description": "Default complexity mode for development tasks"
+      },
+      "defaultModel": {
+        "type": "string",
+        "default": "kilo/minimax/minimax-m2.5:free",
+        "description": "Default model for agent orchestration"
+      },
+      "specDriven": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable spec-driven development (proposal/design/tasks)"
+      },
+      "qualityGate": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable QA gate checks before delivery"
+      },
+      "agentParallelism": {
+        "type": "boolean",
+        "default": true,
+        "description": "Allow parallel agent execution for independent tasks"
+      }
+    }
+  }
+}

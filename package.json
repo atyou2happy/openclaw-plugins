@@ -1,0 +1,22 @@
+{
+  "name": "openclaw-plugins",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenClaw plugin collection — dev-workflow, wechat, and more",
+  "type": "module",
+  "workspaces": [
+    "plugins/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "oxlint": "^0.15.0"
+  }
+}

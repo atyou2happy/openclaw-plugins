@@ -1,0 +1,23 @@
+{
+  "id": "openharness-skills",
+  "name": "OpenHarness Skills",
+  "description": "On-demand markdown skill loading system. Compatible with anthropics/skills format. Skills are loaded contextually when the agent needs domain-specific guidance.",
+  "version": "1.0.0",
+  "skills": ["skills/"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "skillDirs": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Additional directories to scan for skill .md files"
+      },
+      "autoLoadPatterns": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Keyword patterns that trigger automatic skill loading"
+      }
+    }
+  }
+}

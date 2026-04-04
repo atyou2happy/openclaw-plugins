@@ -1,0 +1,27 @@
+{
+  "id": "openharness-memory",
+  "name": "OpenHarness Memory",
+  "description": "Persistent cross-session memory system. Project-specific memory stored as markdown files with MEMORY.md index. Compatible with OpenHarness memory format.",
+  "version": "1.0.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable memory system"
+      },
+      "maxFiles": {
+        "type": "number",
+        "default": 5,
+        "description": "Maximum memory files to load into context"
+      },
+      "maxEntrypointLines": {
+        "type": "number",
+        "default": 200,
+        "description": "Maximum lines from MEMORY.md to include in prompt"
+      }
+    }
+  }
+}

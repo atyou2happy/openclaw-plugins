@@ -1,0 +1,67 @@
+{
+  "name": "@openclaw/dev-workflow",
+  "version": "0.1.0",
+  "description": "OpenClaw Dev Workflow plugin — AI-driven spec-driven development workflow with multi-agent orchestration, integrating claw-code harness patterns",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./engine": "./dist/engine/index.js",
+    "./agents": "./dist/agents/index.js",
+    "./tools": "./dist/tools/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "oxlint src/"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "0.34.49",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "openclaw": "file:../../../openclaw",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "oxlint": "^0.15.0"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.4.2"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "openclaw": {
+    "extensions": [
+      "./src/index.ts"
+    ],
+    "setupEntry": "./setup-entry.ts",
+    "channel": {
+      "id": "dev-workflow",
+      "label": "Dev Workflow",
+      "selectionLabel": "Dev Workflow (AI-Driven Development)",
+      "docsPath": "/channels/dev-workflow",
+      "docsLabel": "dev-workflow",
+      "blurb": "Spec-driven AI development workflow with multi-agent orchestration, inspired by Claw Code harness patterns.",
+      "aliases": ["dwf", "devflow"],
+      "order": 50,
+      "quickstartAllowFrom": true
+    },
+    "install": {
+      "npmSpec": "@openclaw/dev-workflow",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.4.2"
+    },
+    "bundle": {
+      "stageRuntimeDependencies": true
+    },
+    "release": {
+      "publishToNpm": true
+    }
+  }
+}

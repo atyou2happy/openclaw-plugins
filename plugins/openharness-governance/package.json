@@ -1,0 +1,32 @@
+{
+  "name": "@openclaw/openharness-governance",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Multi-level permissions, path rules, command deny, and pre/post tool hooks from OpenHarness",
+  "openclaw": {
+    "extensions": ["./src/index.ts"],
+    "compat": {
+      "pluginApi": ">=2026.3.24-beta.2",
+      "minGatewayVersion": "2026.3.24-beta.2"
+    },
+    "build": {
+      "openclawVersion": "2026.3.24-beta.2",
+      "pluginSdkVersion": "2026.3.24-beta.2"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "oxlint src/"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.0",
+    "openclaw": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "oxlint": "^0.15.0"
+  }
+}

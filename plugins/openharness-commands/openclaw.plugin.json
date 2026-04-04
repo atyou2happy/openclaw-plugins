@@ -1,0 +1,10 @@
+{
+  "id": "openharness-commands",
+  "name": "OpenHarness Commands",
+  "description": "Slash commands from OpenHarness: /oh-status, /oh-summary, /oh-compact, /oh-usage, /oh-cost, /oh-skills, /oh-hooks, /oh-memory, /oh-resume, /oh-session, /oh-export, /oh-permissions, /oh-plan, /oh-model, /oh-doctor, /oh-diff, /oh-branch, /oh-commit",
+  "version": "1.0.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false
+  }
+}

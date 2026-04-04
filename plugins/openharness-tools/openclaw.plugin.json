@@ -1,0 +1,38 @@
+{
+  "id": "openharness-tools",
+  "name": "OpenHarness Tools",
+  "description": "Bridges 43+ OpenHarness tools (file I/O, shell, search, web, MCP, tasks, agents) into OpenClaw agent tools",
+  "version": "1.0.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "allowedTools": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Subset of OpenHarness tools to expose (empty = all)"
+      },
+      "mcpServers": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "MCP server configurations to connect to"
+      }
+    }
+  },
+  "contracts": {
+    "tools": [
+      "oh_bash", "oh_file_read", "oh_file_write", "oh_file_edit",
+      "oh_glob", "oh_grep", "oh_web_fetch", "oh_web_search",
+      "oh_tool_search", "oh_skill", "oh_config", "oh_brief",
+      "oh_sleep", "oh_ask_user", "oh_todo_write",
+      "oh_enter_plan_mode", "oh_exit_plan_mode",
+      "oh_enter_worktree", "oh_exit_worktree",
+      "oh_cron_create", "oh_cron_list", "oh_cron_delete", "oh_remote_trigger",
+      "oh_task_create", "oh_task_get", "oh_task_list", "oh_task_stop", "oh_task_output", "oh_task_update",
+      "oh_agent_spawn", "oh_send_message",
+      "oh_team_create", "oh_team_delete",
+      "oh_notebook_edit",
+      "oh_lsp"
+    ]
+  }
+}

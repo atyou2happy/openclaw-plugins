@@ -1,0 +1,28 @@
+{
+  "id": "openharness-swarm",
+  "name": "OpenHarness Swarm",
+  "description": "Multi-agent coordination system: subagent spawning, team registry, task delegation, background task lifecycle, and ClawTeam-style coordination patterns from OpenHarness",
+  "version": "1.0.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "maxConcurrentAgents": {
+        "type": "number",
+        "default": 5,
+        "description": "Maximum number of concurrent subagents"
+      },
+      "defaultAgentMode": {
+        "type": "string",
+        "enum": ["local_agent", "remote_agent", "in_process_teammate"],
+        "default": "local_agent",
+        "description": "Default mode for spawned agents"
+      },
+      "agentTimeoutMs": {
+        "type": "number",
+        "default": 300000,
+        "description": "Default timeout for subagent execution (5 minutes)"
+      }
+    }
+  }
+}

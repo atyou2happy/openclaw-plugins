@@ -1,0 +1,44 @@
+{
+  "id": "openharness-governance",
+  "name": "OpenHarness Governance",
+  "description": "Multi-level permission modes, path-level rules, command deny lists, and PreToolUse/PostToolUse lifecycle hooks from OpenHarness",
+  "version": "1.0.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "mode": {
+        "type": "string",
+        "enum": ["default", "auto", "plan"],
+        "default": "default",
+        "description": "Permission mode: default (ask before write/execute), auto (allow all), plan (block all writes)"
+      },
+      "pathRules": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "pattern": { "type": "string" },
+            "allow": { "type": "boolean" }
+          }
+        },
+        "description": "Path-level permission rules with glob patterns"
+      },
+      "deniedCommands": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Commands that are always denied (e.g., 'rm -rf /', 'DROP TABLE *')"
+      },
+      "allowedTools": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Explicitly allowed tools"
+      },
+      "deniedTools": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Explicitly denied tools"
+      }
+    }
+  }
+}
