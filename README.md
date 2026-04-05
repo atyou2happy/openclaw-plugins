@@ -8,151 +8,101 @@ OpenClaw plugin collection — multiple plugins in a single monorepo.
 
 | Plugin | Description | Status |
 |--------|-------------|--------|
+| [openharness](plugins/openharness/) | 116+ tools in a unified plugin: file I/O, shell, search, web, git, GitHub, LSP, code intel, MCP, sessions, memory, swarm, REPL, cost tracking, and more | ✅ Active |
 | [dev-workflow](plugins/dev-workflow/) | Spec-driven AI development workflow with multi-agent orchestration | ✅ Active |
+| [cross-platform-message-sync](plugins/cross-platform-message-sync/) | Cross-platform message sync (WeChat/QQ/Feishu) | ✅ Active |
 | [wechat](plugins/wechat/) | WeChat Official Account & WeCom (企业微信) channel support | ✅ Active |
-| [openharness-tools](plugins/openharness-tools/) | 43+ OpenHarness tools bridged as OpenClaw agent tools (file I/O, shell, search, web, tasks, agents, cron) | ✅ Active |
-| [openharness-skills](plugins/openharness-skills/) | Markdown-based on-demand skill loading, compatible with anthropics/skills format | ✅ Active |
-| [openharness-governance](plugins/openharness-governance/) | Multi-level permissions, path rules, command deny lists, pre/post tool hooks | ✅ Active |
-| [openharness-swarm](plugins/openharness-swarm/) | Multi-agent coordination: subagent spawning, team registry, task delegation, background lifecycle | ✅ Active |
-| [openharness-memory](plugins/openharness-memory/) | Persistent cross-session memory with MEMORY.md index, project-specific storage, heuristic search | ✅ Active |
-| [openharness-commands](plugins/openharness-commands/) | 20+ slash commands from OpenHarness: /oh-status, /oh-doctor, /oh-permissions, /oh-commit, etc. | ✅ Active |
-| [openharness-mcp](plugins/openharness-mcp/) | MCP server integration — connect/disconnect, list servers, list tools, call tools, read resources | ✅ Active |
-| [openharness-context](plugins/openharness-context/) | Smart context management — CLAUDE.md discovery, context compression, token estimation, intelligent context window management | ✅ Active |
-| [openharness-session](plugins/openharness-session/) | Session management — save/load/resume, export, branch, and browse conversation history | ✅ Active |
-| [openharness-code-intel](plugins/openharness-code-intel/) | Code intelligence — symbol search, definition lookup, reference finding, dependency analysis, complexity metrics | ✅ Active |
-| [openharness-gitflow](plugins/openharness-gitflow/) | Enhanced git workflow — smart conventional commits, branch management, PR descriptions, changelogs, worktree management | ✅ Active |
-| [openharness-interactive](plugins/openharness-interactive/) | Interactive user communication — ask questions, confirm actions, select from lists, collect text input | ✅ Active |
-| [openharness-lsp](plugins/openharness-lsp/) | Language Server Protocol integration — go-to-definition, find references, hover, diagnostics, rename, workspace symbols | ✅ Active |
-| [openharness-bridge](plugins/openharness-bridge/) | Bridge system — spawn, manage, and communicate with child OpenHarness sessions for delegated work | ✅ Active |
-| [openharness-cost](plugins/openharness-cost/) | Real cost tracking, model management, effort/passes configuration, and usage statistics | ✅ Active |
-| [openharness-github](plugins/openharness-github/) | GitHub integration — issue management, PR comments, repository operations via gh CLI | ✅ Active |
-| [openharness-session-ops](plugins/openharness-session-ops/) | Session operations — context display, conversation rewind, session tagging, project init, plugin reload, runtime config | ✅ Active |
-| [openharness-repl](plugins/openharness-repl/) | REPL code execution for Python, Node.js, and Ruby — bridged from Claw Code | ✅ Active |
-| [openharness-structured-output](plugins/openharness-structured-output/) | Generate structured JSON output from natural language descriptions — bridged from Claw Code | ✅ Active |
-| [openharness-provider](plugins/openharness-provider/) | Multi-provider LLM management (Anthropic, xAI/Grok, OpenAI-compatible) — bridged from Claw Code | ✅ Active |
-| [openharness-auth](plugins/openharness-auth/) | OAuth/PKCE authentication management for API providers — bridged from Claw Code | ✅ Active |
 
-## OpenHarness Integration Architecture
+## OpenHarness Modules
 
-These 21 plugins bridge the full OpenHarness agent harness and Claw Code capabilities into OpenClaw:
+The `openharness` plugin consolidates 21 former sub-plugins into a single entry point:
 
-```
-OpenHarness Subsystem    →  OpenClaw Plugin
-─────────────────────────────────────────────────
-43+ Tools Registry       →  openharness-tools (agent tools via registerTool)
-Skills System (.md)      →  openharness-skills (discovery + auto-inject via before_prompt_build)
-Permissions + Hooks      →  openharness-governance (before_tool_call + after_tool_call hooks)
-Multi-Agent Swarm        →  openharness-swarm (subprocess spawning + team registry)
-Context & Memory         →  openharness-memory (MEMORY.md + project-specific storage)
-Slash Commands           →  openharness-commands (registerCommand for 20+ commands)
-MCP Client               →  openharness-mcp (connect, discover, call MCP server tools/resources)
-Prompt/Context System    →  openharness-context (CLAUDE.md discovery, compression, token estimation)
-Session Storage          →  openharness-session (save/load/branch/export conversation sessions)
-Code Understanding       →  openharness-code-intel (symbol search, dependency graph, complexity)
-Git Workflow             →  openharness-gitflow (conventional commits, branch management, PR/CHANGELOG)
-Interactive Communication→  openharness-interactive (ask questions, confirm, select, input)
-Language Server Protocol →  openharness-lsp (definition, references, hover, diagnostics, rename)
-Bridge System            →  openharness-bridge (spawn/manage child sessions with context passing)
-Cost & Model Management  →  openharness-cost (real cost tracking, model switching, effort/passes)
-GitHub Integration       →  openharness-github (issues, PRs, comments via gh CLI)
-Session Operations       →  openharness-session-ops (context, rewind, tag, share, init, config)
-REPL Execution           →  openharness-repl (Python/Node.js/Ruby code execution via subprocess)
-Structured Output        →  openharness-structured-output (JSON generation from natural language)
-Multi-Provider LLM       →  openharness-provider (Anthropic/xAI/OpenAI-compatible management)
-OAuth/PKCE Auth          →  openharness-auth (OAuth login, token management, provider auth status)
-```
+| Module | Tools | Description |
+|--------|-------|-------------|
+| tools | 19 | File read/write/edit, glob, grep, bash, web search/fetch, skill loading, config, brief, todo |
+| gitflow | 6 | Smart conventional commits, branch management, PR descriptions, changelogs, worktrees, status dashboard |
+| github | 6 | Issue CRUD, comments, PR comments, PR reviews via `gh` CLI |
+| swarm | 8 | Subagent spawn/status/list/stop, team create/list/delete, messaging, delegation |
+| session | 6 | Save/load/list/export sessions, branch, summary |
+| session-ops | 8 | Context display, rewind, tag, share, project init, plugin reload, runtime config, version |
+| code-intel | 6 | Symbol search, definitions, references, dependencies, outline, complexity |
+| lsp | 8 | Definition, references, hover, diagnostics, rename, symbols, implementations, completions |
+| mcp | 7 | List servers/tools/resources, call tools, read resources, disconnect, server status |
+| memory | 5 | Add/list/search/remove memories, view index |
+| context | 5 | Discover context files, compress, estimate tokens, status, add instruction |
+| cost | 5 | Track cost, summary, effort/passes config, usage stats, fast mode toggle |
+| interactive | 4 | Ask question, confirm action, select from list, input text |
+| provider | 4 | List/set/test providers, model aliases |
+| bridge | 5 | Spawn/send/receive/close/list bridge sessions |
+| repl | 3 | Execute code, list/install runtimes (Python/Node/Ruby) |
+| governance | 1 | Permission management |
+| skills | 3 | List/load/search skills |
+| structured-output | 1 | Generate structured JSON from natural language |
+| auth | 3 | OAuth login/status/logout |
+| commands | 5+ | Slash commands: /oh-status, /oh-summary, /oh-skills, /oh-usage, /oh-cost |
+
+**Total: 116+ tools, 5+ commands**
 
 ## Quick Start
 
 ```bash
-# Install dependencies for all plugins
+# Install dependencies
 pnpm install
 
-# Type check all plugins
-pnpm -r run typecheck
+# Type check
+npx tsc --noEmit
 
-# Run tests for all plugins
+# Run tests
 pnpm -r run test
-
-# Lint all plugins
-pnpm -r run lint
 ```
 
-## Plugin Development
+## Plugin Structure
 
-Each plugin lives in `plugins/<name>/` with its own:
-- `package.json` — plugin metadata and dependencies
-- `openclaw.plugin.json` — OpenClaw plugin manifest
-- `setup-entry.ts` — plugin setup (create directories, etc.)
-- `src/` — source code
-- `tests/` — test files
-- `tsconfig.json` — TypeScript configuration
-- `vitest.config.ts` — Vitest test configuration
+```
+plugins/<name>/
+├── package.json          # Plugin metadata + dependencies
+├── openclaw.plugin.json  # OpenClaw plugin manifest
+├── setup-entry.ts        # Setup (create dirs, etc.)
+├── src/
+│   ├── index.ts          # Main entry — register all tools/commands/hooks
+│   └── <module>/
+│       └── index.ts      # Module-specific tool definitions
+└── tests/
+```
 
-### Adding a New Plugin
+### Tool Registration Convention
 
-1. Create `plugins/<new-plugin>/` directory
-2. Copy the structure from an existing plugin
-3. Update `package.json` name and metadata
-4. Update `openclaw.plugin.json` with plugin-specific config
-5. Run `pnpm install` at the root to link workspaces
+**Every `api.registerTool()` call MUST include a `name` property** (not just `label`):
 
-## Channel Compatibility
+```typescript
+// ✅ Correct
+api.registerTool({
+  name: "oh_gitflow_smart_commit",
+  label: "Smart Commit",
+  parameters: Type.Object({ ... }),
+  async execute() { ... },
+});
 
-| Plugin | CLI | Feishu | WeChat |
-|--------|-----|--------|--------|
-| dev-workflow | ✅ Tools + Hooks | ✅ Tools available to LLM agent | ✅ Tools available to LLM agent |
-| wechat | — | — | ✅ Full channel support |
-| openharness-tools | ✅ 43+ tools | ✅ All tools via LLM agent | ✅ All tools via LLM agent |
-| openharness-skills | ✅ Skill discovery + auto-inject | ✅ Auto-inject on prompt build | ✅ Auto-inject on prompt build |
-| openharness-governance | ✅ Hooks + permissions tool | ✅ Hooks on all tool calls | ✅ Hooks on all tool calls |
-| openharness-swarm | ✅ Subagent spawn/manage | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-memory | ✅ Memory CRUD + auto-inject | ✅ Auto-inject on prompt build | ✅ Auto-inject on prompt build |
-| openharness-commands | ✅ 20+ slash commands | ✅ Via command handler | ✅ Via command handler |
-| openharness-mcp | ✅ MCP connect/call tools | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-context | ✅ Context compression + estimation | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-session | ✅ Session CRUD + export + branch | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-code-intel | ✅ Symbol search, deps, complexity | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-gitflow | ✅ Smart commits, branches, PRs | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-interactive | ✅ Ask/confirm/select/input | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-lsp | ✅ Definition, refs, hover, diag | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-bridge | ✅ Spawn/manage child sessions | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-cost | ✅ Cost tracking, model mgmt | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-github | ✅ Issues, PRs, comments | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-session-ops | ✅ Context, rewind, tag, init | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-repl | ✅ Code execution (Python/Node/Ruby) | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-structured-output | ✅ JSON output generation | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-provider | ✅ Multi-provider LLM mgmt | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-auth | ✅ OAuth/PKCE auth management | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-repl | ✅ Code execution (Python/Node/Ruby) | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-structured-output | ✅ JSON output generation | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-provider | ✅ Multi-provider LLM mgmt | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
-| openharness-auth | ✅ OAuth/PKCE auth management | ✅ Via LLM agent tools | ✅ Via LLM agent tools |
+// ❌ Wrong — missing name causes "Cannot read properties of undefined (reading 'trim')"
+api.registerTool({
+  label: "Smart Commit",
+  parameters: Type.Object({ ... }),
+  async execute() { ... },
+});
+```
 
-dev-workflow registers its tools (DevWorkflowTool, WorkflowStatusTool, TaskExecuteTool, SpecViewTool, QAGateTool) via the OpenClaw plugin API. These tools are available to the LLM agent across **all channels** — Feishu, WeChat, and CLI — once the plugin is loaded.
+**Naming convention**: `oh_<module>_<action>` — must be globally unique across all modules.
 
 ## Deployment (WSL / NTFS Mount)
 
-Plugins under `/mnt/g/` (Windows NTFS mounts) are blocked by OpenClaw's `path_world_writable` security check. Use the sync script to deploy to a native Linux path:
+Plugins under `/mnt/g/` are blocked by OpenClaw's `path_world_writable` security check. Sync to a native Linux path:
 
 ```bash
-# Build first
-pnpm run build
-
-# Sync to default target (~/openclaw-plugins)
+# Sync to ~/.openclaw/extensions/
 ./scripts/sync-plugins.sh
-
-# Or specify a custom target
-./scripts/sync-plugins.sh /opt/openclaw-plugins
 ```
 
-Then configure OpenClaw to load plugins from the target path:
-
-```yaml
-plugins:
-  allow:
-    - ~/openclaw-plugins/plugins/*
-```
+Configure `plugins.allow` in OpenClaw config to whitelist trusted plugins.
 
 ## License
 

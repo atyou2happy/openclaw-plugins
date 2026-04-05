@@ -8,155 +8,101 @@ OpenClaw 插件集合 — 单一仓库中包含多个插件。
 
 | 插件 | 描述 | 状态 |
 |------|------|------|
+| [openharness](plugins/openharness/) | 116+ 工具统一插件：文件 I/O、Shell、搜索、Web、Git、GitHub、LSP、代码智能、MCP、会话、记忆、Swarm、REPL、成本跟踪等 | ✅ 活跃 |
 | [dev-workflow](plugins/dev-workflow/) | 规格驱动的 AI 开发工作流，多智能体编排 | ✅ 活跃 |
+| [cross-platform-message-sync](plugins/cross-platform-message-sync/) | 跨平台消息同步（微信/QQ/飞书） | ✅ 活跃 |
 | [wechat](plugins/wechat/) | 微信公众号 & 企业微信频道支持 | ✅ 活跃 |
-| [openharness-tools](plugins/openharness-tools/) | 43+ OpenHarness 工具桥接为 OpenClaw 代理工具（文件 I/O、Shell、搜索、Web、任务、代理、定时任务） | ✅ 活跃 |
-| [openharness-skills](plugins/openharness-skills/) | 基于 Markdown 的按需技能加载，兼容 anthropics/skills 格式 | ✅ 活跃 |
-| [openharness-governance](plugins/openharness-governance/) | 多级权限、路径规则、命令拒绝列表、工具使用前/后钩子 | ✅ 活跃 |
-| [openharness-swarm](plugins/openharness-swarm/) | 多代理协调：子代理生成、团队注册、任务委派、后台生命周期 | ✅ 活跃 |
-| [openharness-memory](plugins/openharness-memory/) | 持久化跨会话记忆，MEMORY.md 索引，项目级存储，启发式搜索 | ✅ 活跃 |
-| [openharness-commands](plugins/openharness-commands/) | 20+ OpenHarness 斜杠命令：/oh-status、/oh-doctor、/oh-permissions、/oh-commit 等 | ✅ 活跃 |
-| [openharness-mcp](plugins/openharness-mcp/) | MCP 服务器集成 — 连接/断开、列出服务器、列出工具、调用工具、读取资源 | ✅ 活跃 |
-| [openharness-context](plugins/openharness-context/) | 智能上下文管理 — CLAUDE.md 发现、上下文压缩、Token 估算、智能上下文窗口管理 | ✅ 活跃 |
-| [openharness-session](plugins/openharness-session/) | 会话管理 — 保存/加载/恢复、导出、分支、浏览对话历史 | ✅ 活跃 |
-| [openharness-code-intel](plugins/openharness-code-intel/) | 代码智能 — 符号搜索、定义查找、引用查找、依赖分析、复杂度指标 | ✅ 活跃 |
-| [openharness-gitflow](plugins/openharness-gitflow/) | 增强 Git 工作流 — 智能约定式提交、分支管理、PR 描述生成、变更日志、工作树管理 | ✅ 活跃 |
-| [openharness-interactive](plugins/openharness-interactive/) | 交互式用户通信 — 提问、确认操作、列表选择、文本输入 | ✅ 活跃 |
-| [openharness-lsp](plugins/openharness-lsp/) | 语言服务器协议集成 — 跳转定义、查找引用、悬停信息、诊断、重命名、工作区符号 | ✅ 活跃 |
-| [openharness-bridge](plugins/openharness-bridge/) | 桥接系统 — 生成、管理和通信子 OpenHarness 会话，用于委派工作 | ✅ 活跃 |
-| [openharness-cost](plugins/openharness-cost/) | 实时成本跟踪、模型管理、推理努力/通过次数配置、使用统计 | ✅ 活跃 |
-| [openharness-github](plugins/openharness-github/) | GitHub 集成 — Issue 管理、PR 评论、仓库操作（通过 gh CLI） | ✅ 活跃 |
-| [openharness-session-ops](plugins/openharness-session-ops/) | 会话操作 — 上下文显示、对话回退、会话标签、项目初始化、插件重载、运行时配置 | ✅ 活跃 |
-| [openharness-repl](plugins/openharness-repl/) | REPL 代码执行，支持 Python、Node.js 和 Ruby — 桥接自 Claw Code | ✅ 活跃 |
-| [openharness-structured-output](plugins/openharness-structured-output/) | 从自然语言描述生成结构化 JSON 输出 — 桥接自 Claw Code | ✅ 活跃 |
-| [openharness-provider](plugins/openharness-provider/) | 多 Provider LLM 管理（Anthropic、xAI/Grok、OpenAI-compatible）— 桥接自 Claw Code | ✅ 活跃 |
-| [openharness-auth](plugins/openharness-auth/) | OAuth/PKCE 认证管理 — 桥接自 Claw Code | ✅ 活跃 |
-| [openharness-repl](plugins/openharness-repl/) | REPL 代码执行，支持 Python、Node.js 和 Ruby — 桥接自 Claw Code | ✅ 活跃 |
-| [openharness-structured-output](plugins/openharness-structured-output/) | 从自然语言描述生成结构化 JSON 输出 — 桥接自 Claw Code | ✅ 活跃 |
-| [openharness-provider](plugins/openharness-provider/) | 多 Provider LLM 管理（Anthropic、xAI/Grok、OpenAI-compatible）— 桥接自 Claw Code | ✅ 活跃 |
-| [openharness-auth](plugins/openharness-auth/) | OAuth/PKCE 认证管理 — 桥接自 Claw Code | ✅ 活跃 |
 
-## OpenHarness 集成架构
+## OpenHarness 模块
 
-这 21 个插件将完整的 OpenHarness 代理系统和 Claw Code 能力桥接到 OpenClaw：
+`openharness` 插件将 21 个子插件合并为单一入口：
 
-```
-OpenHarness 子系统        →  OpenClaw 插件
-─────────────────────────────────────────────────
-43+ 工具注册表            →  openharness-tools (通过 registerTool 注册代理工具)
-技能系统 (.md)            →  openharness-skills (发现 + 通过 before_prompt_build 自动注入)
-权限 + 钩子               →  openharness-governance (before_tool_call + after_tool_call 钩子)
-多代理 Swarm             →  openharness-swarm (子进程生成 + 团队注册)
-上下文 & 记忆             →  openharness-memory (MEMORY.md + 项目级存储)
-斜杠命令                  →  openharness-commands (20+ 命令的 registerCommand)
-MCP 客户端                →  openharness-mcp (连接、发现、调用 MCP 服务器工具/资源)
-提示/上下文系统            →  openharness-context (CLAUDE.md 发现、压缩、Token 估算)
-会话存储                  →  openharness-session (保存/加载/分支/导出对话会话)
-代码理解                  →  openharness-code-intel (符号搜索、依赖图、复杂度)
-Git 工作流                →  openharness-gitflow (约定式提交、分支管理、PR/CHANGELOG)
-交互式通信                →  openharness-interactive (提问、确认、选择、输入)
-语言服务器协议            →  openharness-lsp (定义、引用、悬停、诊断、重命名)
-桥接系统                  →  openharness-bridge (生成/管理子会话，上下文传递)
-成本 & 模型管理           →  openharness-cost (实时成本跟踪、模型切换、努力/通过次数)
-GitHub 集成               →  openharness-github (Issues、PRs、评论，通过 gh CLI)
-会话操作                  →  openharness-session-ops (上下文、回退、标签、初始化、配置)
-REPL 代码执行             →  openharness-repl (Python/Node.js/Ruby 子进程执行)
-结构化输出                →  openharness-structured-output (从自然语言生成 JSON)
-多 Provider LLM           →  openharness-provider (Anthropic/xAI/OpenAI-compatible 管理)
-OAuth/PKCE 认证           →  openharness-auth (OAuth 登录、Token 管理、Provider 认证状态)
-```
+| 模块 | 工具数 | 描述 |
+|------|--------|------|
+| tools | 19 | 文件读写编辑、glob、grep、bash、Web 搜索/抓取、技能加载、配置、摘要、待办 |
+| gitflow | 6 | 智能约定式提交、分支管理、PR 描述、变更日志、工作树、状态仪表盘 |
+| github | 6 | Issue 增删查、评论、PR 评论、PR 审查（通过 gh CLI） |
+| swarm | 8 | 子智能体生成/状态/列表/停止、团队创建/列表/删除、消息、委派 |
+| session | 6 | 保存/加载/列表/导出会话、分支、摘要 |
+| session-ops | 8 | 上下文显示、回退、标签、分享、项目初始化、插件重载、运行时配置、版本 |
+| code-intel | 6 | 符号搜索、定义、引用、依赖、大纲、复杂度 |
+| lsp | 8 | 定义、引用、悬停、诊断、重命名、符号、实现、补全 |
+| mcp | 7 | 列出服务器/工具/资源、调用工具、读取资源、断开、服务器状态 |
+| memory | 5 | 添加/列出/搜索/删除记忆、查看索引 |
+| context | 5 | 发现上下文文件、压缩、估算 Token、状态、添加指令 |
+| cost | 5 | 成本跟踪、汇总、推理/轮次配置、使用统计、快速模式 |
+| interactive | 4 | 提问、确认、列表选择、文本输入 |
+| provider | 4 | 列出/设置/测试 Provider、模型别名 |
+| bridge | 5 | 生成/发送/接收/关闭/列出桥接会话 |
+| repl | 3 | 执行代码、列出/安装运行时（Python/Node/Ruby） |
+| governance | 1 | 权限管理 |
+| skills | 3 | 列出/加载/搜索技能 |
+| structured-output | 1 | 从自然语言生成结构化 JSON |
+| auth | 3 | OAuth 登录/状态/登出 |
+| commands | 5+ | 斜杠命令：/oh-status、/oh-summary、/oh-skills、/oh-usage、/oh-cost |
+
+**合计：116+ 工具，5+ 命令**
 
 ## 快速开始
 
 ```bash
-# 安装所有插件的依赖
+# 安装依赖
 pnpm install
 
-# 类型检查所有插件
-pnpm -r run typecheck
+# 类型检查
+npx tsc --noEmit
 
-# 运行所有插件的测试
+# 运行测试
 pnpm -r run test
-
-# Lint 所有插件
-pnpm -r run lint
 ```
 
-## 插件开发
+## 插件结构
 
-每个插件位于 `plugins/<name>/` 目录下，包含：
-- `package.json` — 插件元数据和依赖
-- `openclaw.plugin.json` — OpenClaw 插件清单
-- `setup-entry.ts` — 插件设置（创建目录等）
-- `src/` — 源代码
-- `tests/` — 测试文件
-- `tsconfig.json` — TypeScript 配置
-- `vitest.config.ts` — Vitest 测试配置
+```
+plugins/<name>/
+├── package.json          # 插件元数据 + 依赖
+├── openclaw.plugin.json  # OpenClaw 插件清单
+├── setup-entry.ts        # 初始化（创建目录等）
+├── src/
+│   ├── index.ts          # 主入口 — 注册所有工具/命令/钩子
+│   └── <module>/
+│       └── index.ts      # 模块工具定义
+└── tests/
+```
 
-### 添加新插件
+### 工具注册规范
 
-1. 创建 `plugins/<新插件>/` 目录
-2. 从现有插件复制结构
-3. 更新 `package.json` 名称和元数据
-4. 更新 `openclaw.plugin.json` 中的插件特定配置
-5. 在根目录运行 `pnpm install` 链接工作区
+**每个 `api.registerTool()` 调用必须包含 `name` 属性**（不能只有 `label`）：
 
-## 频道兼容性
+```typescript
+// ✅ 正确
+api.registerTool({
+  name: "oh_gitflow_smart_commit",
+  label: "Smart Commit",
+  parameters: Type.Object({ ... }),
+  async execute() { ... },
+});
 
-| 插件 | CLI | 飞书 | 微信 |
-|------|-----|------|------|
-| dev-workflow | ✅ 工具 + 钩子 | ✅ 工具可供 LLM 调用 | ✅ 工具可供 LLM 调用 |
-| wechat | — | — | ✅ 完整频道支持 |
-| openharness-tools | ✅ 43+ 工具 | ✅ 所有工具通过 LLM 代理 | ✅ 所有工具通过 LLM 代理 |
-| openharness-skills | ✅ 技能发现 + 自动注入 | ✅ 提示构建时自动注入 | ✅ 提示构建时自动注入 |
-| openharness-governance | ✅ 钩子 + 权限工具 | ✅ 所有工具调用钩子 | ✅ 所有工具调用钩子 |
-| openharness-swarm | ✅ 子代理生成/管理 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-memory | ✅ 记忆 CRUD + 自动注入 | ✅ 提示构建时自动注入 | ✅ 提示构建时自动注入 |
-| openharness-commands | ✅ 20+ 斜杠命令 | ✅ 通过命令处理器 | ✅ 通过命令处理器 |
-| openharness-mcp | ✅ MCP 连接/调用工具 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-context | ✅ 上下文压缩 + 估算 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-session | ✅ 会话 CRUD + 导出 + 分支 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-code-intel | ✅ 符号搜索、依赖、复杂度 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-gitflow | ✅ 智能提交、分支、PR | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-interactive | ✅ 提问/确认/选择/输入 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-lsp | ✅ 定义、引用、悬停、诊断 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-bridge | ✅ 生成/管理子会话 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-cost | ✅ 成本跟踪、模型管理 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-github | ✅ Issues、PRs、评论 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-session-ops | ✅ 上下文、回退、标签、初始化 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-repl | ✅ 代码执行（Python/Node/Ruby） | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-structured-output | ✅ JSON 输出生成 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-provider | ✅ 多 Provider LLM 管理 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-auth | ✅ OAuth/PKCE 认证管理 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-repl | ✅ 代码执行（Python/Node/Ruby） | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-structured-output | ✅ JSON 输出生成 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-provider | ✅ 多 Provider LLM 管理 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
-| openharness-auth | ✅ OAuth/PKCE 认证管理 | ✅ 通过 LLM 代理工具 | ✅ 通过 LLM 代理工具 |
+// ❌ 错误 — 缺少 name 会导致 "Cannot read properties of undefined (reading 'trim')"
+api.registerTool({
+  label: "Smart Commit",
+  parameters: Type.Object({ ... }),
+  async execute() { ... },
+});
+```
 
-dev-workflow 通过 OpenClaw 插件 API 注册工具（DevWorkflowTool、WorkflowStatusTool、TaskExecuteTool、SpecViewTool、QAGateTool）。插件加载后，这些工具在**所有频道**（飞书、微信、CLI）中对 LLM 智能体可用。
+**命名规范**：`oh_<模块>_<操作>` — 全局唯一，所有模块间不能重复。
 
-## 部署（WSL / NTFS 挂载）
+## 部署（WSL / NTFS 挂载盘）
 
-`/mnt/g/`（Windows NTFS 挂载）下的插件会被 OpenClaw 的 `path_world_writable` 安全检查阻止。使用同步脚本部署到原生 Linux 路径：
+`/mnt/g/` 下的插件会被 OpenClaw 的 `path_world_writable` 安全检查阻止。需同步到原生 Linux 路径：
 
 ```bash
-# 先构建
-pnpm run build
-
-# 同步到默认目标（~/openclaw-plugins）
+# 同步到 ~/.openclaw/extensions/
 ./scripts/sync-plugins.sh
-
-# 或指定自定义目标路径
-./scripts/sync-plugins.sh /opt/openclaw-plugins
 ```
 
-然后配置 OpenClaw 从目标路径加载插件：
-
-```yaml
-plugins:
-  allow:
-    - ~/openclaw-plugins/plugins/*
-```
+在 OpenClaw 配置中设置 `plugins.allow` 白名单信任插件。
 
 ## 许可证
 
