@@ -62,7 +62,7 @@ function isPathRestricted(filePath: string, pathRules: { pattern: string; allow:
 export function registerGovernance(api: any) {
 
     api.registerTool({
-
+      name: "oh_permissions",
       label: "Manage Permissions",
 
       parameters: Type.Object({

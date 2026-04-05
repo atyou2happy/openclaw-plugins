@@ -158,7 +158,7 @@ async function connectStdioServer(name: string, config: McpServerConfig): Promis
 
 export function registerMcp(api: any) {
   api.registerTool({
-
+      name: "oh_mcp_disconnect",
       label: "Disconnect MCP Server",
 
       parameters: Type.Object({
@@ -183,7 +183,7 @@ export function registerMcp(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_mcp_list_servers",
       label: "List MCP Servers",
 
       parameters: Type.Object({}),
@@ -205,7 +205,7 @@ export function registerMcp(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_mcp_list_tools",
       label: "List MCP Tools",
 
       parameters: Type.Object({
@@ -227,7 +227,7 @@ export function registerMcp(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_mcp_call_tool",
       label: "Call MCP Tool",
 
       parameters: Type.Object({
@@ -262,7 +262,7 @@ export function registerMcp(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_mcp_list_resources",
       label: "List MCP Resources",
 
       parameters: Type.Object({
@@ -284,7 +284,7 @@ export function registerMcp(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_mcp_read_resource",
       label: "Read MCP Resource",
 
       parameters: Type.Object({
@@ -308,7 +308,7 @@ export function registerMcp(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_mcp_server_status",
       label: "MCP Server Status",
 
       parameters: Type.Object({

@@ -25,7 +25,7 @@ async function detectRepo(): Promise<string | null> {
 export function registerGithub(api: any) {
 
     api.registerTool({
-
+      name: "oh_github_issue_create",
       label: "Create GitHub Issue",
 
       parameters: Type.Object({
@@ -58,7 +58,7 @@ export function registerGithub(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_github_issue_list",
       label: "List GitHub Issues",
 
       parameters: Type.Object({
@@ -101,7 +101,7 @@ export function registerGithub(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_github_issue_get",
       label: "Get GitHub Issue",
 
       parameters: Type.Object({
@@ -146,7 +146,7 @@ export function registerGithub(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_github_issue_comment",
       label: "Comment on GitHub Issue",
 
       parameters: Type.Object({
@@ -170,7 +170,7 @@ export function registerGithub(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_github_pr_comments",
       label: "PR Comments",
 
       parameters: Type.Object({
@@ -217,7 +217,7 @@ export function registerGithub(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_github_pr_review",
       label: "Submit PR Review",
 
       parameters: Type.Object({

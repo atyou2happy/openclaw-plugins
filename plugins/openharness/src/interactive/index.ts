@@ -3,7 +3,7 @@ import { Type } from "@sinclair/typebox";
 export function registerInteractive(api: any) {
 
     api.registerTool({
-
+      name: "oh_ask_user_question",
       label: "Ask User Question",
 
       parameters: Type.Object({
@@ -34,7 +34,7 @@ export function registerInteractive(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_confirm_action",
       label: "Confirm Action",
 
       parameters: Type.Object({
@@ -58,7 +58,7 @@ export function registerInteractive(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_select_from_list",
       label: "Select From List",
 
       parameters: Type.Object({
@@ -96,7 +96,7 @@ export function registerInteractive(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_input_text",
       label: "Input Text",
 
       parameters: Type.Object({

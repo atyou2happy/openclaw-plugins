@@ -93,7 +93,7 @@ function findRelevantMemories(query: string, files: { path: string; title: strin
 export function registerMemory(api: any) {
 
     api.registerTool({
-
+      name: "oh_memory_add",
       label: "Add Memory",
 
       parameters: Type.Object({
@@ -115,7 +115,7 @@ export function registerMemory(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_memory_list",
       label: "List Memories",
 
       parameters: Type.Object({
@@ -133,7 +133,7 @@ export function registerMemory(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_memory_search",
       label: "Search Memories",
 
       parameters: Type.Object({
@@ -156,7 +156,7 @@ export function registerMemory(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_memory_remove",
       label: "Remove Memory",
 
       parameters: Type.Object({
@@ -180,7 +180,7 @@ export function registerMemory(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_memory_view",
       label: "View Memory Index",
 
       parameters: Type.Object({}),

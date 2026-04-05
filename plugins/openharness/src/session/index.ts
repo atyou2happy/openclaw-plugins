@@ -74,7 +74,7 @@ function messagesToMarkdown(messages: SessionMessage[]): string {
 export function registerSession(api: any) {
 
     api.registerTool({
-
+      name: "oh_session_save",
       label: "Save Session",
 
       parameters: Type.Object({
@@ -127,7 +127,7 @@ export function registerSession(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_session_load",
       label: "Load Session",
 
       parameters: Type.Object({
@@ -160,7 +160,7 @@ export function registerSession(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_session_list",
       label: "List Sessions",
 
       parameters: Type.Object({
@@ -197,7 +197,7 @@ export function registerSession(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_session_export",
       label: "Export Session",
 
       parameters: Type.Object({
@@ -241,7 +241,7 @@ export function registerSession(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_session_branch",
       label: "Branch Session",
 
       parameters: Type.Object({
@@ -293,7 +293,7 @@ export function registerSession(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_session_summary",
       label: "Session Summary",
 
       parameters: Type.Object({}),

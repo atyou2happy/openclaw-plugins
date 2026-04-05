@@ -26,26 +26,31 @@ export default definePluginEntry({
   name: "OpenHarness",
   description: "Unified OpenHarness plugin — 140+ tools, 19 commands, 5 hooks for OpenClaw",
   register(api) {
-    registerTools(api);
-    registerAuth(api);
-    registerBridge(api);
-    registerCodeIntel(api);
-    registerCommands(api);
-    registerContext(api);
-    registerCost(api);
-    registerGitflow(api);
-    registerGithub(api);
-    registerGovernance(api);
-    registerInteractive(api);
-    registerLsp(api);
-    registerMcp(api);
-    registerMemory(api);
-    registerProvider(api);
-    registerRepl(api);
-    registerSession(api);
-    registerSessionOps(api);
-    registerSkills(api);
-    registerStructuredOutput(api);
-    registerSwarm(api);
+    const regs = [
+      ["tools", () => registerTools(api)],
+      ["auth", () => registerAuth(api)],
+      ["bridge", () => registerBridge(api)],
+      ["code-intel", () => registerCodeIntel(api)],
+      ["commands", () => registerCommands(api)],
+      ["context", () => registerContext(api)],
+      ["cost", () => registerCost(api)],
+      ["gitflow", () => registerGitflow(api)],
+      ["github", () => registerGithub(api)],
+      ["governance", () => registerGovernance(api)],
+      ["interactive", () => registerInteractive(api)],
+      ["lsp", () => registerLsp(api)],
+      ["mcp", () => registerMcp(api)],
+      ["memory", () => registerMemory(api)],
+      ["provider", () => registerProvider(api)],
+      ["repl", () => registerRepl(api)],
+      ["session", () => registerSession(api)],
+      ["session-ops", () => registerSessionOps(api)],
+      ["skills", () => registerSkills(api)],
+      ["structured-output", () => registerStructuredOutput(api)],
+      ["swarm", () => registerSwarm(api)],
+    ];
+    for (const [name, fn] of regs) {
+      try { fn(); } catch(e: any) { console.error(`[openharness] register FAILED: ${name}:`, e.message, e.stack); }
+    }
   },
 });

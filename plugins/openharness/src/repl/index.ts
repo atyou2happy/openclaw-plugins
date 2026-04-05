@@ -43,7 +43,7 @@ const installInstructions: Record<Language, string> = {
 export function registerRepl(api: any) {
 
     api.registerTool({
-
+      name: "oh_repl_execute",
       label: "Execute REPL Code",
 
       parameters: Type.Object({
@@ -108,7 +108,7 @@ export function registerRepl(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_repl_list_runtimes",
       label: "List REPL Runtimes",
 
       parameters: Type.Object({}),
@@ -150,7 +150,7 @@ export function registerRepl(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_repl_install_runtime",
       label: "Install REPL Runtime",
 
       parameters: Type.Object({

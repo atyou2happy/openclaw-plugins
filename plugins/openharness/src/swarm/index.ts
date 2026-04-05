@@ -59,6 +59,7 @@ export function registerSwarm(api: any) {
 
     api.registerTool({
 
+      name: "oh_swarm_spawn",
       label: "Spawn Subagent",
 
       parameters: Type.Object({
@@ -123,7 +124,7 @@ export function registerSwarm(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_swarm_agent_status",
       label: "Agent Status",
 
       parameters: Type.Object({
@@ -141,7 +142,7 @@ export function registerSwarm(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_swarm_list_subagents",
       label: "List Subagents",
 
       parameters: Type.Object({
@@ -160,7 +161,7 @@ export function registerSwarm(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_swarm_stop_subagent",
       label: "Stop Subagent",
 
       parameters: Type.Object({
@@ -187,6 +188,7 @@ export function registerSwarm(api: any) {
 
     api.registerTool({
 
+      name: "oh_swarm_team_create",
       label: "Create Team",
 
       parameters: Type.Object({
@@ -215,6 +217,7 @@ export function registerSwarm(api: any) {
 
     api.registerTool({
 
+      name: "oh_swarm_team_list",
       label: "List Teams",
 
       parameters: Type.Object({}),
@@ -231,6 +234,7 @@ export function registerSwarm(api: any) {
 
     api.registerTool({
 
+      name: "oh_swarm_send_message",
       label: "Send Team Message",
 
       parameters: Type.Object({
@@ -259,6 +263,7 @@ export function registerSwarm(api: any) {
 
     api.registerTool({
 
+      name: "oh_swarm_delegate",
       label: "Delegate Task",
 
       parameters: Type.Object({

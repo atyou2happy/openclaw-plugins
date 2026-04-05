@@ -169,7 +169,7 @@ async function getRecentCommits(count = 20, cwd?: string): Promise<{ hash: strin
 export function registerGitflow(api: any) {
 
     api.registerTool({
-
+      name: "oh_gitflow_smart_commit",
       label: "Smart Commit",
 
       parameters: Type.Object({
@@ -227,7 +227,7 @@ export function registerGitflow(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_gitflow_branch_manager",
       label: "Branch Manager",
 
       parameters: Type.Object({
@@ -360,7 +360,7 @@ export function registerGitflow(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_gitflow_pr_description",
       label: "PR Description Generator",
 
       parameters: Type.Object({
@@ -431,7 +431,7 @@ export function registerGitflow(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_gitflow_changelog",
       label: "Changelog Generator",
 
       parameters: Type.Object({
@@ -516,7 +516,7 @@ export function registerGitflow(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_gitflow_worktree",
       label: "Worktree Manager",
 
       parameters: Type.Object({
@@ -613,7 +613,7 @@ export function registerGitflow(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_gitflow_status_dashboard",
       label: "Git Status Dashboard",
 
       parameters: Type.Object({

@@ -81,6 +81,7 @@ export function registerStructuredOutput(api: any) {
 
     api.registerTool({
 
+      name: "oh_structured_output",
       label: "Structured Output",
 
       parameters: Type.Object({

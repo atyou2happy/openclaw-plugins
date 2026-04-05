@@ -30,6 +30,7 @@ export function registerSessionOps(api: any) {
 
     api.registerTool({
 
+      name: "oh_session_context",
       label: "Show Session Context",
 
       parameters: Type.Object({
@@ -85,6 +86,7 @@ export function registerSessionOps(api: any) {
 
     api.registerTool({
 
+      name: "oh_session_rewind",
       label: "Rewind Conversation",
 
       parameters: Type.Object({
@@ -119,7 +121,7 @@ export function registerSessionOps(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_session_tag",
       label: "Tag Session",
 
       parameters: Type.Object({
@@ -159,7 +161,7 @@ export function registerSessionOps(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_session_share",
       label: "Share Session",
 
       parameters: Type.Object({
@@ -200,6 +202,7 @@ export function registerSessionOps(api: any) {
 
     api.registerTool({
 
+      name: "oh_project_init",
       label: "Initialize Project",
 
       parameters: Type.Object({
@@ -274,6 +277,7 @@ export function registerSessionOps(api: any) {
 
     api.registerTool({
 
+      name: "oh_plugin_reload",
       label: "Reload Plugins",
 
       parameters: Type.Object({}),
@@ -294,6 +298,7 @@ export function registerSessionOps(api: any) {
 
     api.registerTool({
 
+      name: "oh_config_runtime",
       label: "Runtime Configuration",
 
       parameters: Type.Object({
@@ -355,6 +360,7 @@ export function registerSessionOps(api: any) {
 
     api.registerTool({
 
+      name: "oh_version",
       label: "Version Info",
 
       parameters: Type.Object({}),

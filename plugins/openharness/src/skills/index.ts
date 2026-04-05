@@ -80,7 +80,7 @@ function matchSkill(query: string, skills: SkillDefinition[]): SkillDefinition[]
 export function registerSkills(api: any) {
 
     api.registerTool({
-
+      name: "oh_skill_list",
       label: "List Skills",
 
       parameters: Type.Object({}),
@@ -95,7 +95,7 @@ export function registerSkills(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_skill_load",
       label: "Load Skill",
 
       parameters: Type.Object({
@@ -116,7 +116,7 @@ export function registerSkills(api: any) {
     });
 
     api.registerTool({
-
+      name: "oh_skill_search",
       label: "Search Skills",
 
       parameters: Type.Object({
