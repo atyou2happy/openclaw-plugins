@@ -1,33 +1,72 @@
 {
   "name": "@openclaw/openharness",
   "version": "1.0.0",
-  "type": "module",
   "description": "Unified OpenHarness plugin — 140+ tools, 19 commands, 5 hooks merged into a single OpenClaw plugin",
-  "openclaw": {
-    "extensions": ["./src/index.ts"],
-    "setupEntry": "./setup-entry.ts",
-    "compat": {
-      "pluginApi": ">=2026.3.24-beta.2",
-      "minGatewayVersion": "2026.3.24-beta.2"
-    },
-    "build": {
-      "openclawVersion": "2026.3.24-beta.2",
-      "pluginSdkVersion": "2026.3.24-beta.2"
-    }
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./tools": "./dist/tools/index.js",
+    "./auth": "./dist/auth/index.js",
+    "./bridge": "./dist/bridge/index.js",
+    "./code-intel": "./dist/code-intel/index.js",
+    "./commands": "./dist/commands/index.js",
+    "./context": "./dist/context/index.js",
+    "./cost": "./dist/cost/index.js",
+    "./gitflow": "./dist/gitflow/index.js",
+    "./github": "./dist/github/index.js",
+    "./governance": "./dist/governance/index.js",
+    "./interactive": "./dist/interactive/index.js",
+    "./lsp": "./dist/lsp/index.js",
+    "./mcp": "./dist/mcp/index.js",
+    "./memory": "./dist/memory/index.js",
+    "./provider": "./dist/provider/index.js",
+    "./repl": "./dist/repl/index.js",
+    "./session": "./dist/session/index.js",
+    "./session-ops": "./dist/session-ops/index.js",
+    "./skills": "./dist/skills/index.js",
+    "./structured-output": "./dist/structured-output/index.js",
+    "./swarm": "./dist/swarm/index.js"
   },
   "scripts": {
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "oxlint src/"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.34.0",
-    "openclaw": "workspace:*"
+    "@sinclair/typebox": "0.34.49"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "openclaw": "file:../../../openclaw",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0",
     "oxlint": "^0.15.0"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.3.24"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "openclaw": {
+    "extensions": [
+      "./src/index.ts"
+    ],
+    "install": {
+      "npmSpec": "@openclaw/openharness",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.3.24"
+    },
+    "bundle": {
+      "stageRuntimeDependencies": true
+    },
+    "release": {
+      "publishToNpm": true
+    }
   }
 }

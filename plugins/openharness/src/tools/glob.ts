@@ -1,5 +1,7 @@
 import { Type, type Static } from "@sinclair/typebox";
-import { glob } from "node:fs/promises";
+import * as fs from "node:fs";
+
+const globFn = (fs as any).glob as ((pattern: string, options?: any) => AsyncIterable<string>) | undefined;
 
 export const GlobInput = Type.Object({
   pattern: Type.String({ description: "The glob pattern to match files against (e.g., '**/*.ts')" }),
@@ -16,9 +18,12 @@ export function createGlobTool() {
     async execute(_toolCallId: string, params: GlobInput) {
       const { pattern, path } = params;
       try {
+        if (!globFn) {
+          return { content: [{ type: "text" as const, text: `glob not available in this Node.js version` }], details: { success: false } };
+        }
         const searchPath = path || process.cwd();
         const matches: string[] = [];
-        for await (const entry of glob(pattern, { cwd: searchPath, withFileTypes: false })) {
+        for await (const entry of globFn(pattern, { cwd: searchPath })) {
           matches.push(entry as string);
         }
         if (matches.length === 0) {

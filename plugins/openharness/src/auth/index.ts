@@ -141,6 +141,7 @@ function createAuthLoginTool() {
     parameters: AuthLoginInput,
     async execute(_toolCallId: string, params: AuthLoginInputType) {
       const { provider, client_id, redirect_uri } = params;
+      const p = provider as Provider;
 
       const codeVerifier = generateCodeVerifier();
       const codeChallenge = await generateCodeChallenge(codeVerifier);
@@ -150,16 +151,16 @@ function createAuthLoginTool() {
         code_verifier: codeVerifier,
         code_challenge: codeChallenge,
         state,
-        provider,
+        provider: p,
         created_at: new Date().toISOString(),
       };
 
-      await writeOAuthToken(provider, {
+      await writeOAuthToken(p, {
         ...authState,
         type: "pending_auth",
       });
 
-      const endpoint = OAUTH_ENDPOINTS[provider];
+      const endpoint = OAUTH_ENDPOINTS[p];
       const defaultClientId = provider === "anthropic" ? "openharness-client" : "openharness-xai-client";
       const defaultRedirectUri = "http://localhost:3000/auth/callback";
 
@@ -221,7 +222,7 @@ function createAuthLogoutTool() {
         };
       }
 
-      const removed = await removeOAuthToken(provider);
+      const removed = await removeOAuthToken(provider as Provider);
       const message = removed
         ? `OAuth tokens for ${provider} have been revoked.`
         : `No OAuth tokens found for ${provider}.`;
