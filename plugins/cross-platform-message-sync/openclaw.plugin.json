@@ -1,7 +1,6 @@
 {
   "id": "cross-platform-message-sync",
   "enabledByDefault": false,
-  "channels": ["openclaw-weixin", "feishu", "qqbot"],
   "skills": ["./skills"],
   "configSchema": {
     "type": "object",

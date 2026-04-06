@@ -1,4 +1,3 @@
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk/core";
 import { MessageSyncTool } from "./message-sync-tool.js";
 import {
   PromptHistoryListTool,
@@ -11,7 +10,7 @@ import { CodeCopyRenderTool } from "./code-copy-tool.js";
 import { QuoteReplyTool } from "./quote-reply-tool.js";
 import { ChoiceSelectTool, ChoiceRenderTool } from "./choice-select-tool.js";
 
-export function registerTools(api: OpenClawPluginApi) {
+export function registerTools(api: any) {
   api.registerTool(new MessageSyncTool());
   api.registerTool(new PromptHistoryListTool());
   api.registerTool(new PromptHistorySearchTool());
