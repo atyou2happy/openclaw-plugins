@@ -84,3 +84,83 @@
 ---
 
 *最后更新：2026-04-15 | 条目数：12*
+
+---
+
+## Karpathy 编码陷阱（v6.1 新增）
+
+> 来源：[andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) 56K+ stars
+
+### 陷阱 1: 隐藏假设（Hidden Assumptions）
+
+**症状**：LLM 默默选择一种理解然后执行，结果不是用户要的。
+
+**根因**：需求有歧义时，LLM 倾向于"猜一个意思然后跑"而不是"停下来问清楚"。
+
+**应对**：
+- Step 2 需求探索时，模糊需求必须列出 ≥2 种理解
+- 用 `karpathy-state-assumptions` 规则强制标注假设
+- 不确定就问，宁可多问一句
+
+**正例**：
+```
+"导出用户数据"可能指：
+1. API 返回 JSON（分页）
+2. 生成 CSV 文件下载
+3. 后台任务邮件发送
+最简方案：API 端点返回分页 JSON。需要文件导出请确认。
+```
+
+**反例**：直接写了一个 200 行的导出函数，假设了格式、字段、分页方式。
+
+### 陷阱 2: 过度设计（Over-engineering）
+
+**症状**：50 行能搞定的事写了 500 行，建了一堆用不上的抽象。
+
+**根因**：LLM 倾向于"为未来扩展性"写代码，实际上那些扩展永远不会来。
+
+**应对**：
+- 用 `karpathy-no-speculative-code` 规则拦截
+- 用 `karpathy-minimal-abstraction` 规则检查抽象层级
+- 审查时问："高级工程师会认为这过度设计了吗？"
+
+**正例**：`calculateDiscount(price: number, rate: number): number` — 3 行。
+
+**反例**：`DiscountStrategyFactory` + `PercentageDiscount` + `FixedDiscount` + `DiscountCalculator` — 200 行。
+
+### 陷阱 3: 乱改无关代码（Collateral Damage）
+
+**症状**：diff 里有一堆和任务无关的改动——重命名变量、改注释风格、删"没用"的代码。
+
+**根因**：LLM 看到"可以改善"的代码就忍不住动手。
+
+**应对**：
+- 用 `karpathy-surgical-edit` 规则强制检查 diff
+- 每行改动必须能追溯到用户需求
+- 发现无关死代码 → 提及但不删除
+
+**正例**：改了 3 行，刚好解决 bug。
+
+**反例**：改了 3 行修 bug，顺便"优化"了 50 行周边代码，引入 2 个新 bug。
+
+### 陷阱 4: 模糊成功标准（Vague Success Criteria）
+
+**症状**："修好了"、"能跑了" — 但没有客观标准，下次又出同样的问题。
+
+**根因**：没有把任务转化为可验证的测试用例。
+
+**应对**：
+- 用 `karpathy-define-success-criteria` 规则要求先写标准
+- "修 bug" → "写一个复现测试 → 通过 = 成功"
+- "加功能" → "写边界测试 → 通过 = 成功"
+
+**正例**：
+```
+任务：修复搜索超时
+成功标准：
+1. 搜索 "test" 在 5s 内返回
+2. 搜索空字符串返回友好错误而非超时
+3. 连续 100 次搜索无内存泄漏
+```
+
+**反例**：改了代码 → 手动试了一次 → "好了"。

@@ -6,7 +6,7 @@ user-invocable: true
 
 # Dev Workflow v5 — AI驱动开发工作流
 
-> 版本：6.0.0 | 最后更新：2026-04-15 | 融合 gstack 方法论 + 三级粒度 + 函数级门控
+> 版本：6.1.0 | 最后更新：2026-04-18 | 融合 gstack 方法论 + 三级粒度 + 函数级门控
 
 ---
 
@@ -33,6 +33,11 @@ user-invocable: true
    - 顶部切换链接：`[English](./README.md) | [简体中文](./README_CN.md)`
    - 参考主流开源项目做法（Vue.js / React / Ant Design）
 9. **经验沉淀** — 每次Debug/Review发现记入记忆
+10. **Karpathy 编码纪律** ⭐⭐⭐ — 源自 [Karpathy Skills](https://github.com/multica-ai/andrej-karpathy-skills)：
+   - **Simplicity First** — 不写没被要求的功能，50行能搞定不写200行
+   - **Surgical Changes** — 只改必须改的，每行改动可追溯到用户需求
+   - **Goal-Driven Execution** — 先定义可验证的成功标准再写代码
+   - **Think Before Coding** — 不确定就问，列出假设，不默默猜
 
 ---
 
@@ -76,6 +81,11 @@ user-invocable: true
 需求不清晰时 → BrainstormAgent（6步：探索→拆解→提问→方案→设计→输出）
 
 **原则**：一次一问 | YAGNI | 逐段确认 | 禁止写代码 | 每个方案附目录结构草案
+
+**Karpathy 假设检查** ⭐ v6.1：
+- 需求模糊时 → 列出 ≥2 种理解供用户选择
+- 不确定时 → 明确标注 `[假设: ...]` 等用户确认
+- 不默默猜 — 宁可多问一句，不返工一次
 
 ### Step 3: 规格定义
 
@@ -142,6 +152,11 @@ user-invocable: true
           打回修复    打回修复    打回修复
 ```
 
+**Karpathy 门控** ⭐ v6.1（Sub-task 执行前）：
+1. **Simplicity 检查**：这段代码是否只做了被要求的事？有没有多余的功能/抽象？
+2. **Surgical 检查**：diff 中每行改动都能追溯到用户需求吗？有没有"顺手"改了无关代码？
+3. **成功标准**：有可验证的测试标准吗？
+
 **三道 Sub-task 门控**：
 1. **Lint 门控**：eslint/shellcheck/flake8 零 warning
 2. **边界检查清单**：空值处理 / 数组越界 / 类型检查 / 错误处理 / 超时处理
@@ -180,6 +195,11 @@ user-invocable: true
 ### Step 7: 测试验证
 
 测试不过不交付
+
+**Karpathy 成功标准先行** ⭐ v6.1：
+- 每个 Task/Sub-task 必须在实现前定义成功标准
+- 成功标准必须具体到可以写自动化测试
+- 没有成功标准的 Task → 打回补写
 
 **QA 角色检查** ⭐ v6（Full 模式）：
 
@@ -358,4 +378,96 @@ README.md（英文，默认）| README_CN.md（中文）| 互相链接可切换 
 
 ---
 
-*v6.0.0 — 三级粒度 + 函数级门控 + QA角色 + 执行纪律 + 常见陷阱清单*
+*v6.1.0 — Karpathy Skills 集成：Simplicity First + Surgical Changes + Goal-Driven Execution + Think Before Coding*
+
+---
+
+## 🔄 高级工作流模式（借鉴 Archon v7.0）
+
+### 循环节点模式（loop + until）
+
+借鉴 [Archon](https://github.com/coleam00/Archon) 的 loop/until 模式，在 dev-workflow 中用现有机制实现：
+
+**1. 测试修复循环**
+```
+实现代码 → 跑测试 → 失败？
+  → Yes: 分析错误 → 修复代码 → 重跑测试（MAX_RETRIES=2）
+  → No: ✅ 通过，进入下一步
+```
+**实现方式**：Step 5 Sub-task 循环已内置，设置 `MAX_RETRIES=2`。
+
+**2. 审批循环**
+```
+提交审查 → 用户反馈 → 有修改意见？
+  → Yes: 修改代码 → 重新提交审查
+  → No: ✅ APPROVED，进入 Step 7 交付
+```
+**实现方式**：Step 6 Review + Step 4.5 Plan Gate 组合使用。
+
+**3. 质量迭代循环**
+```
+生成代码 → Lint → 有 warning？
+  → Yes: 修复 → 重跑 Lint
+  → No: ✅ 零 warning，继续
+```
+**实现方式**：Step 5 Lint 门控。
+
+### 混合节点模式（确定性 + AI）
+
+| 节点类型 | 用途 | 触发方式 |
+|----------|------|----------|
+| **确定性** | 跑测试/lint/git操作 | Agent 直接执行 bash |
+| **AI** | 规划/编码/审查 | 派发子智能体（Kilocode/OpenCode） |
+| **人工** | 审批/决策/确认 | Plan Gate 暂停等待用户 |
+
+**DAG 依赖**（depends_on）：
+```
+plan → implement → test → review → approve → deliver
+                    ↑                    |
+                    └─── fix (if fail) ──┘
+```
+**实现方式**：Task Engine 的父子任务 + 状态流转。
+
+### 工作流模板
+
+**标准编码工作流**（对应 standard 模式）：
+```yaml
+# 概念流程（不需要 YAML parser，SKILL.md 直接描述）
+nodes:
+  - id: spec          # Step 3: 规格定义
+  - id: plan          # Step 4.5: Plan Gate
+    depends_on: [spec]
+    type: human        # 需要用户确认
+  - id: implement     # Step 5: 开发
+    depends_on: [plan]
+    loop:
+      until: TESTS_PASS
+      max_retries: 2
+  - id: review        # Step 6: 代码审查
+    depends_on: [implement]
+  - id: approve       # 用户验收
+    depends_on: [review]
+    type: human
+  - id: deliver       # Step 7: 交付
+    depends_on: [approve]
+```
+
+**快速修复工作流**（对应 quick 模式）：
+```yaml
+nodes:
+  - id: diagnose      # 诊断根因
+  - id: fix           # 修复
+    depends_on: [diagnose]
+    loop:
+      until: TESTS_PASS
+      max_retries: 2
+  - id: verify        # 验证
+    depends_on: [fix]
+    type: deterministic  # bash 验证
+```
+
+**原则**：
+- 这些模板是**概念参考**，指导 Step 5 的执行逻辑
+- 不需要 YAML 解析器 — AI Agent 直接理解 SKILL.md 描述
+- 循环/门控已由引擎内置（MAX_RETRIES + Plan Gate + QA Gate）
+- 人工节点通过 Plan Gate 和反馈循环实现

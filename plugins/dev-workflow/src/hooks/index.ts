@@ -61,7 +61,7 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
     const step = event?.step ?? "unknown";
     api.logger.info(`[dev-workflow] Pre-step hook: ${step}`);
 
-    if (step === "step7-development" || step === "step6-plan-gate") {
+    if (step === "step5-development" || step === "step4.5-plan-gate") {
       permissionManager.upgradeToWorkspaceWrite();
       api.logger.info("[dev-workflow] Permission upgraded to workspace-write at Plan Gate");
     }
@@ -82,7 +82,7 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
     const step = event?.step ?? "unknown";
     api.logger.info(`[dev-workflow] Post-step hook: ${step}`);
 
-    if (step === "step12-delivery") {
+    if (step === "step9-delivery" || step === "step9.5-handover-cleanup") {
       if (context.decisions.length > 0) {
         await memdirManager.remember(context.projectDir, {
           type: "decision",

@@ -207,7 +207,12 @@ export type DevWorkflowRule =
   | "prefer-early-return"
   | "no-boolean-params"
   | "no-global-mutation"
-  | "prefer-pure-functions";
+  | "prefer-pure-functions"
+  | "karpathy-no-speculative-code"
+  | "karpathy-minimal-abstraction"
+  | "karpathy-surgical-edit"
+  | "karpathy-define-success-criteria"
+  | "karpathy-state-assumptions";
 
 export const DEV_WORKFLOW_RULES: Record<DevWorkflowRule, { description: string; severity: "error" | "warning" }> = {
   "no-unused-vars": { description: "No unused variables or imports", severity: "error" },
@@ -231,6 +236,11 @@ export const DEV_WORKFLOW_RULES: Record<DevWorkflowRule, { description: string; 
   "no-boolean-params": { description: "Avoid boolean parameters that change function behavior", severity: "warning" },
   "no-global-mutation": { description: "Avoid mutating global state", severity: "error" },
   "prefer-pure-functions": { description: "Prefer pure functions over side-effecting ones", severity: "warning" },
+  "karpathy-no-speculative-code": { description: "No features beyond what was asked — YAGNI enforced", severity: "error" },
+  "karpathy-minimal-abstraction": { description: "No abstraction for single-use code — don't generalize prematurely", severity: "warning" },
+  "karpathy-surgical-edit": { description: "Only touch code directly related to the task — no unrelated refactoring", severity: "error" },
+  "karpathy-define-success-criteria": { description: "Every task must have verifiable success criteria before implementation", severity: "warning" },
+  "karpathy-state-assumptions": { description: "Ambiguous requirements must list assumptions explicitly before proceeding", severity: "warning" },
 };
 
 /**
