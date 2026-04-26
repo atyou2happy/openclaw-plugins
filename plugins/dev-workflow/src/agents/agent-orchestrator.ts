@@ -554,12 +554,12 @@ Return a summary of what you did.`;
 private static readonly ACPX_MODEL_POOL = {
   // Kilocode: 9 免费模型
   kilocode: {
-    code: "kilo/qwen/qwen3.6-plus:free",
-    orchestrator: "kilo/qwen/qwen3.6-plus:free",
-    architect: "kilo/qwen/qwen3.6-plus:free",
-    debug: "kilo/qwen/qwen3.6-plus:free",
+    code: "minimax/MiniMax-M2.7",
+    orchestrator: "minimax/MiniMax-M2.7",
+    architect: "minimax/MiniMax-M2.7",
+    debug: "minimax/MiniMax-M2.7",
     review: "kilo/meta-llama/llama-3.3-70b-instruct",
-    test: "kilo/qwen/qwen3.6-plus:free",
+    test: "minimax/MiniMax-M2.7",
     // 备选模型
     fast: "kilo/qwen/qwen3-coder:free",
     smart: "kilo/google/gemma-3-27b-it:free",
@@ -567,8 +567,8 @@ private static readonly ACPX_MODEL_POOL = {
   },
   // OpenCode: 5 免费模型
   opencode: {
-    code: "opencode/qwen3.6-plus-free",
-    review: "opencode/qwen3.6-plus-free",
+    code: "minimax/MiniMax-M2.7",
+    review: "minimax/MiniMax-M2.7",
     // 备选模型
     fast: "opencode/qwen3-coder-free",
     smart: "opencode/gemma-3-27b-free",
@@ -584,10 +584,10 @@ private static readonly ACPX_MODEL_POOL = {
 routeByComplexity(complexity: string): { tool: string; model: string } {
   const routes: Record<string, { tool: string; model: string }> = {
     L1: { tool: "direct", model: "direct" }, // 直接编辑
-    L2: { tool: "acpx-opencode", model: "opencode/qwen3.6-plus-free" }, // 样板代码
-    L3: { tool: "acpx-kilocode", model: "kilo/qwen/qwen3.6-plus:free" }, // 业务逻辑
-    L4: { tool: "acpx-kilocode", model: "kilo/qwen/qwen3.6-plus:free" }, // 架构设计
-    L5: { tool: "acpx-kilocode", model: "kilo/qwen/qwen3.6-plus:free" }, // 系统级
+    L2: { tool: "acpx-opencode", model: "minimax/MiniMax-M2.7" }, // 样板代码
+    L3: { tool: "acpx-kilocode", model: "minimax/MiniMax-M2.7" }, // 业务逻辑
+    L4: { tool: "acpx-kilocode", model: "minimax/MiniMax-M2.7" }, // 架构设计
+    L5: { tool: "acpx-kilocode", model: "minimax/MiniMax-M2.7" }, // 系统级
   };
   return routes[complexity] ?? routes.L3;
 }
@@ -598,7 +598,7 @@ routeByComplexity(complexity: string): { tool: string; model: string } {
   routeByGranularity(granularity: "feature" | "task" | "subtask"): { tool: string; model: string; maxLines: number } {
     const granularityRoutes = {
       feature: { tool: "acpx-kilocode", model: "zai/GLM-5.1", maxLines: 999 },
-      task: { tool: "acpx-kilocode", model: "kilo/qwen/qwen3.6-plus:free", maxLines: 200 },
+      task: { tool: "acpx-kilocode", model: "minimax/MiniMax-M2.7", maxLines: 200 },
       subtask: { tool: "acpx-opencode", model: "minimax/MiniMax-M2.7", maxLines: 50 },
     };
     return granularityRoutes[granularity];
@@ -619,27 +619,27 @@ routeByComplexity(complexity: string): { tool: string; model: string } {
 
 private static readonly MODE_MODELS: Record<WorkflowMode, Record<string, string>> = {
     quick: {
-      brainstorm: "minimax-m2.5",
+      brainstorm: "llama-3.3-70b",
       spec: "minimax-m2.5",
       tech: "minimax-m2.5",
-      coder: "qwen3.6-plus",
+      coder: "minimax-m2.7",
       reviewer: "glm-5.1",
       test: "minimax-m2.5",
-      docs: "minimax-m2.5",
+      docs: "llama-3.3-70b",
       qa: "glm-5.1",
     },
     standard: {
-      brainstorm: "minimax-m2.5",
+      brainstorm: "llama-3.3-70b",
       spec: "minimax-m2.5",
       tech: "minimax-m2.5",
-      coder: "minimax-m2.5",
+      coder: "minimax-m2.7",
       reviewer: "glm-5.1",
       test: "minimax-m2.5",
-      docs: "minimax-m2.5",
+      docs: "llama-3.3-70b",
       qa: "glm-5.1",
     },
     debug: {
-      brainstorm: "glm-5.1",
+      brainstorm: "llama-3.3-70b",
       spec: "glm-5.1",
       tech: "glm-5.1",
       coder: "glm-5.1",
@@ -649,13 +649,13 @@ private static readonly MODE_MODELS: Record<WorkflowMode, Record<string, string>
       qa: "glm-5.1",
     },
     full: {
-      brainstorm: "minimax-m2.5",
+      brainstorm: "llama-3.3-70b",
       spec: "glm-5.1",
       tech: "glm-5.1",
       coder: "glm-5.1",
       reviewer: "glm-5.1",
       test: "glm-5.1",
-      docs: "minimax-m2.5",
+      docs: "llama-3.3-70b",
       qa: "glm-5.1",
     },
   };
@@ -667,7 +667,7 @@ private static readonly MODE_MODELS: Record<WorkflowMode, Record<string, string>
       hard: "glm-5.1",
       extreme: "qwen3",
     };
-    return modelMapping[difficulty] ?? "minimax-m2.5";
+    return modelMapping[difficulty] ?? "minimax-m2.7";
   }
 
   /**
@@ -686,13 +686,13 @@ private static readonly MODE_MODELS: Record<WorkflowMode, Record<string, string>
     if (role === "coder" && difficulty) {
       const difficultyUpgrade: Record<string, string> = {
         hard: "glm-5.1",
-        extreme: "qwen3-coder-480b",
+        extreme: "glm-5.1",
       };
       if (difficultyUpgrade[difficulty]) {
         return difficultyUpgrade[difficulty];
       }
     }
     // 3. 按模式默认
-    return AgentOrchestrator.MODE_MODELS[mode]?.[role] ?? "minimax-m2.5";
+    return AgentOrchestrator.MODE_MODELS[mode]?.[role] ?? "minimax-m2.7";
   }
 }

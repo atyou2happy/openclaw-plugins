@@ -1,6 +1,6 @@
 {
   "name": "@openclaw/dev-workflow",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "description": "OpenClaw Dev Workflow plugin \u2014 AI-driven spec-driven development workflow with multi-agent orchestration, integrating claw-code harness patterns",
   "type": "module",
   "main": "dist/index.js",

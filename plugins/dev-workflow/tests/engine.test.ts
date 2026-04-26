@@ -47,7 +47,7 @@ describe("DevWorkflowEngine", () => {
     const context = await engine.initialize(testDir, "standard");
     expect(context.projectId).toBeDefined();
     expect(context.mode).toBe("standard");
-    expect(context.currentStep).toBe("step1-project-identify");
+    expect(context.currentStep).toBe("step0-analysis");
     expect(context.spec).toBeNull();
     expect(context.decisions.length).toBeGreaterThan(0);
   });

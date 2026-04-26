@@ -14,6 +14,7 @@ import { DirectoryTemplateManager } from "../directory-templates/index.js";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 import { execSync } from "child_process";
+import { RefactorAssessmentTool } from "../tools/refactor-assessment-tool.js";
 
 const CONTEXT_FILE = ".dev-workflow-context.json";
 const CONTEXT_MD_FILE = ".dev-workflow.md";
@@ -32,6 +33,7 @@ export class DevWorkflowEngine {
   private workingMemoryManager: WorkingMemoryManager;
   private directoryTemplateManager: DirectoryTemplateManager;
   private context: WorkflowContext | null = null;
+  private refactorAssessmentTool!: RefactorAssessmentTool;
   private aborted = false;
   private verificationFailures = new Map<string, number>();
 
@@ -51,6 +53,7 @@ export class DevWorkflowEngine {
 
   async initialize(projectDir: string, mode: WorkflowMode = "standard", featureFlags?: Partial<FeatureFlags>): Promise<WorkflowContext> {
     const persisted = this.loadContext(projectDir);
+    this.refactorAssessmentTool = new RefactorAssessmentTool();
     if (persisted) {
       this.context = persisted;
       await this.memdirManager.initialize(projectDir);
@@ -100,6 +103,17 @@ export class DevWorkflowEngine {
     const analysis = await this.orchestrator.runAnalysis(projectDir);
     this.context!.decisions.push(`Analysis: ${analysis.summary}`);
     this.context!.openSource = analysis.hasOpenSpec;
+
+    // v6.2: Refactor assessment on Step 0
+    if (this.context!.featureFlags.refactorAssessmentOnStep0) {
+      try {
+        const result = await this.refactorAssessmentTool.quickAssessment(projectDir);
+        this.context!.refactorAssessment = result;
+        this.context!.decisions.push(`Refactor: ${result.score}/100 [${result.healthLevel}] - ${result.recommendations.length} recommendations`);
+      } catch (e) {
+        this.context!.decisions.push(`Refactor assessment skipped: ${e}`);
+      }
+    }
     this.persistContext();
     return this.context;
   }

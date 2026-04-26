@@ -182,7 +182,7 @@ describe("types", () => {
 
   it("DEV_WORKFLOW_RULES has 21 rules", () => {
     const ruleKeys = Object.keys(DEV_WORKFLOW_RULES);
-    expect(ruleKeys).toHaveLength(21);
+    expect(ruleKeys).toHaveLength(26);
   });
 
   it("DEV_WORKFLOW_RULES each rule has description and severity", () => {

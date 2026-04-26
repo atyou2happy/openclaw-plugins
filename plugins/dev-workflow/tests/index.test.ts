@@ -12,7 +12,7 @@ describe("plugin entry point", () => {
     expect(plugin.name).toBe("Dev Workflow");
   });
 
-  it("has registerFull that calls tool and hook registration", async () => {
+  it("has register that calls tool and hook registration", async () => {
     const plugin = (await import("../src/index.js")).default;
     const registerTool = vi.fn();
     const registerHook = vi.fn();
@@ -42,7 +42,7 @@ describe("plugin entry point", () => {
       resolvePath: vi.fn(),
       on: vi.fn(),
     } as any;
-    plugin.registerFull(api);
+    plugin.register(api);
     expect(registerTool).toHaveBeenCalled();
     expect(registerHook).toHaveBeenCalled();
   });

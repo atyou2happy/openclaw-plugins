@@ -8,6 +8,7 @@ export type WorkflowStep =
   | "step0-analysis"
   | "step0.1-handover"
   | "step0.2-bootstrap"
+  | "step0.3-refactor-assessment"
   | "step0.5-spec-update"
   | "step1-requirement"
   | "step2-brainstorm"
@@ -85,6 +86,7 @@ export interface WorkflowContext {
   brainstormNotes: string[];
   decisions: string[];
   qaGateResults: QAGateCheck[];
+  refactorAssessment?: RefactorAssessment;
   startedAt: string;
   openSource: boolean | null;
   branchName: string | null;
@@ -135,6 +137,134 @@ export interface ConventionalCommit {
   breaking: boolean;
 }
 
+// ─── Refactor Assessment Types (v6.2) ───
+
+export type RefactorHealthLevel = "healthy" | "acceptable" | "needs-attention" | "technical-debt";
+
+export type RefactorMetricType =
+  | "complexity"
+  | "file-size"
+  | "function-size"
+  | "duplication"
+  | "coupling"
+  | "naming";
+
+export interface RefactorMetric {
+  type: RefactorMetricType;
+  value: number;
+  threshold: number;
+  weight: number;
+  passed: boolean;
+  files?: string[];
+}
+
+export interface RefactorRecommendation {
+  priority: "high" | "medium" | "low";
+  principle: RefactorPrinciple;
+  title: string;
+  description: string;
+  affectedFiles: string[];
+  estimatedEffort: string;
+}
+
+export type RefactorPrinciple =
+  | "efficiency"
+  | "maintainability"
+  | "extensibility"
+  | "readability"
+  | "simplicity"
+  | "correctness";
+
+export interface RefactorAssessment {
+  score: number;
+  healthLevel: RefactorHealthLevel;
+  metrics: RefactorMetric[];
+  recommendations: RefactorRecommendation[];
+  scannedAt: string;
+  fileCount: number;
+}
+
+export const REFACTOR_PRINCIPLES: Record<RefactorPrinciple, { label: string; description: string }> = {
+  efficiency: { label: "效率优先", description: "O(n)优化、惰性计算、批量操作、避免重复计算" },
+  maintainability: { label: "可维护性", description: "单一职责、显式依赖、完善错误处理、一致的风格" },
+  extensibility: { label: "可扩展性", description: "开放封闭原则、插件化设计、配置驱动、接口抽象" },
+  readability: { label: "可读性", description: "自解释命名、最小抽象层级、线性逻辑流、有意义的注释" },
+  simplicity: { label: "简洁性", description: "YAGNI、删除无用代码、组合优于继承、数据驱动" },
+  correctness: { label: "正确性优先", description: "测试覆盖、边界处理、幂等操作、防御性编程" },
+};
+
+export const REFACTOR_THRESHOLDS = {
+  maxFileLines: 500,
+  maxFunctionLines: 50,
+  maxCyclomaticComplexity: 15,
+  maxImportsPerFile: 10,
+  maxDuplicationPercent: 3,
+  minNameLength: 2,
+} as const;
+
+export function healthLevelFromScore(score: number): RefactorHealthLevel {
+  if (score >= 90) return "healthy";
+  if (score >= 70) return "acceptable";
+  if (score >= 50) return "needs-attention";
+  return "technical-debt";
+}
+
+export function healthEmoji(level: RefactorHealthLevel): string {
+  const map: Record<RefactorHealthLevel, string> = {
+    healthy: "🟢",
+    acceptable: "🟡",
+    "needs-attention": "🟠",
+    "technical-debt": "🔴",
+  };
+  return map[level];
+}
+
+// ─── End Refactor Types ───
+
+// ─── Tier Model Selection (v6.2) ───
+
+export type ModelTier = "lightweight" | "standard" | "advanced" | "critical";
+
+export interface TierModel {
+  primary: string;
+  fallback: string[];
+}
+
+export const MODEL_TIERS: Record<ModelTier, TierModel> = {
+  lightweight: { primary: "llama-3.3-70b", fallback: ["minimax-m2.5"] },
+  standard: { primary: "minimax-m2.7", fallback: ["minimax-m2.7"] },
+  advanced: { primary: "glm-5.1", fallback: ["deepseek-v3.2"] },
+  critical: { primary: "glm-5.1", fallback: ["deepseek-v3.2", "gpt-oss-120b"] },
+};
+
+export const ROLE_TIERS: Record<string, ModelTier> = {
+  brainstorm: "lightweight",
+  spec: "advanced",
+  tech: "standard",
+  coder: "standard",
+  reviewer: "advanced",
+  test: "standard",
+  docs: "lightweight",
+  qa: "advanced",
+  security: "advanced",
+};
+
+export const STEP_MIGRATION_MAP: Record<string, string> = {
+  "step0-analysis": "step1-project-identify",
+  "step1-requirement": "step3-requirement",
+  "step2-brainstorm": "step3-brainstorm",
+  "step3-spec": "step4-spec",
+  "step4-tech-selection": "step5-tech-selection",
+  "step4.5-plan-gate": "step6-plan-gate",
+  "step5-development": "step7-development",
+  "step6-review": "step8-review",
+  "step7-test": "step9-test",
+  "step6.5-security-audit": "step10-security-audit",
+  "step8-docs": "step11-docs",
+  "step8.5-github": "step11-docs",
+  "step9-delivery": "step12-delivery",
+};
+
 export interface FeatureFlags {
   strictTdd: boolean;
   ruleEnforcement: boolean;
@@ -155,6 +285,8 @@ export interface FeatureFlags {
   tmuxTimeoutSeconds: number;
   noProxyLocalhost: boolean;
   readmeDualLanguage: boolean;
+  refactorAssessmentEnabled: boolean;
+  refactorAssessmentOnStep0: boolean;
 }
 
 export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
@@ -177,6 +309,8 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
   tmuxTimeoutSeconds: 30,
   noProxyLocalhost: true,
   readmeDualLanguage: true,
+  refactorAssessmentEnabled: true,
+  refactorAssessmentOnStep0: true,
 };
 
 export interface WorkflowConfig {

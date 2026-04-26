@@ -306,7 +306,7 @@ describe("selectModel", () => {
   });
 
   it("quick mode: uses free models for coder", () => {
-    expect(orchestrator.selectModel("coder", "quick")).toBe("qwen3.6-plus");
+    expect(orchestrator.selectModel("coder", "quick")).toBe("minimax-m2.7");
   });
 
   it("quick mode: uses glm-5.1 for reviewer", () => {
@@ -318,7 +318,7 @@ describe("selectModel", () => {
   });
 
   it("standard mode: coder=standard→qwen3.6-plus", () => {
-    expect(orchestrator.selectModel("coder", "standard")).toBe("qwen3.6-plus"); // v6: coder=standard→qwen3.6-plus
+    expect(orchestrator.selectModel("coder", "standard")).toBe("minimax-m2.7"); // v6: coder=standard→qwen3.6-plus
   });
 
   it("standard mode: qa=advanced→glm-5.1", () => {
@@ -354,6 +354,6 @@ describe("selectModel", () => {
   });
 
   it("unknown role falls back to standard→qwen3.6-plus", () => {
-    expect(orchestrator.selectModel("unknown-role", "quick")).toBe("qwen3.6-plus"); // v6: unknown→standard→qwen3.6-plus
+    expect(orchestrator.selectModel("unknown-role", "quick")).toBe("minimax-m2.7"); // v6: unknown→standard→qwen3.6-plus
   });
 });
