@@ -12,6 +12,7 @@ import { DebugTool } from "./debug-tool.js";
 import { SecurityAuditTool } from "./security-audit-tool.js";
 import { RetroTool } from "./retro-tool.js";
 import { RefactorAssessmentTool } from "./refactor-assessment-tool.js";
+import { CodeGraphTool } from "./code-graph-tool.js";
 
 // Tool type exports
 export type { DevWorkflowTool } from "./dev-workflow-tool.js";
@@ -27,6 +28,7 @@ export type { DebugTool } from "./debug-tool.js";
 export type { SecurityAuditTool } from "./security-audit-tool.js";
 export type { RetroTool } from "./retro-tool.js";
 export type { RefactorAssessmentTool } from "./refactor-assessment-tool.js";
+export type { CodeGraphTool } from "./code-graph-tool.js";
 
 export function registerDevWorkflowTools(api: OpenClawPluginApi) {
   api.registerTool(new DevWorkflowTool());
@@ -42,4 +44,5 @@ export function registerDevWorkflowTools(api: OpenClawPluginApi) {
   api.registerTool(new SecurityAuditTool());
   api.registerTool(new RetroTool());
   api.registerTool(new RefactorAssessmentTool());
+  api.registerTool(new CodeGraphTool());
 }
