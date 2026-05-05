@@ -1,12 +1,12 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v7。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/Superpowers/gstack/SLM六大开源项目最佳实践+重构实战经验。
+description: AI驱动开发工作流 v8。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi 双项目实战经验。集中配置、async安全、连接池、测试分层、SDK模式。
 user-invocable: true
 ---
 
-# Dev Workflow v7 — AI驱动开发工作流
+# Dev Workflow v8 — AI驱动开发工作流
 
-> 版本：7.0.0 | 最后更新：2026-05-06 | 融合 6 开源项目 + daily-stock-report 重构实战
+> 版本：8.0.0 | 最后更新：2026-05-06 | v6→v7(daily-stock-report)→v8(freeapi重构) 三版经验融合
 
 ---
 
@@ -32,6 +32,10 @@ user-invocable: true
 10. **模型能力匹配** — 按任务难度选模型，不硬编码（详见 `references/models.md`）
 11. **先简后繁** ⭐v7 — 第一版够用就好，用户反馈驱动迭代
 12. **测试是安全网** ⭐v7 — 测试能发现 try/except 静默吞掉的隐藏 bug
+13. **Async 安全** ⭐⭐⭐ v8 — 禁止在 FastAPI/asyncio 项目中使用 `asyncio.run()`，改用纯 async + lifespan
+14. **HTTP 连接池** ⭐⭐ v8 — 高频 API 调用必须复用 HTTP 连接（基类维护 _http_client）
+15. **测试分层金字塔** ⭐⭐ v8 — Unit(多) → Business(中) → Integration(少)，目标覆盖率 >80%
+16. **版本号 Single Source of Truth** ⭐ v8 — 多包项目版本号从单一文件读取，grep 验证同步
 
 ---
 
@@ -89,6 +93,13 @@ Step 7: 直接编码 → commit → 汇报
 - 现有测试覆盖率？<30% → 建议先补测试再重构
 - 路径/配置是否集中管理？散布 → 标记为"路径集中化"任务
 - 是否有 try/except 静默吞异常？→ 标记为高危区域
+
+**⭐v8 freeapi 重构预检**（补充）：
+- [ ] async 项目是否用了 `asyncio.run()`？→ 改纯 async + lifespan
+- [ ] HTTP 客户端是否每次新建连接？→ 基类连接池复用
+- [ ] 死代码是否存在（coverage < 5%）？→ 删除
+- [ ] 环境变量是否散落多文件？→ 集中配置模块
+- [ ] JS/TS SDK 方法名是否含点号？→ 嵌套对象模式
 
 #### Step 3: 需求探索
 
@@ -173,6 +184,18 @@ delegate_task 适合 <200行文件的小型独立修改。实测数据：
 
 **经验法则**：如果任务需要读取>8个文件或修改>5个文件，优先用 execute_code 或主会话直接做。
 
+**⭐v8 架构模式速查**（freeapi 实战总结，按技术栈选用）：
+
+| 模式 | 适用场景 | 示例 |
+|------|----------|------|
+| 集中配置 | 任何 >3 文件项目 | pydantic-settings + get_settings() + lru_cache |
+| HTTP 连接池 | API 客户端/Provider | 基类 _http_client + get_http_client() + close() |
+| Lifespan 管理 | FastAPI/Starlette | async with lifespan(app): 初始化 → yield → 清理 |
+| 结构化日志 | 任何中大型项目 | structlog + setup_logging() + get_logger() |
+| 向后兼容 re-export | 删除旧模块时 | `from new_module import *` 保留旧 import 路径 |
+| 测试分层 | 任何有测试的项目 | conftest.py 共享 fixture + 1:1 源文件映射 |
+| SDK 嵌套对象 | JS/TS SDK | `this.chat = { completions: { create: fn } }` |
+
 #### Step 8: 代码审查 ⭐ v6升级
 
 **6角色审查**（详见 `references/review-methodology.md`）：
@@ -199,11 +222,11 @@ delegate_task 适合 <200行文件的小型独立修改。实测数据：
 
 **回退**：发现P0问题 → 回Step 7修复
 
-#### Step 9: 测试验证 ⭐v7增强
+#### Step 9: 测试验证 ⭐v7→v8增强
 
 测试不过不交付
 
-**⭐v7 测试策略**（新增，详见 `references/lessons/testing-strategy.md`）：
+**⭐v7 测试策略**（详见 `references/lessons/testing-strategy.md`）：
 
 分层原则：
 1. 先测底层模块 — utils, config, 数据模型
@@ -215,6 +238,26 @@ delegate_task 适合 <200行文件的小型独立修改。实测数据：
 - **60% 是务实目标**，不要追求 100%
 - **coverage fail_under 设保守值**（实际覆盖率的 90%），避免 CI 不稳定
 - **关键路径 100%** — 评分计算、风险判断、数据处理
+
+**⭐v8 freeapi 测试策略增强**：
+
+| 层级 | 数量 | 速度 | 依赖 | 示例 |
+|------|------|------|------|------|
+| Unit | 最多 | <1s | 全 mock | 配置类、异常类、纯函数 |
+| Business | 中等 | 1-5s | mock HTTP | Provider 适配器、SDK client |
+| Integration | 最少 | 5-30s | TestClient | API 路由、中间件链路 |
+
+v8 覆盖率目标细化：
+- 核心业务逻辑：>90%
+- 胶水代码（CLI/中间件）：50-70%
+- 整体：>80%（freeapi 实测 83%）
+
+**Python 测试必知** ⭐v8（freeapi 踩坑）：
+- pydantic-settings + lru_cache → autouse fixture 清缓存
+- httpx.AsyncClient.is_closed 是只读 → 用 MagicMock(spec=AsyncClient)
+- Click CLI → CliRunner.invoke()
+- structlog → structlog.testing.capture_logs()
+- 测试隔离：每个测试文件对应一个源文件
 
 **重构测试专项**：
 - 拆分文件后跑全量测试 — 不只跑被拆分的模块
@@ -408,14 +451,18 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ## 参考文档（按需加载）
 
-| 文件 | 内容 |
+|| 文件 | 内容 |
 |------|------|
 | `references/models.md` | ⭐v6 模型Tier配置+fallback链 |
 | `references/state-management.md` | ⭐v6 进度持久化state.json规范 |
 | `references/context-rot-detection.md` | ⭐v6 上下文腐烂检测 |
-| `references/lessons/` | ⭐v7 按技术栈归档的经验库 |
-| `references/lessons/refactoring-lessons.md` | ⭐v7 重构实战经验（路径管理/文件拆分/Scope控制） |
-| `references/lessons/testing-strategy.md` | ⭐v7 测试策略（分层/Mock/覆盖率） |
+| `references/lessons/` | ⭐v7→v8 按技术栈归档的经验库 |
+| `references/lessons/python.md` | ⭐v8 Python经验库（6条：config/async/exception/httpx/structlog） |
+| `references/lessons/testing.md` | ⭐v8 Testing经验库（6条：分层/覆盖率/mock/fixture） |
+| `references/lessons/security.md` | ⭐v8 Security经验库（4条：密钥扫描/异常吞没/环境变量/死代码） |
+| `references/lessons/git.md` | ⭐v8 Git经验库（4条：大commit/干净起点/版本号/push验证） |
+| `references/lessons/typescript.md` | ⭐v6 TypeScript经验库 |
+| `references/lessons/react.md` | ⭐v6 React经验库 |
 | `references/project-templates.md` | 5个目录结构模板 |
 | `references/feature-flags.md` | Feature Flag 开发模式 |
 | `references/working-memory.md` | Working Memory 三层架构 |
@@ -425,35 +472,35 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 | `references/pr-templates.md` | PR模板+Changelog自动化 |
 | `references/handover-template.md` | 交接文档模板 |
 | `references/refactor-migration.md` | 重构迁移流程 |
-| `references/bulk-refactoring-pitfalls.md` | ⭐v7 批量重构陷阱（含实战案例） |
+| `references/bulk-refactoring-pitfalls.md` | ⭐v7 批量重构陷阱 |
 | `references/qa-gate-template.sh` | QA Gate 脚本模板 |
 | `references/commit-conventions.md` | Conventional Commits 规范 |
 | `references/review-methodology.md` | 多视角审查方法论（6角色） |
 | `references/debug-methodology.md` | 根因调试方法论 |
 | `references/security-audit.md` | 安全审计方法论 |
 | `references/retro-methodology.md` | 周回顾方法论 |
+| `references/refactor-principles.md` | ⭐v8 重构原则+freeapi实战案例（36 files, 83% coverage） |
+| `references/common-pitfalls.md` | ⭐v6→v8 常见陷阱清单（17条：环境/模型/async/httpx） |
 
 ---
 
-## v6→v7 变更摘要
+## v6→v7→v8 变更摘要
 
-| 变更 | 说明 |
-|------|------|
-| +核心原则 11-12 | 先简后繁、测试是安全网 |
-| +Step 2 重构前检查 | 覆盖率/路径集中度/try-except 危险区 |
-| +Step 3 "不做什么"清单 | 防止范围蔓延 |
-| +Step 4 数据语义定义 | 字段含义、命名、范围约束 |
-| +Step 7 文件拆分纪律 | 拆前测试→拆后验证→逐模块拆分 |
-| +Step 7 JS/模板规范 | .tmpl 文件 + 语法验证 |
-| +Step 8 重构审查专项 | import 断裂/路径管理/配置别名 |
-| +Step 9 测试策略增强 | 分层原则、覆盖率目标、重构专项 |
-| +Step 11 文档同步检查 | 版本号/结构/功能一致性 |
-| +Step 12 经验提取增强 | 重构+测试经验自动归档 |
-| +场景C重构增强 | 重构前检查步骤 |
-| +场景H测试补全 | 新增项目场景 |
-| +回退路径 | 文件拆分 import 断裂回退 |
-| +3个参考文档 | refactoring-lessons, testing-strategy, bulk-pitfalls更新 |
+| 变更 | 版本 | 说明 |
+|------|------|------|
+| +核心原则 11-12 | v7 | 先简后繁、测试是安全网 |
+| +核心原则 13-16 | v8 | Async安全、HTTP连接池、测试分层金字塔、版本号SSOT |
+| +Step 2 重构前检查 | v7 | 覆盖率/路径集中度/try-except 危险区 |
+| +Step 2 freeapi 重构预检 | v8 | async/httpx/死代码/环境变量/JS SDK 检查项 |
+| +Step 7 文件拆分纪律 | v7 | 拆前测试→拆后验证→逐模块拆分 |
+| +Step 7 JS/模板规范 | v7 | .tmpl 文件 + 语法验证 |
+| +Step 7 架构模式速查 | v8 | 7种实战模式（集中配置/连接池/Lifespan/日志等） |
+| +Step 9 测试策略增强 | v7→v8 | v7分层原则 → v8三级金字塔+覆盖率细化+Python必知 |
+| +4个经验库填充 | v8 | python(6条)/testing(6条)/security(4条)/git(4条) |
+| +common-pitfalls 扩充 | v8 | 16→17条，+5条freeapi陷阱 |
+| +refactor-principles 实战案例 | v8 | +freeapi v0.1.0→v0.2.0 案例研究 |
+| +UltraQuick 模式 | v7 | 5种模式，⚡2步快速通道 |
 
 ---
 
-*v7.0.0 — 融合 GSD/GSD-OpenCode/OpenSpec/Superpowers/gstack/SLM 最佳实践 + daily-stock-report 重构实战经验*
+*v8.0.0 — 三版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式)*

@@ -423,3 +423,62 @@ Phase 4 (Day 14-15): 收尾
 ---
 
 *最后更新：2026-04-26 | 版本：2.0*
+
+---
+
+## 实战案例：freeapi v0.1.0 → v0.2.0 完整重构 (2026-05-06)
+
+> 36 files changed, +2403/-841, 114 tests, 83% coverage
+
+### 重构前诊断
+
+| 问题 | 严重度 | 位置 |
+|------|--------|------|
+| asyncio.run() 与 FastAPI 事件循环冲突 | P0 | providers/nvidia.py |
+| 静默吞异常 (except: pass) | P0 | providers/nvidia.py |
+| from None 丢弃异常链 | P1 | providers/codingplan.py, openrouter.py |
+| 无效 str.replace() | P1 | providers/codingplan.py |
+| 死代码（未用的 CORS 类） | P2 | api/middleware.py |
+| 环境变量散落 3 文件 | P2 | routes.py, middleware.py, providers/ |
+| 测试覆盖率 20-30% | P2 | tests/ |
+| httpx 每次请求新建连接 | P2 | providers/base.py |
+
+### 重构执行顺序（依赖关系驱动）
+
+```
+config.py (集中配置)     ← 所有模块依赖
+    ↓
+logging.py (结构化日志)   ← config 依赖
+    ↓
+base.py (httpx 连接池)    ← config 依赖
+    ↓
+nvidia.py (async 修复)    ← base 依赖
+openrouter.py             ← base 依赖
+codingplan.py             ← base 依赖
+    ↓
+main.py (lifespan 集成)   ← 所有 provider 依赖
+routes.py                 ← config 依赖
+middleware.py             ← config 依赖
+    ↓
+tests/ (8 个新测试文件)    ← 所有源码依赖
+    ↓
+SDK + 文档 + 版本号
+```
+
+### 关键决策
+
+1. **先修 BUG 再重构** — asyncio.run() 和静默异常是运行时炸弹，先消灭
+2. **集中配置是基石** — config.py 是第一个新建的文件，所有后续改进都依赖它
+3. **向后兼容优先** — models.py 不删除，改为从 routes.py re-export
+4. **测试先行于架构改动** — 先为现有行为写测试，再重构实现
+
+### 经验教训
+
+| 规则 | 说明 |
+|------|------|
+| 集中配置 > 散落配置 | pydantic-settings + get_settings() with lru_cache |
+| 连接池 > 每次新建 | httpx base class with lazy init + close() |
+| from e > from None | 保留异常链，方便调试 |
+| 测试金字塔 | Unit(多) → Business(中) → Integration(少) |
+| 1:1 测试映射 | 每个源文件一个测试文件 |
+| 大重构大 commit | 36 files, 1 commit, conventional message |

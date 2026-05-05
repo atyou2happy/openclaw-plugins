@@ -164,3 +164,17 @@
 ```
 
 **反例**：改了代码 → 手动试了一次 → "好了"。
+
+---
+
+### C) freeapi 重构陷阱 (5条, v8.0新增)
+
+13. **asyncio.run() 与 FastAPI 冲突** — `asyncio.run()` 在已有事件循环中调用会报错。FastAPI 项目中所有异步初始化应为纯 async 方法，通过 lifespan 调用
+
+14. **httpx 每次请求新建连接** — `async with httpx.AsyncClient()` 作为上下文管理器会在请求后关闭连接。高频 API 调用必须复用连接池：基类维护 `_http_client` 实例
+
+15. **JS/TS 中方法名不能含点号** — `chat.completions.create(...)` 在 JS/TS 中语法错误。改用嵌套对象模式：`this.chat = { completions: { create: fn } }`
+
+16. **pydantic-settings + lru_cache 测试污染** — `get_settings()` 缓存的 Settings 实例跨测试用例不清理。测试中必须 autouse fixture 调用 `cache_clear()`
+
+17. **from None 切断异常链** — `raise NewError() from None` 丢弃原始异常堆栈，调试时看不到根因。改为 `from e` 保留链或直接 `raise`
