@@ -181,7 +181,7 @@ export class WorkflowStateMachine {
       }
 
       // ── Terminal node (no transitions) ──
-      if (node.transitions.length === 0) {
+      if (!node.transitions || node.transitions.length === 0) {
         return { finalStep: current, finalResult: lastResult };
       }
 
