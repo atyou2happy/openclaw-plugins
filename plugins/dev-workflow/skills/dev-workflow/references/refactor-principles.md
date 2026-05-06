@@ -481,4 +481,59 @@ SDK + 文档 + 版本号
 | from e > from None | 保留异常链，方便调试 |
 | 测试金字塔 | Unit(多) → Business(中) → Integration(少) |
 | 1:1 测试映射 | 每个源文件一个测试文件 |
-| 大重构大 commit | 36 files, 1 commit, conventional message |
+|| 大重构大 commit | 36 files, 1 commit, conventional message |
+
+---
+
+## 案例 2: unified-search v0.9.5 → v1.0.0 (2026-05-07)
+
+> 规模：35 搜索模块 + 58 文件 +2800/-1500 行
+> 项目：统一搜索 API 服务（FastAPI + httpx + 38 搜索引擎）
+
+### 变更清单
+
+| 变更类型 | 具体内容 |
+|---------|---------|
+| feat | httpx 连接池 — 每个模块共享 AsyncClient（35 模块迁移） |
+| feat | FastAPI lifespan 替换废弃 `@app.on_event("startup")` |
+| feat | CDPPool 类封装（全局变量 → singleton class） |
+| refactor | 代理配置基类统一分发（子模块不再重复构建 kwargs） |
+| refactor | `print()` → `logger`（scheduler.py） |
+| test | 28 新增纯单元测试（6 类：Models/Cache/Intent/Merger/Config/AvailabilityCache） |
+| test | conftest.py session scope fixture |
+
+### 关键决策
+
+1. **基类先行** — base.py 先加 get_http_client()/close_http_client()，确认 API 后再批量迁移
+2. **grep 定位迁移点** — `grep -rn "async with httpx.AsyncClient" app/modules/` 找出全部 35 处
+3. **代理配置统一** — 每个模块不再独立构建 proxy kwargs，由基类 _get_client_kwargs() 统一处理
+4. **CDPPool 类化** — 全局 `_cdp_available`/`_cdp_check_lock` 改为 CDPPool 实例属性
+
+### 迁移模式
+
+每个模块的改动（机械替换）：
+```python
+# Before: 8-12 行
+proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+kwargs = {"timeout": request.timeout, "trust_env": False, ...}
+if proxy:
+    kwargs["proxy"] = proxy
+    kwargs["verify"] = False
+async with httpx.AsyncClient(**kwargs) as client:
+    r = await client.get(url, headers=headers)
+
+# After: 2 行
+client = await self.get_http_client(timeout=request.timeout)
+r = await client.get(url, headers=headers)
+```
+
+### 经验教训
+
+| 规则 | 说明 |
+|------|------|
+| 基类 API 先定 | 先确认 base.py 的 get_http_client() 签名，再批量迁移 |
+| 逐模块验证 | 每 5-10 个模块跑 import 验证，避免积累断裂 |
+| 代理基类分发 | 减少 50% 样板代码，统一 proxy/trust_env/limits |
+| 全局→类 | 可测试性和线程安全大幅提升 |
+| session scope fixture | 避免每个测试重复注册 35 个模块 |
+| 一个大 commit | 58 文件 1 commit，conventional message 列出全部变更 |

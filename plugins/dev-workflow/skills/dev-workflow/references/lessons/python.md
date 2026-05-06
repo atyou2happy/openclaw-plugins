@@ -45,3 +45,24 @@
 - **根因**：防御性编程过度，担心异常影响主流程而完全吞掉
 - **方案**：至少 logger.warning() 记录，或 raise 自定义异常让上层处理
 - **关键要点**：Python 反模式 top 1。永远不要空 except: pass，至少 log 一下
+
+## 全局可变状态→类封装提升可测试性
+- **来源**：unified-search 重构 (2026-05-07)
+- **症状**：CDP 连接池用 4 个全局变量 (`_cdp_available`, `_cdp_last_check`, `_cdp_check_lock`, `_cdp_http_client`)，测试无法隔离，多个测试串扰
+- **根因**：模块级全局可变状态没有封装，所有测试共享同一个全局状态
+- **方案**：封装为 CDPPool 类，`__init__` 初始化实例属性，每个测试实例化独立对象
+- **关键要点**：全局可变状态是不可测试性的根源。改用类封装或依赖注入
+
+## print() 在生产环境应替换为 logger
+- **来源**：unified-search 重构 (2026-05-07)
+- **症状**：scheduler.py 中 7 处 print() 输出调试信息，生产环境无法控制日志级别、无法重定向到日志系统
+- **根因**：开发初期用 print 快速调试，未及时替换为正式日志
+- **方案**：全局替换 `print(...)` → `logger.info/debug/warning(...)`，logging.basicConfig 统一配置格式和级别
+- **关键要点**：print 只用于临时调试。项目启动时就应该用 logging，不要等到重构
+
+## conftest.py session scope fixture 避免重复注册
+- **来源**：unified-search 重构 (2026-05-07)
+- **症状**：35 个搜索模块在每个测试函数中重复注册（function scope），测试套件运行缓慢
+- **根因**：conftest.py 未使用 session scope，每个测试都重新 auto_register() + engine.load_modules()
+- **方案**：改为 `@pytest.fixture(scope="session")` ，只注册一次，所有测试共享 engine 实例
+- **关键要点**：模块注册/引擎加载等重量级操作用 session scope，纯数据 fixture 用 function scope

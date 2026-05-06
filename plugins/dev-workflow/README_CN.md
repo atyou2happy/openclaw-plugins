@@ -1,25 +1,22 @@
 # @openclaw/dev-workflow
 [English Docs](./README.md)
 
-基于 AI 的规格驱动开发工作流插件，适用于 [OpenClaw](https://github.com/openclaw/openclaw)，集成 Claw Code harness 模式、多智能体编排和实战验证的重构经验。
+基于 AI 的规格驱动开发工作流插件，适用于 [OpenClaw](https://github.com/openclaw/openclaw)，集成 Claw Code harness 模式与多智能体编排。
+
+> **v9.0.0** — 融入 unified-search 批量迁移实战经验（35 模块，58 文件）。
 
 ## 功能特性
 
-- **5 种工作流模式**: UltraQuick（快速修复）、Quick（简单任务）、Standard（均衡模式）、Full（生产级）、Debug（根因分析）
-- **12 步工作流**: 分析 → 交接 → 需求 → 规格 → 技术选型 → Plan Gate → 开发 → 代码审查 → 测试 → 安全审计 → 文档 → 交付
-- **6 角色代码审查**: CEO、工程师、设计、QA、安全、发布 — 含置信度评分
+- **5 种复杂度模式**: UltraQuick（单文件）、Quick（快速修复）、Standard（均衡模式）、Full（生产级）、Debug（根因调试）
+- **12 步工作流**: 分析 → 恢复 → 需求 → 规格 → 技术选型 → 计划门 → 开发 → 评审 → 测试 → 安全 → 文档 → 交付
 - **Ship/Show/Ask 框架**: 自动分类变更以安全交付
 - **多智能体编排**: 通过子智能体运行时进行 LLM 调用、代码评审、测试执行
 - **TDD 周期强制**: RED → GREEN → REFACTOR → VERIFY → COMMIT（Full 模式下严格）
 - **约定式提交**: 自动生成 `type(scope): description` 提交信息
 - **工作记忆**: 3 层上下文系统（项目 → 任务 → 步骤）
-- **QA 质量门**: 12 项质量检查，包括 lint、格式化、测试、覆盖率、类型检查、简化、提交、TODO、文档和规则执行
-- **规则执行**: 23 条内置代码质量规则（通过 feature flags 配置）
+- **QA 质量门**: 10 项质量检查，包括 lint、格式化、测试、覆盖率、类型检查、简化、提交、TODO、文档和规则执行
+- **规则执行**: 21 条内置代码质量规则（通过 feature flags 配置）
 - **Feature Flags**: 细粒度控制工作流行为
-- **上下文腐烂检测**: 自动检测并压缩过时上下文
-- **经验闭环**: 按技术栈自动提取和注入经验
-- **重构纪律** ⭐v7: 文件拆分规则、import 验证、JS 模板分离、路径集中管理
-- **测试策略** ⭐v7: 分层测试、Mock 模式、务实覆盖率目标（60%+）
 - **GitHub 集成**: 自动标签发布、合并特性分支、更新仓库描述
 - **Git 分支管理**: 自动创建 `feature/<project>-<timestamp>` 分支
 

@@ -1,25 +1,22 @@
 # @openclaw/dev-workflow
 [中文文档](./README_CN.md)
 
-AI-driven spec-driven development workflow plugin for [OpenClaw](https://github.com/openclaw/openclaw), integrating Claw Code harness patterns with multi-agent orchestration and battle-tested refactoring experience.
+AI-driven spec-driven development workflow plugin for [OpenClaw](https://github.com/openclaw/openclaw), integrating Claw Code harness patterns with multi-agent orchestration.
+
+> **v9.0.0** — Now with battle-tested batch-migration patterns from unified-search (35 modules, 58 files).
 
 ## Features
 
-- **5 Workflow Modes**: UltraQuick (fast fixes), Quick (simple tasks), Standard (balanced), Full (production-grade), Debug (root-cause analysis)
-- **12-Step Workflow**: Analysis → Handover → Requirement → Spec → Tech Selection → Plan Gate → Development → Code Review → Testing → Security Audit → Docs → Delivery
-- **6-Role Code Review**: CEO, Engineer, Design, QA, Security, Release — with confidence scoring
+- **5 Complexity Modes**: UltraQuick (single file), Quick (fast fixes), Standard (balanced), Full (production-grade), Debug (root cause)
+- **12-Step Workflow**: Analysis → Recovery → Requirement → Spec → Tech Selection → Plan Gate → Development → Review → Test → Security → Docs → Delivery
 - **Ship/Show/Ask Framework**: Automatic categorization of changes for safe delivery
 - **Multi-Agent Orchestration**: Subagent runtime for LLM calls, code review, test execution
 - **TDD Cycle Enforcement**: RED → GREEN → REFACTOR → VERIFY → COMMIT (strict in Full mode)
 - **Conventional Commits**: Auto-generated `type(scope): description` commit messages
 - **Working Memory**: 3-layer context system (Project → Task → Step)
-- **QA Gate**: 12 quality checks including lint, format, tests, coverage, typecheck, simplify, commits, todos, docs, and rule enforcement
-- **Rule Enforcement**: 23 built-in code quality rules (configurable via feature flags)
+- **QA Gate**: 10 quality checks including lint, format, tests, coverage, typecheck, simplify, commits, todos, docs, and rule enforcement
+- **Rule Enforcement**: 21 built-in code quality rules (configurable via feature flags)
 - **Feature Flags**: Fine-grained control over workflow behavior
-- **Context Rot Detection**: Auto-detect and compact stale context
-- **Experience Loop**: Auto-extract and inject lessons by tech stack
-- **Refactoring Discipline** ⭐v7: File-splitting rules, import verification, JS template separation, path centralization
-- **Testing Strategy** ⭐v7: Layered testing, mock patterns, pragmatic coverage targets (60%+)
 - **GitHub Integration**: Auto-tag releases, merge feature branches, update repo descriptions
 - **Git Branch Management**: Automatic `feature/<project>-<timestamp>` branch creation
 

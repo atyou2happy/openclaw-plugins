@@ -1,12 +1,12 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v8。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi 双项目实战经验。集中配置、async安全、连接池、测试分层、SDK模式。
+description: AI驱动开发工作流 v9。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。集中配置、async安全、连接池、测试分层、批量迁移、SDK模式。
 user-invocable: true
 ---
 
-# Dev Workflow v8 — AI驱动开发工作流
+# Dev Workflow v9 — AI驱动开发工作流
 
-> 版本：8.0.0 | 最后更新：2026-05-06 | v6→v7(daily-stock-report)→v8(freeapi重构) 三版经验融合
+> 版本：9.0.0 | 最后更新：2026-05-07 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search) 四版经验融合
 
 ---
 
@@ -36,6 +36,9 @@ user-invocable: true
 14. **HTTP 连接池** ⭐⭐ v8 — 高频 API 调用必须复用 HTTP 连接（基类维护 _http_client）
 15. **测试分层金字塔** ⭐⭐ v8 — Unit(多) → Business(中) → Integration(少)，目标覆盖率 >80%
 16. **版本号 Single Source of Truth** ⭐ v8 — 多包项目版本号从单一文件读取，grep 验证同步
+17. **批量迁移纪律** ⭐⭐ v9 — 35+模块同时迁移时，逐个验证+全量测试，一个大 commit 交付
+18. **全局变量→类封装** ⭐⭐ v9 — 全局可变状态改为类实例，提高可测试性和线程安全
+19. **代理配置统一分发** ⭐ v9 — 代理/proxy 从基类统一获取，子模块不重复构建 kwargs
 
 ---
 
@@ -45,13 +48,13 @@ user-invocable: true
 |------|-------------|----------|-------------|----------|----------|
 | 文件数 | 1 | 1-2 | 3-10 | >10 | N/A |
 | 需要新模块 | 否 | 否 | 可能 | 是 | N/A |
-| 影响架构 | 否 | 否 | 否 | 是 | N/A |
+| 影响架构 | 否 | 否 | 否 | 是(含批量迁移) | N/A |
 | 步骤 | 2步 | 3步 | 12步 | 12步+ | 5阶段 |
 | Spec驱动 | ❌ | ❌ | ✅ | ✅强制 | ❌ |
 | Plan Gate | ❌ | ❌ | ✅ | ✅强制 | ❌ |
 | 审查 | ❌ | ❌ | ✅CEO+Eng | ✅6角色 | ❌ |
 | 经验注入 | ❌ | ❌ | ✅ | ✅ | ❌ |
-| 测试要求 | 现有测试通过 | 现有测试通过 | 覆盖率≥目标 | 覆盖率≥60% | 回归测试 |
+| 测试要求 | 现有测试通过 | 现有测试通过 | 覆盖率≥目标 | 覆盖率≥60% + 迁移验证脚本 | 回归测试 |
 | 典型时长 | <10min | <30min | 1-4h | >4h | 30min-2h |
 
 ### UltraQuick ⚡ 流程
@@ -100,6 +103,13 @@ Step 7: 直接编码 → commit → 汇报
 - [ ] 死代码是否存在（coverage < 5%）？→ 删除
 - [ ] 环境变量是否散落多文件？→ 集中配置模块
 - [ ] JS/TS SDK 方法名是否含点号？→ 嵌套对象模式
+
+**⭐v9 unified-search 重构预检**（补充）：
+- [ ] 全局可变状态是否用类封装？→ CDPPool/singleton 模式
+- [ ] 35+模块迁移是否需要批量脚本？→ 写迁移脚本 + 逐模块验证
+- [ ] 代理/proxy 是否各模块重复构建？→ 基类统一 get_http_client()
+- [ ] print() 是否替代了 logger？→ 全局替换 print→logger
+- [ ] conftest.py 是否共享了 engine fixture？→ session scope 避免重复注册
 
 #### Step 3: 需求探索
 
@@ -195,6 +205,17 @@ delegate_task 适合 <200行文件的小型独立修改。实测数据：
 | 向后兼容 re-export | 删除旧模块时 | `from new_module import *` 保留旧 import 路径 |
 | 测试分层 | 任何有测试的项目 | conftest.py 共享 fixture + 1:1 源文件映射 |
 | SDK 嵌套对象 | JS/TS SDK | `this.chat = { completions: { create: fn } }` |
+| 批量模块迁移 | 35+相似模块统一改 | 迁移脚本 + 逐模块 sed + 全量测试 |
+| 全局状态→类 | 全局变量重构 | CDPPool class: __init__ + lazy lock + close() |
+
+**⭐v9 批量迁移纪律**（unified-search 实战：35模块 +58 文件 +2800/-1500 行）：
+
+1. **先改基类，再批量迁移子模块** — base.py 加 get_http_client() 后，逐模块替换 `async with httpx.AsyncClient()` → `await self.get_http_client()`
+2. **迁移脚本**：`grep -rn "async with httpx.AsyncClient" app/modules/` 找出所有待迁移点
+3. **逐模块验证**：每迁 5-10 个模块跑一次 `python -c "from app.modules.XXX import *"` 验证 import
+4. **全量测试**：迁移完成后跑全量测试 + 手动 API 验证
+5. **一个大 commit**：所有迁移 + 测试放在一个 conventional commit，commit message 列出所有变更
+6. **删除死代码**：迁移后删除旧模式的 helper 函数和手动 proxy kwargs 构建
 
 #### Step 8: 代码审查 ⭐ v6升级
 
@@ -263,6 +284,24 @@ v8 覆盖率目标细化：
 - 拆分文件后跑全量测试 — 不只跑被拆分的模块
 - `grep -rn 'except.*:$' --include='*.py' | grep -B1 'import'` — 查找吞异常
 - 验证 conftest.py 中的 fixture 是否需要更新路径
+
+**⭐v9 unified-search 测试增强**：
+
+纯单元测试分类（无网络、无 I/O、<1s）：
+
+| 测试类 | 测试对象 | 关键点 |
+|--------|---------|--------|
+| TestModels | Pydantic 模型 | 默认值、验证规则、边界值 |
+| TestCache | LRU 缓存 | put/get/evict/TTL |
+| TestIntent | 意图识别 | 关键词匹配、优先级、边界 |
+| TestMerger | RRF 融合 | 去重、排序、权重 |
+| TestConfig | 配置类 | env 覆盖、默认值 |
+| TestAvailabilityCache | 可用性缓存 | TTL、force refresh |
+
+配置最佳实践：
+- pytest.ini: `asyncio_mode = "auto"` + `markers = ["integration"]`
+- coverage: `fail_under` 设保守值（实际覆盖率的 70-80%），`show_missing = true`
+- conftest.py: session scope fixture 注册模块，避免每个测试重复注册
 
 **回退**：覆盖率不足 → 回Step 7补测试
 
@@ -460,7 +499,8 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 | `references/lessons/python.md` | ⭐v8 Python经验库（6条：config/async/exception/httpx/structlog） |
 | `references/lessons/testing.md` | ⭐v8 Testing经验库（6条：分层/覆盖率/mock/fixture） |
 | `references/lessons/security.md` | ⭐v8 Security经验库（4条：密钥扫描/异常吞没/环境变量/死代码） |
-| `references/lessons/git.md` | ⭐v8 Git经验库（4条：大commit/干净起点/版本号/push验证） |
+|| `references/lessons/git.md` | ⭐v8 Git经验库（4条：大commit/干净起点/版本号/push验证） |
+|| `references/lessons/httpx-connection-pool-migration.md` | ⭐v9 httpx 连接池批量迁移实战（unified-search: 35 modules, 基类模式, 迁移脚本） |
 | `references/lessons/typescript.md` | ⭐v6 TypeScript经验库 |
 | `references/lessons/react.md` | ⭐v6 React经验库 |
 | `references/project-templates.md` | 5个目录结构模板 |
@@ -484,23 +524,29 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ---
 
-## v6→v7→v8 变更摘要
+## v6→v7→v8→v9 变更摘要
 
 | 变更 | 版本 | 说明 |
 |------|------|------|
 | +核心原则 11-12 | v7 | 先简后繁、测试是安全网 |
 | +核心原则 13-16 | v8 | Async安全、HTTP连接池、测试分层金字塔、版本号SSOT |
+| +核心原则 17-19 | v9 | 批量迁移纪律、全局变量→类封装、代理统一分发 |
 | +Step 2 重构前检查 | v7 | 覆盖率/路径集中度/try-except 危险区 |
 | +Step 2 freeapi 重构预检 | v8 | async/httpx/死代码/环境变量/JS SDK 检查项 |
+| +Step 2 unified-search 重构预检 | v9 | 全局状态/批量迁移/代理/PRINT/conftest 检查项 |
 | +Step 7 文件拆分纪律 | v7 | 拆前测试→拆后验证→逐模块拆分 |
 | +Step 7 JS/模板规范 | v7 | .tmpl 文件 + 语法验证 |
 | +Step 7 架构模式速查 | v8 | 7种实战模式（集中配置/连接池/Lifespan/日志等） |
+| +Step 7 架构模式速查追加 | v9 | +2种：批量模块迁移、全局状态→类 |
+| +Step 7 批量迁移纪律 | v9 | 6步迁移流程（基类→脚本→逐模块→全量→大commit→死代码） |
 | +Step 9 测试策略增强 | v7→v8 | v7分层原则 → v8三级金字塔+覆盖率细化+Python必知 |
+| +Step 9 unified-search 测试增强 | v9 | 6类纯单元测试 + pytest 配置最佳实践 |
 | +4个经验库填充 | v8 | python(6条)/testing(6条)/security(4条)/git(4条) |
+| +httpx 迁移经验库 | v9 | 独立参考文档，详细记录 35 模块迁移步骤和验证方法 |
 | +common-pitfalls 扩充 | v8 | 16→17条，+5条freeapi陷阱 |
 | +refactor-principles 实战案例 | v8 | +freeapi v0.1.0→v0.2.0 案例研究 |
 | +UltraQuick 模式 | v7 | 5种模式，⚡2步快速通道 |
 
 ---
 
-*v8.0.0 — 三版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式)*
+*v9.0.0 — 四版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/测试分类)*

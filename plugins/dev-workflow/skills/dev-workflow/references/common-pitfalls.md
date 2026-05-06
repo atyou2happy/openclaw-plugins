@@ -178,3 +178,13 @@
 16. **pydantic-settings + lru_cache 测试污染** — `get_settings()` 缓存的 Settings 实例跨测试用例不清理。测试中必须 autouse fixture 调用 `cache_clear()`
 
 17. **from None 切断异常链** — `raise NewError() from None` 丢弃原始异常堆栈，调试时看不到根因。改为 `from e` 保留链或直接 `raise`
+
+---
+
+### D) unified-search 重构陷阱 (3条, v9.0新增)
+
+18. **35+模块批量迁移需 grep 定位** — 手动逐文件检查容易遗漏。用 `grep -rn "async with httpx.AsyncClient" app/modules/` 一次性找出所有迁移点，然后逐模块替换验证
+
+19. **全局可变状态不可测试** — `_cdp_available = None` + `asyncio.Lock` 作为全局变量，测试时无法隔离。改为 CDPPool 类，每个测试可实例化独立对象
+
+20. **代理 kwargs 各模块重复构建** — 每个模块都有 `proxy = os.environ.get(...)` + `kwargs = {...}` + `if proxy:` 的 8-12 行样板代码。移到基类 `_get_client_kwargs()` 统一处理后，每个模块减少 50% 样板代码

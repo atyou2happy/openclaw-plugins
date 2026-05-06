@@ -1,7 +1,7 @@
 {
   "name": "@openclaw/dev-workflow",
-  "version": "8.0.0",
-  "description": "OpenClaw Dev Workflow plugin — AI-driven spec-driven development workflow v8 with multi-agent orchestration, battle-tested async/HTTP/testing patterns from freeapi + daily-stock-report",
+  "version": "9.0.0",
+  "description": "OpenClaw Dev Workflow plugin — AI-driven spec-driven development workflow v9 with multi-agent orchestration, battle-tested async/HTTP/testing/batch-migration patterns from freeapi + daily-stock-report + unified-search",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
