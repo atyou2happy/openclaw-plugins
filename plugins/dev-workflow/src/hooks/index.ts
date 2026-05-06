@@ -64,9 +64,10 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
     const step = event?.step ?? "unknown";
     api.logger.info(`[dev-workflow] Pre-step hook: ${step}`);
 
-    if (step === "step7-development" || step === "step6-plan-gate") {
+    if (step === "step7-development") {
+      // Only upgrade at step7 — Plan Gate (step6) must stay read-only until user approves
       permissionManager.upgradeToWorkspaceWrite();
-      api.logger.info("[dev-workflow] Permission upgraded to workspace-write at Plan Gate");
+      api.logger.info("[dev-workflow] Permission upgraded to workspace-write at Development step");
     }
 
     const compactCheck = workingMemoryManager.shouldCompact();

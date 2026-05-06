@@ -26,6 +26,9 @@ export const REFACTOR_THRESHOLDS = {
 
 // ─── Tier Model Constants ───
 
+/** Default model used for task execution and spec suggestions — single source of truth */
+export const DEFAULT_MODEL = "minimax/MiniMax-M2.7" as const;
+
 export const MODEL_TIERS: Record<ModelTier, { primary: string; fallback: string[] }> = {
   lightweight: { primary: "llama-3.3-70b", fallback: ["minimax-m2.5"] },
   standard: { primary: "minimax-m2.7", fallback: ["minimax-m2.7"] },

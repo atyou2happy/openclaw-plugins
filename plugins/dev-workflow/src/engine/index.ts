@@ -38,6 +38,8 @@ export class DevWorkflowEngine {
   private refactorAssessmentTool!: RefactorAssessmentTool;
   private aborted = false;
   private verificationFailures = new Map<string, number>();
+  /** T4: Total token usage tracker across all steps */
+  private totalTokenUsage = 0;
 
   constructor(runtime: PluginRuntime) {
     this.runtime = runtime;
@@ -147,6 +149,27 @@ export class DevWorkflowEngine {
 
       // Abort forwarding
       const checkAbort = (): boolean => { if (this.aborted) { sm.abort(); return true; } return false; };
+
+      // ── Step 1: Project identification + analysis ──
+      // The IO parts (bootstrap, memdir init) run in initialize(). Here we handle
+      // the LLM-driven analysis that may need checkpoint recovery.
+      sm.addNode({
+        step: "step1-project-identify",
+        execute: async () => {
+          if (checkAbort()) return { status: "paused" };
+          // Re-run analysis only if context has no analysis decision yet (fresh or checkpoint resume)
+          const hasAnalysis = this.context!.decisions.some((d) => d.startsWith("Analysis:"));
+          if (!hasAnalysis) {
+            const analysis = await this.orchestrator.runAnalysis(this.context!.projectDir);
+            this.context!.decisions.push(`Analysis: ${analysis.summary}`);
+            this.context!.openSource = analysis.hasOpenSpec;
+          }
+          return { status: "success" };
+        },
+        transitions: [
+          { condition: (r) => r.status === "success", target: "step2-handover" },
+        ],
+      });
 
       // ── Step 2: Handover recovery ──
       sm.addNode({
@@ -380,13 +403,21 @@ export class DevWorkflowEngine {
       });
 
       // ── Run the state machine ──
-      // Try to resume from saved checkpoint, otherwise start from step2
+      // Try to resume from saved checkpoint, otherwise start from step1
       const checkpoint = this.loadCheckpoint();
-      const startStep = checkpoint?.step ?? "step2-handover";
+      const startStep = checkpoint?.step ?? "step1-project-identify";
       if (checkpoint) {
         this.context!.decisions.push(`Resuming from checkpoint: step=${checkpoint.step}, iteration=${checkpoint.iteration}`);
       }
-      await sm.run(startStep as any);
+      const { finalStep, finalResult } = await sm.run(startStep as any);
+
+      // Handle paused state — keep checkpoint for resume, return pause info
+      if (finalResult.status === "paused") {
+        // Don't clear checkpoint — allow resumeWorkflow() to pick up from here
+        this.context!.decisions.push(`Workflow paused at ${finalStep}. Call resumeWorkflow() to continue.`);
+        this.persistContext();
+        return `WORKFLOW PAUSED at ${finalStep}. Use resumeWorkflow() to continue.`;
+      }
 
       // Clean up checkpoint on successful completion
       this.clearCheckpoint();
@@ -477,7 +508,10 @@ export class DevWorkflowEngine {
     if (!this.context?.spec) return;
     const tasks = this.context.spec.tasks.filter((t) => t.status === "pending");
 
-    const completed = new Set(tasks.filter((t) => t.status === "completed").map((t) => t.id));
+    // Initialize completed set from ALL tasks (not just pending ones — that would always be empty)
+    const completed = new Set(
+      this.context.spec.tasks.filter((t) => t.status === "completed").map((t) => t.id)
+    );
     const failed = new Set<string>();
     let progress = true;
 
@@ -629,7 +663,12 @@ export class DevWorkflowEngine {
 
   private buildReport(): string {
     if (!this.context) return "No context.";
-    return buildReport(this.context);
+    const report = buildReport(this.context);
+    // T4: Append token usage summary
+    if (this.totalTokenUsage > 0) {
+      return report + `\n\n--- Token Usage: ~${this.totalTokenUsage} tokens estimated ---`;
+    }
+    return report;
   }
 
   private persistContext() {
@@ -648,12 +687,24 @@ export class DevWorkflowEngine {
     const path = join(dir, "checkpoint.json");
     try {
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      // A2: Rich checkpoint with context snapshot for reliable resume
+      const specSummary = this.context.spec ? {
+        taskCount: this.context.spec.tasks.length,
+        completedTasks: this.context.spec.tasks.filter(t => t.status === "completed").length,
+        pendingTasks: this.context.spec.tasks.filter(t => t.status === "pending").length,
+        failedTasks: this.context.spec.tasks.filter(t => t.status === "failed").length,
+      } : null;
       writeFileSync(path, JSON.stringify({
         currentStep: step,
         iterationCount: iteration,
         timestamp: new Date().toISOString(),
         projectId: this.context.projectId,
         mode: this.context.mode,
+        // Context snapshot for validation on resume
+        specSummary,
+        decisionsCount: this.context.decisions.length,
+        brainstormNotesCount: this.context.brainstormNotes?.length ?? 0,
+        planGateConfirmed: this.context.planGateConfirmed ?? false,
       }, null, 2));
     } catch {
       // Non-critical: checkpoint is best-effort
@@ -769,5 +820,34 @@ export class DevWorkflowEngine {
 
   isPlanGateWaiting(): boolean {
     return this.planGateConfirmationPromise !== null;
+  }
+
+  // ── P3: Resume workflow from paused state (inspired by LangGraph's Command(resume=)) ──
+  // Re-invokes executeWorkflow which will find the saved checkpoint and resume from there.
+  async resumeWorkflow(requirement: string): Promise<string> {
+    if (!this.context) throw new Error("Workflow not initialized.");
+    const checkpoint = this.loadCheckpoint();
+    if (!checkpoint) {
+      throw new Error("No paused workflow to resume. Start with executeWorkflow() first.");
+    }
+    this.context!.decisions.push(`Resuming paused workflow from ${checkpoint.step}`);
+    return this.executeWorkflow(requirement);
+  }
+
+  // ── T4: Token usage tracking ──
+  /** Record estimated token usage from a step. CJK~1tok/char, ASCII~1tok/4chars. */
+  recordTokenUsage(text: string): void {
+    let est = 0;
+    for (const ch of text) {
+      const cp = ch.codePointAt(0)!;
+      // CJK Unified Ideographs + CJK Extension A/B + Kana + Hangul
+      est += (cp >= 0x4E00 && cp <= 0x9FFF) || (cp >= 0x3040 && cp <= 0x30FF) || (cp >= 0xAC00 && cp <= 0xD7AF) ? 1 : 0.25;
+    }
+    this.totalTokenUsage += Math.ceil(est);
+  }
+
+  /** Get total estimated token usage for this workflow run */
+  getTokenUsage(): number {
+    return this.totalTokenUsage;
   }
 }

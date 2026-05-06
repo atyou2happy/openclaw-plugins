@@ -1,7 +1,7 @@
 {
   "name": "@openclaw/dev-workflow",
-  "version": "11.0.0",
-  "description": "OpenClaw Dev Workflow plugin — AI-driven spec-driven development workflow v11 with state machine, real gate checks, checkpoint persistence, and token optimization",
+  "version": "12.0.0",
+  "description": "OpenClaw Dev Workflow plugin — AI-driven spec-driven development workflow v12: state machine 12-step loop, interrupt/resume, token tracking, output trimming, decisions grouping",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

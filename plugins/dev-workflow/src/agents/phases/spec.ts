@@ -1,5 +1,6 @@
 import type { PluginRuntime } from "openclaw/plugin-sdk/core";
 import type { WorkflowSpec } from "../../types.js";
+import { DEFAULT_MODEL } from "../../constants.js";
 
 export function defaultSpec(requirement: string): WorkflowSpec {
   return {
@@ -51,7 +52,7 @@ Return ONLY valid JSON.`;
               files: Array.isArray(t.files) ? t.files : [],
               shipCategory: t.shipCategory ?? "show",
               granularity: t.granularity ?? "task",
-              suggestedModel: t.suggestedModel ?? "minimax/MiniMax-M2.7",
+              suggestedModel: t.suggestedModel ?? DEFAULT_MODEL,
               maxLines: t.maxLines ?? 200,
               subtasks: Array.isArray(t.subtasks) ? t.subtasks : [],
               gates: Array.isArray(t.gates) ? t.gates : [],

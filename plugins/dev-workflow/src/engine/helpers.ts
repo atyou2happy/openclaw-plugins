@@ -2,7 +2,30 @@ import type { WorkflowTask, WorkflowContext, AgentResult } from "../types.js";
 import { execSync } from "child_process";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
+import { DEFAULT_MODEL } from "../constants.js";
 
+/** T3: Classify a decision string into a category */
+function categorizeDecision(d: string): "decision" | "error" | "skip" | "info" {
+  const lower = d.toLowerCase();
+  if (/error|fail|exception|crash/i.test(lower)) return "error";
+  if (/skip|skipped|skip\b/i.test(lower)) return "skip";
+  if (/approved|confirmed|selected|chose|decided|gate/i.test(lower)) return "decision";
+  return "info";
+}
+
+/** T3: Group decisions by category */
+function groupDecisions(decisions: string[]): Record<string, string[]> {
+  const groups: Record<string, string[]> = { decision: [], error: [], skip: [], info: [] };
+  for (const d of decisions) {
+    const cat = categorizeDecision(d);
+    groups[cat].push(d);
+  }
+  // Remove empty groups
+  for (const k of Object.keys(groups)) {
+    if (groups[k].length === 0) delete groups[k];
+  }
+  return groups;
+}
 export function getVersion(dir: string): string {
   const pkgPath = join(dir, "package.json");
   if (existsSync(pkgPath)) {
@@ -80,7 +103,17 @@ export function buildReport(context: WorkflowContext): string {
 
   if (context.decisions.length > 0) {
     lines.push(``, `## Decisions`);
-    for (const d of context.decisions) lines.push(`- ${d}`);
+    // T3: Group decisions by category for compact output
+    const grouped = groupDecisions(context.decisions);
+    for (const [category, items] of Object.entries(grouped)) {
+      if (items.length <= 15) {
+        for (const d of items) lines.push(`- [${category}] ${d}`);
+      } else {
+        // Show first 10 + summary
+        for (const d of items.slice(0, 10)) lines.push(`- [${category}] ${d}`);
+        lines.push(`  ... and ${items.length - 10} more ${category} items`);
+      }
+    }
   }
 
   if (context.qaGateResults.length > 0) {

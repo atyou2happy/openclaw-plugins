@@ -3,6 +3,7 @@
 // All helpers are re-exported from types.ts for backward compatibility.
 
 import type { RefactorHealthLevel, WorkflowTask } from "./types.js";
+import { DEFAULT_MODEL } from "./constants.js";
 
 export function healthLevelFromScore(score: number): RefactorHealthLevel {
   if (score >= 90) return "healthy";
@@ -30,7 +31,7 @@ export function normalizeTask(task: Partial<WorkflowTask> & Pick<WorkflowTask, "
     files: [],
     shipCategory: "ship",
     granularity: "task",
-    suggestedModel: "minimax/MiniMax-M2.7",
+    suggestedModel: DEFAULT_MODEL,
     maxLines: 200,
     subtasks: [],
     gates: [],
