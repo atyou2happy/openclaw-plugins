@@ -147,11 +147,17 @@ Step 7: 直接编码 → commit → 汇报
 #### Step 6: Plan Gate ⭐⭐⭐
 
 1. 汇总 design.md + tasks.md → 展示完整计划
-2. **强制等待用户说「开始开发」**
-3. 用户确认前 → **只允许只读操作**
+2. **强制阻塞等待用户确认（`plan-gate-tool` action=confirm）**
+   - engine 通过 `waitForPlanGateConfirmation()` 同步等待，超时 10min 默认拒绝
+   - 用户通过 `/plan-gate:confirm` 解锁写权限
+3. 确认前 → **只允许只读操作**
 4. 确认后 → 解锁写权限，更新 state.json phase=3
 
 **回退**：用户拒绝 → 回Step 4重新设计
+
+**技术细节** ⭐v10修复：
+- 修复前：`upgradeToWorkspaceWrite()` 无条件调用，Plan Gate 形同虚设
+- 修复后：engine 在 step6 真正阻塞，`plan-gate-tool:confirm` 调用 `resolvePlanGate()` 解锁
 
 **拆分为包时的兼容模式** ⭐v6：当拆分 `file.py` 为 `package/` 时，在原位置保留薄包装器（3行: `from package.main import main; main()`），这样外部调用方无需改路径。同时添加 `__main__.py` 支持 `python -m package` 入口。
 
@@ -519,35 +525,42 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ## v6→v7→v8→v9→v10 变更摘要
 
-| 变更 | 版本 | 说明 |
-|------|------|------|
-| +核心原则 11-12 | v7 | 先简后繁、测试是安全网 |
-| +核心原则 13-16 | v8 | Async安全、HTTP连接池、测试分层金字塔、版本号SSOT |
-| +核心原则 17-19 | v9 | 批量迁移纪律、全局变量→类封装、代理统一分发 |
-| +Step 2 重构前检查 | v7 | 覆盖率/路径集中度/try-except 危险区 |
-| +Step 2 freeapi 重构预检 | v8 | async/httpx/死代码/环境变量/JS SDK 检查项 |
-| +Step 2 unified-search 重构预检 | v9 | 全局状态/批量迁移/代理/PRINT/conftest 检查项 |
-| +Step 7 文件拆分纪律 | v7 | 拆前测试→拆后验证→逐模块拆分 |
-| +Step 7 JS/模板规范 | v7 | .tmpl 文件 + 语法验证 |
-| +Step 7 架构模式速查 | v8 | 7种实战模式（集中配置/连接池/Lifespan/日志等） |
-| +Step 7 架构模式速查追加 | v9 | +2种：批量模块迁移、全局状态→类 |
-| +Step 7 批量迁移纪律 | v9 | 6步迁移流程（基类→脚本→逐模块→全量→大commit→死代码） |
-| +Step 9 测试策略增强 | v7→v8 | v7分层原则 → v8三级金字塔+覆盖率细化+Python必知 |
-| +Step 9 unified-search 测试增强 | v9 | 6类纯单元测试 + pytest 配置最佳实践 |
-| +4个经验库填充 | v8 | python(6条)/testing(6条)/security(4条)/git(4条) |
-| +httpx 迁移经验库 | v9 | 独立参考文档，详细记录 35 模块迁移步骤和验证方法 |
-| +common-pitfalls 扩充 | v8 | 16→17条，+5条freeapi陷阱 |
-| +refactor-principles 实战案例 | v8 | +freeapi v0.1.0→v0.2.0 案例研究 |
-| +UltraQuick 模式 | v7 | 5种模式，⚡2步快速通道 |
-| +types.ts 拆分 | v10 | types.ts→types.ts+constants.ts+helpers.ts，纯类型+常量+辅助函数分离 |
-| +WorkflowStep 新编号 | v10 | step1-project-identify ~ step12-retro，统一编号 |
-| +WorkflowMode ultra | v10 | 新增 ultra 模式，5种工作流模式 |
-| +agent-orchestrator 拆分 | v10 | 694行→thin delegator + 10个 phases/ 模块 |
-| +qa-gate-tool 拆分 | v10 | 694行→60行 thin class + qa-checks.ts 358行 |
-| +engine helpers 提取 | v10 | commit/report/version 辅助函数提取到 engine/helpers.ts |
-| +参考文档清理 | v10 | 移除12个不存在文件引用，补充2个遗漏文件 |
-| +测试覆盖增强 | v10 | 新增 bootstrap/handover/feature-flags/memdir 模块测试，314 tests |
+|| 变更 | 版本 | 说明 |
+||------|------|------|
+|| +核心原则 11-12 | v7 | 先简后繁、测试是安全网 |
+|| +核心原则 13-16 | v8 | Async安全、HTTP连接池、测试分层金字塔、版本号SSOT |
+|| +核心原则 17-19 | v9 | 批量迁移纪律、全局变量→类封装、代理统一分发 |
+|| +Step 2 重构前检查 | v7 | 覆盖率/路径集中度/try-except 危险区 |
+|| +Step 2 freeapi 重构预检 | v8 | async/httpx/死代码/环境变量/JS SDK 检查项 |
+|| +Step 2 unified-search 重构预检 | v9 | 全局状态/批量迁移/代理/PRINT/conftest 检查项 |
+|| +Step 7 文件拆分纪律 | v7 | 拆前测试→拆后验证→逐模块拆分 |
+|| +Step 7 JS/模板规范 | v7 | .tmpl 文件 + 语法验证 |
+|| +Step 7 架构模式速查 | v8 | 7种实战模式（集中配置/连接池/Lifespan/日志等） |
+|| +Step 7 架构模式速查追加 | v9 | +2种：批量模块迁移、全局状态→类 |
+|| +Step 7 批量迁移纪律 | v9 | 6步迁移流程（基类→脚本→逐模块→全量→大commit→死代码） |
+|| +Step 9 测试策略增强 | v7→v8 | v7分层原则 → v8三级金字塔+覆盖率细化+Python必知 |
+|| +Step 9 unified-search 测试增强 | v9 | 6类纯单元测试 + pytest 配置最佳实践 |
+|| +4个经验库填充 | v8 | python(6条)/testing(6条)/security(4条)/git(4条) |
+|| +httpx 迁移经验库 | v9 | 独立参考文档，详细记录 35 模块迁移步骤和验证方法 |
+|| +common-pitfalls 扩充 | v8 | 16→17条，+5条freeapi陷阱 |
+|| +refactor-principles 实战案例 | v8 | +freeapi v0.1.0→v0.2.0 案例研究 |
+|| +UltraQuick 模式 | v7 | 5种模式，⚡2步快速通道 |
+|| +types.ts 拆分 | v10 ✅已实施 | types.ts→types.ts+constants.ts+helpers.ts，纯类型+常量+辅助函数分离 |
+|| +WorkflowStep 新编号 | v10 ✅已实施 | step1-project-identify ~ step12-delivery，统一编号 |
+|| +WorkflowMode ultra | v10 ✅已实施 | 新增 ultra 模式，5种工作流模式 |
+|| +agent-orchestrator 拆分 | v10 ✅已实施 | 694行→thin delegator + 10个 phases/ 模块 |
+|| +qa-gate-tool 拆分 | v10 ✅已实施 | 694行→thin class + qa-checks.ts 358行 |
+|| +engine helpers 提取 | v10 ✅已实施 | commit/report/version 辅助函数提取到 engine/helpers.ts |
+|| +参考文档清理 | v10 ✅已实施 | 移除不存在文件引用，保留实际可用文档 |
+|| +测试覆盖增强 | v10 ✅已实施 | bootstrap/handover/feature-flags/memdir 模块测试，320 tests |
+|| ⭐P0 Plan Gate 真正等待 | v10 ✅已实施 | engine 阻塞直到用户 confirm，超时10min默认拒绝，详见 Step 6 |
+|| ⭐P0 三重 verification 消除 | v10 ✅已实施 | verification 从3次→1次（仅 engine 层调用），hooks 中的2处重复调用已删除 |
+|| ⭐P1 Spec JSON 解析保护 | v10 ✅已实施 | JSON.parse 加 try/catch，Array.isArray() 检查，补全5个缺失字段 |
+|| ⭐P1 静默异常可见化 | v10 ✅已实施 | spec 写入失败的 catch 改为写入 context.decisions |
+|| ⭐P2 Context 构建缓存 | v10 ✅已实施 | engine context._cachedProjectContext，同一 workflow 只构建一次 |
+|| ⭐P2 ultra 模式模型修正 | v10 ✅已实施 | ultra reviewer/qa 从 glm-5.1 降为 minimax-m2.5（与 standard 一致）|
+|| ⭐P1 getSkippedSteps 修正 | v10 ✅已实施 | 返回新 step ID，覆盖 ultra/debug 模式，与 engine step 编号一致 |
 
 ---
 
-*v10.0.0 — 五版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report) → v8(freeapi) → v9(unified-search) → v10(dev-workflow 自身重构：类型拆分/编号对齐/模块化拆分/文档清理)*
+*v10.0.0 — 五版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report) → v8(freeapi) → v9(unified-search) → v10(dev-workflow 自身重构：类型拆分/编号对齐/模块化拆分/文档清理 + 6个P0/P1/P2逻辑漏洞修复)*

@@ -26,7 +26,8 @@ export function saveWorkingMemory(projectDir: string, taskId: string, content: s
   } catch { /* skip */ }
 }
 
-export async function buildProjectContext(projectDir: string): Promise<string> {
+export async function buildProjectContext(projectDir: string, cachedContext?: string): Promise<string> {
+  if (cachedContext) return cachedContext;
   const lines: string[] = [];
   try {
     const { stdout } = await execAsync("find . -maxdepth 3 -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' | head -50", { cwd: projectDir, timeout: 10000 });
@@ -43,12 +44,25 @@ export async function buildProjectContext(projectDir: string): Promise<string> {
   return lines.join("\n");
 }
 
+// T-B1: uses cached project context from engine when available to avoid repeated find/package.json reads
 export async function executeTask(runtime: PluginRuntime, task: WorkflowTask, projectDir: string, mode: WorkflowMode, flags?: FeatureFlags): Promise<AgentResult> {
   const logger = runtime.logging.getChildLogger({ level: "info" });
   const start = Date.now();
   const sessionKey = `dwf-task-${task.id}-${Date.now()}`;
   const effectiveFlags = flags ?? DEFAULT_FEATURE_FLAGS;
-  const projectContext = await buildProjectContext(projectDir);
+  // T-B1: try to reuse cached context from engine, build only if not cached
+  let projectContext: string;
+  try {
+    const { getEngine } = await import("../../channel/runtime.js");
+    const ctx = getEngine().getContext();
+    projectContext = ctx?._cachedProjectContext ?? await buildProjectContext(projectDir);
+    if (!ctx?._cachedProjectContext && projectContext) {
+      // cache for next call
+      if (ctx) { ctx._cachedProjectContext = projectContext; }
+    }
+  } catch {
+    projectContext = await buildProjectContext(projectDir);
+  }
   const workingMemory = effectiveFlags.workingMemoryPersist ? loadWorkingMemory(projectDir, task.id) : "";
   const tddPrompt = mode === "quick" ? "Write code and verify it works."
     : mode === "full" || effectiveFlags.strictTdd

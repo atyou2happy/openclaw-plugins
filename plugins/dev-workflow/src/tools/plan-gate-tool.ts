@@ -25,6 +25,8 @@ export class PlanGateTool implements AnyAgentTool {
     }
 
     if (input.action === "confirm") {
+      // T-A1: Resolve the engine's plan gate wait promise, triggering write access upgrade
+      engine.resolvePlanGate();
       return {
         content: [{ type: "text" as const, text: "✅ Plan Gate confirmed. Write access unlocked. Development can begin." }],
         details: {

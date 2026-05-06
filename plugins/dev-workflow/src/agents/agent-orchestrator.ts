@@ -35,12 +35,21 @@ export class AgentOrchestrator {
     return gitPrepare(this.runtime, projectDir, taskName);
   }
 
+  // T-D1 fix: returns NEW step names (step3-brainstorm, etc.) to match engine step IDs.
+  // Logic:
+  //   ultra  = minimal: no brainstorm/tech/docs/review (like quick but no dev branch either)
+  //   quick  = no brainstorm/tech/docs, YES review+test+dev (most common)
+  //   standard = all steps EXCEPT docs (includes brainstorm+tech)
+  //   full   = all steps
+  //   debug  = all steps (same as full)
   getSkippedSteps(mode: WorkflowMode): string[] {
     switch (mode) {
-      case "quick": return ["brainstorm", "tech", "docs", "review"];
-      case "standard": return ["docs"];
-      case "full": return [];
-      default: return [];
+      case "ultra":    return ["step3-brainstorm", "step5-tech-selection", "step8-review", "step9-test", "step11-docs"];
+      case "quick":    return ["step3-brainstorm", "step5-tech-selection", "step11-docs"];
+      case "standard": return ["step11-docs"];
+      case "full":     return [];
+      case "debug":    return [];
+      default:         return [];
     }
   }
 

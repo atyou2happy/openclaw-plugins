@@ -28,7 +28,7 @@ export const MODE_MODELS: Record<WorkflowMode, Record<string, string>> = {
   standard: { brainstorm: "llama-3.3-70b", spec: "minimax-m2.5", tech: "minimax-m2.5", coder: "minimax-m2.7", reviewer: "glm-5.1", test: "minimax-m2.5", docs: "llama-3.3-70b", qa: "glm-5.1" },
   debug: { brainstorm: "llama-3.3-70b", spec: "glm-5.1", tech: "glm-5.1", coder: "glm-5.1", reviewer: "glm-5.1", test: "glm-5.1", docs: "minimax-m2.5", qa: "glm-5.1" },
   full: { brainstorm: "llama-3.3-70b", spec: "glm-5.1", tech: "glm-5.1", coder: "glm-5.1", reviewer: "glm-5.1", test: "glm-5.1", docs: "llama-3.3-70b", qa: "glm-5.1" },
-  ultra: { brainstorm: "llama-3.3-70b", spec: "minimax-m2.5", tech: "minimax-m2.5", coder: "minimax-m2.7", reviewer: "glm-5.1", test: "minimax-m2.5", docs: "llama-3.3-70b", qa: "glm-5.1" },
+  ultra: { brainstorm: "llama-3.3-70b", spec: "minimax-m2.5", tech: "minimax-m2.5", coder: "minimax-m2.7", reviewer: "minimax-m2.5", test: "minimax-m2.5", docs: "llama-3.3-70b", qa: "minimax-m2.5" },
 };
 
 export function routeByComplexity(complexity: string): { tool: string; model: string } {

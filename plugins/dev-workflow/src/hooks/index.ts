@@ -1,6 +1,5 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/core";
 import { getEngine } from "../channel/runtime.js";
-import { VerificationAgent } from "../agents/verification-agent.js";
 import { HandoverManager } from "../handover/index.js";
 import { MemdirManager } from "../memdir/index.js";
 import { BootstrapManager } from "../bootstrap/index.js";
@@ -9,7 +8,6 @@ import { PermissionManager } from "../permissions/index.js";
 import { WorkingMemoryManager } from "../working-memory/index.js";
 
 export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
-  const verificationAgent = new VerificationAgent(api.runtime);
   const handoverManager = new HandoverManager(api.runtime);
   const memdirManager = new MemdirManager(api.runtime);
   const bootstrapManager = new BootstrapManager(api.runtime);
@@ -110,22 +108,16 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
     const success = event?.success ?? false;
     api.logger.info(`[dev-workflow] Post-task hook: ${taskId} (success: ${success})`);
 
-    if (context.mode !== "quick") {
-      const projectDir = context.projectDir;
-      api.logger.info(`[dev-workflow] Running verification for task: ${taskId}`);
-      const report = await verificationAgent.verify(taskId, projectDir);
-      api.logger.info(`[dev-workflow] Verification result: ${report.verdict}`);
+    // T-A2 fix: verification moved to engine layer only (post_task and task_completed both called it,
+    // causing 3x token waste per task). Now hooks only record completion status.
+    api.logger.info(`[dev-workflow] Task completed: ${taskId} (success: ${success})`);
 
-      context.qaGateResults.push({
-        name: `verification-${taskId}`,
-        passed: report.verdict === "PASS",
-        output: verificationAgent.formatReport(report),
-      });
-
-      if (report.verdict === "FAIL") {
-        api.logger.warn(`[dev-workflow] Verification FAILED for task ${taskId}, issues: ${report.issues.join(", ")}`);
-      }
-    }
+    // Record completion status (verification itself is done once in engine/executeTaskWithShipStrategy)
+    context.qaGateResults.push({
+      name: `task-${taskId}`,
+      passed: success,
+      output: `Task ${taskId} completed: ${success ? "OK" : "FAIL"}`,
+    });
 
     const compactCheck = workingMemoryManager.shouldCompact();
     if (compactCheck.needed && context.projectDir) {
@@ -176,23 +168,10 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
     api.logger.info(`[dev-workflow] Task completed: ${event?.taskId ?? "unknown"}`);
 
     const context = getEngine().getContext();
-    if (context && context.mode !== "quick") {
-      const projectDir = context.projectDir;
-      const taskId = event?.taskId ?? "unknown";
-
-      api.logger.info(`[dev-workflow] Running verification for task: ${taskId}`);
-      const report = await verificationAgent.verify(taskId, projectDir);
-      api.logger.info(`[dev-workflow] Verification result: ${report.verdict}`);
-
-      context.qaGateResults.push({
-        name: `verification-${taskId}`,
-        passed: report.verdict === "PASS",
-        output: verificationAgent.formatReport(report),
-      });
-
-      if (report.verdict === "FAIL") {
-        api.logger.warn(`[dev-workflow] Verification FAILED for task ${taskId}, issues: ${report.issues.join(", ")}`);
-      }
+    if (context) {
+      // T-A2 fix: verification is done only once in engine/executeTaskWithShipStrategy.
+      // task_completed hook records task-level completion only.
+      api.logger.info(`[dev-workflow] Task completed: ${event?.taskId ?? "unknown"} (mode: ${context.mode})`);
     }
   }, { name: "dev-workflow-task-completed" });
 

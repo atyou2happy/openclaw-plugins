@@ -101,6 +101,10 @@ export interface WorkflowContext {
   branchName: string | null;
   featureFlags: FeatureFlags;
   taskRouting?: Record<string, { complexity: string; tool: string; model: string }>;
+  // T-A1: plan gate confirmation state
+  planGateConfirmed?: boolean;
+  // T-B1: cached project context to avoid repeated rebuilds
+  _cachedProjectContext?: string;
 }
 
 export interface QAGateCheck {

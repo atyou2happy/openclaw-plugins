@@ -82,6 +82,8 @@ export class DevWorkflowEngine {
       openSource: null,
       branchName: null,
       featureFlags: flags,
+      // T-B1: cache for project context built once per workflow
+      _cachedProjectContext: undefined,
     };
 
     this.loadContextMd(projectDir);
@@ -152,7 +154,10 @@ export class DevWorkflowEngine {
           writeFileSync(join(openspecDir, "proposal.md"), this.context!.spec.proposal);
           writeFileSync(join(openspecDir, "design.md"), this.context!.spec.design);
           writeFileSync(join(openspecDir, "tasks.json"), JSON.stringify(this.context!.spec.tasks, null, 2));
-        } catch { /* skip */ }
+        } catch {
+          // T-C2 fix: previously silent — now record the failure so users can see spec writes failed
+          this.context!.decisions.push(`Spec write skipped: openspec dir or file write failed (non-critical — spec still in memory)`);
+        }
       });
 
       if (this.aborted) return this.buildReport();
@@ -169,8 +174,15 @@ export class DevWorkflowEngine {
 
       await this.runStep("step6-plan-gate", async () => {
         this.context!.decisions.push("Plan Gate: Waiting for user approval before proceeding to implementation");
-        this.permissionManager.upgradeToWorkspaceWrite();
-        this.context!.decisions.push("Plan Gate: Permission upgraded to workspace-write");
+        // T-A1 fix: Block here until user confirms via plan_gate_tool (action=confirm).
+        // Plan Gate is no longer auto-proceed — user must explicitly call plan_gate tool.
+        const confirmed = await this.waitForPlanGateConfirmation(600_000);
+        if (!confirmed) {
+          this.context!.decisions.push("Plan Gate: User did not confirm within timeout. Workflow paused.");
+          this.aborted = true;
+          return;
+        }
+        this.context!.decisions.push("Plan Gate: APPROVED by user");
       });
 
       if (this.aborted) return this.buildReport();
@@ -508,5 +520,43 @@ export class DevWorkflowEngine {
 
   getDirectoryTemplateManager(): DirectoryTemplateManager {
     return this.directoryTemplateManager;
+  }
+
+  // ── T-A1: Plan Gate confirmation mechanism ──
+  // Engine side: creates a promise that resolves when user confirms via plan_gate_tool.
+  private planGateConfirmationResolver: (() => void) | null = null;
+  private planGateConfirmationPromise: Promise<void> | null = null;
+
+  createPlanGateWait(): Promise<void> {
+    this.planGateConfirmationPromise = new Promise((resolve) => {
+      this.planGateConfirmationResolver = resolve;
+    });
+    return this.planGateConfirmationPromise;
+  }
+
+  async waitForPlanGateConfirmation(timeoutMs: number): Promise<boolean> {
+    if (!this.planGateConfirmationPromise) {
+      // No pending wait means confirm was already handled or not needed
+      return true;
+    }
+    const timeout = new Promise<false>((resolve) => setTimeout(() => resolve(false), timeoutMs));
+    const result = await Promise.race([this.planGateConfirmationPromise.then(() => true), timeout]);
+    this.planGateConfirmationPromise = null;
+    this.planGateConfirmationResolver = null;
+    if (result === true && this.context) {
+      this.context.planGateConfirmed = true;
+      this.permissionManager.upgradeToWorkspaceWrite();
+      this.persistContext();
+    }
+    return result;
+  }
+
+  // Called by plan_gate_tool when user confirms
+  resolvePlanGate(): void {
+    this.planGateConfirmationResolver?.();
+  }
+
+  isPlanGateWaiting(): boolean {
+    return this.planGateConfirmationPromise !== null;
   }
 }
