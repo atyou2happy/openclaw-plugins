@@ -146,10 +146,10 @@ describe("Refactor Feature Flags", () => {
 // ─── WorkflowStep ───
 
 describe("WorkflowStep refactor step", () => {
-  it("includes step0.3-refactor-assessment", async () => {
+  it("includes step2-handover for refactor assessment", async () => {
     const types = await import("../src/types.js");
     // Type-level test: if this compiles, the step exists
-    const step: types.WorkflowStep = "step0.3-refactor-assessment";
-    expect(step).toBe("step0.3-refactor-assessment");
+    const step: types.WorkflowStep = "step2-handover";
+    expect(step).toBe("step2-handover");
   });
 });

@@ -61,9 +61,9 @@ describe("STEP_MIGRATION_MAP 向后兼容", () => {
   });
 
   it("映射目标是有效的新 step 名", () => {
-    const validNew = [
+    const validNew: string[] = [
       "step1-project-identify", "step2-handover", "step3-requirement",
-      "step3-brainstorm", "step4-spec", "step5-tech-selection",
+      "step4-spec", "step5-tech-selection",
       "step6-plan-gate", "step7-development", "step8-review",
       "step9-test", "step10-security-audit", "step11-docs", "step12-delivery",
     ];

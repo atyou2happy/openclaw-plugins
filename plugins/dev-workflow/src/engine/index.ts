@@ -15,6 +15,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 import { execSync } from "child_process";
 import { RefactorAssessmentTool } from "../tools/refactor-assessment-tool.js";
+import { getVersion, gitCommit, generateCommitMessage, inferCommitType, inferScope, buildReport, persistContext as persistCtx, loadContextFromDisk } from "./helpers.js";
 
 const CONTEXT_FILE = ".dev-workflow-context.json";
 const CONTEXT_MD_FILE = ".dev-workflow.md";
@@ -71,7 +72,7 @@ export class DevWorkflowEngine {
       projectId: projectDir.split("/").pop() || "unknown",
       projectDir,
       mode,
-      currentStep: "step0-analysis",
+      currentStep: "step1-project-identify",
       spec: null,
       activeTaskIndex: 0,
       brainstormNotes: [],
@@ -127,7 +128,7 @@ export class DevWorkflowEngine {
     this.aborted = false;
 
     try {
-      await this.runStep("step1-requirement", async () => {
+      await this.runStep("step3-requirement", async () => {
         const analysis = await this.orchestrator.analyzeRequirement(requirement, this.context!.projectDir, this.context!.mode);
         this.context!.decisions.push(`Requirement: complexity=${analysis.complexity}, files=${analysis.estimatedFiles}`);
       });
@@ -135,7 +136,7 @@ export class DevWorkflowEngine {
       if (this.aborted) return this.buildReport();
 
       if (this.context.mode !== "quick") {
-        await this.runStep("step2-brainstorm", async () => {
+        await this.runStep("step3-requirement", async () => {
           const options = await this.orchestrator.brainstorm(requirement, this.context!.projectDir);
           this.context!.brainstormNotes = options.map((o) => `${o.label}: ${o.description}`);
         });
@@ -143,7 +144,7 @@ export class DevWorkflowEngine {
 
       if (this.aborted) return this.buildReport();
 
-      await this.runStep("step3-spec", async () => {
+      await this.runStep("step4-spec", async () => {
         this.context!.spec = await this.orchestrator.defineSpec(requirement, this.context!.projectDir, this.context!.brainstormNotes);
         const openspecDir = join(this.context!.projectDir, "openspec", "changes", "dev-workflow");
         try {
@@ -157,7 +158,7 @@ export class DevWorkflowEngine {
       if (this.aborted) return this.buildReport();
 
       if (this.context.mode === "full") {
-        await this.runStep("step4-tech-selection", async () => {
+        await this.runStep("step5-tech-selection", async () => {
           const tech = await this.orchestrator.selectTech(requirement, this.context!.projectDir, this.context!.brainstormNotes);
           this.context!.decisions.push(`Tech: ${tech.language}/${tech.framework} - ${tech.architecture} [${tech.patterns.join(", ")}]`);
           this.updateContextMd("tech-selection", `Language: ${tech.language}\nFramework: ${tech.framework}\nArchitecture: ${tech.architecture}\nPatterns: ${tech.patterns.join(", ")}`);
@@ -166,7 +167,7 @@ export class DevWorkflowEngine {
         if (this.aborted) return this.buildReport();
       }
 
-      await this.runStep("step4.5-plan-gate", async () => {
+      await this.runStep("step6-plan-gate", async () => {
         this.context!.decisions.push("Plan Gate: Waiting for user approval before proceeding to implementation");
         this.permissionManager.upgradeToWorkspaceWrite();
         this.context!.decisions.push("Plan Gate: Permission upgraded to workspace-write");
@@ -174,7 +175,7 @@ export class DevWorkflowEngine {
 
       if (this.aborted) return this.buildReport();
 
-      await this.runStep("step5-development", async () => {
+      await this.runStep("step7-development", async () => {
         if (!this.context!.spec) return;
         const featureBranch = `feature/${this.context!.projectId}-${Date.now()}`;
         this.createBranch(featureBranch);
@@ -189,17 +190,17 @@ export class DevWorkflowEngine {
       if (this.aborted) return this.buildReport();
 
       if (this.context.mode !== "quick") {
-        await this.runStep("step6-review", async () => {
+        await this.runStep("step8-review", async () => {
           const review = await this.orchestrator.runReview(this.context!.projectDir);
           this.context!.decisions.push(`Review: ${review.slice(0, 200)}`);
         });
 
-        await this.runStep("step7-test", async () => {
+        await this.runStep("step9-test", async () => {
           const tests = await this.orchestrator.runTests(this.context!.projectDir);
           this.context!.decisions.push(`Tests: ${tests.passed ? "PASSED" : "FAILED"}`);
         });
 
-        await this.runStep("step8-docs", async () => {
+        await this.runStep("step11-docs", async () => {
           await this.orchestrator.generateDocs(this.context!.projectDir, this.context!.spec);
         });
       }
@@ -207,12 +208,12 @@ export class DevWorkflowEngine {
       if (this.aborted) return this.buildReport();
 
       if (this.context.mode !== "quick" && this.context.featureFlags.githubIntegration) {
-        await this.runStep("step8.5-github", async () => {
+        await this.runStep("step11-docs", async () => {
           await this.runGitHubSteps();
         });
       }
 
-      this.context.currentStep = "step9-delivery";
+      this.context.currentStep = "step12-delivery";
       this.updateContextMd("delivery", `Completed at ${new Date().toISOString()}`);
       this.persistContext();
 
@@ -271,15 +272,7 @@ export class DevWorkflowEngine {
   }
 
   private getVersion(dir: string): string {
-    const pkgPath = join(dir, "package.json");
-    if (existsSync(pkgPath)) {
-      try {
-        const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-        if (pkg.version) return pkg.version;
-      } catch { /* skip */ }
-    }
-    const date = new Date();
-    return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`;
+    return getVersion(dir);
   }
 
   private createBranch(branchName: string): void {
@@ -459,93 +452,34 @@ export class DevWorkflowEngine {
   }
 
   private generateCommitMessage(task: WorkflowTask): string {
-    const type = this.inferCommitType(task);
-    const scope = task.files.length > 0 ? this.inferScope(task.files[0]) : "";
-    const desc = task.title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-    const scopeStr = scope ? `(${scope})` : "";
-    return `${type}${scopeStr}: ${desc}`;
+    return generateCommitMessage(task);
   }
 
   private inferCommitType(task: WorkflowTask): string {
-    const t = task.title.toLowerCase();
-    const d = task.description.toLowerCase();
-    if (t.includes("test") || d.includes("test")) return "test";
-    if (t.includes("doc") || d.includes("doc")) return "docs";
-    if (t.includes("fix") || d.includes("fix") || d.includes("bug")) return "fix";
-    if (t.includes("refactor") || d.includes("refactor")) return "refactor";
-    if (t.includes("setup") || t.includes("config") || t.includes("init")) return "chore";
-    return "feat";
+    return inferCommitType(task);
   }
 
   private inferScope(filePath: string): string {
-    const parts = filePath.replace(/\\/g, "/").split("/");
-    if (parts.length >= 2 && parts[0] === "src") return parts[1].replace(/\.[^.]+$/, "");
-    if (parts.length >= 1) return parts[0].replace(/\.[^.]+$/, "");
-    return "";
+    return inferScope(filePath);
   }
 
   private gitCommit(message: string, files?: string[]): void {
     if (!this.context) return;
-    try {
-      if (files && files.length > 0) {
-        const fileList = files.map((f) => `"${f.replace(/"/g, '\\"')}"`).join(" ");
-        execSync(`git add -- ${fileList}`, { cwd: this.context.projectDir, stdio: "pipe", timeout: 10000 });
-      } else {
-        // Only stage tracked files — never use git add -A (Rule 19)
-        execSync("git add -u", { cwd: this.context.projectDir, stdio: "pipe", timeout: 10000 });
-      }
-      execSync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: this.context.projectDir, stdio: "pipe", timeout: 10000 });
-    } catch (e) {
-      this.context!.decisions.push(`Commit skipped: ${message}`);
-    }
+    gitCommit(this.context.projectDir, message, files, (msg) => this.context!.decisions.push(msg));
   }
 
   private buildReport(): string {
     if (!this.context) return "No context.";
-    const spec = this.context.spec;
-    const completed = spec?.tasks.filter((t) => t.status === "completed").length ?? 0;
-    const total = spec?.tasks.length ?? 0;
-    const elapsed = Date.now() - new Date(this.context.startedAt).getTime();
-    const mins = Math.floor(elapsed / 60000);
-    const secs = Math.floor((elapsed % 60000) / 1000);
-
-    const shipCounts = {
-      ship: spec?.tasks.filter((t) => t.shipCategory === "ship" && t.status === "completed").length ?? 0,
-      show: spec?.tasks.filter((t) => t.shipCategory === "show" && t.status === "completed").length ?? 0,
-      ask: spec?.tasks.filter((t) => t.shipCategory === "ask" && t.status === "completed").length ?? 0,
-    };
-
-    const lines = [
-      `# Delivery Report`,
-      `Project: ${this.context.projectId} | Mode: ${this.context.mode} | Duration: ${mins}m ${secs}s`,
-      `Tasks: ${completed}/${total} completed (ship:${shipCounts.ship} show:${shipCounts.show} ask:${shipCounts.ask})`,
-      `Branch: ${this.context.branchName ?? "N/A"}`,
-      ``,
-      spec ? spec.proposal : "No spec generated.",
-    ];
-
-    if (this.context.decisions.length > 0) {
-      lines.push(``, `## Decisions`);
-      for (const d of this.context.decisions) lines.push(`- ${d}`);
-    }
-
-    if (this.context.qaGateResults.length > 0) {
-      lines.push(``, `## QA Gate`);
-      for (const c of this.context.qaGateResults) lines.push(`- [${c.passed ? "x" : " "}] ${c.name}`);
-    }
-
-    return lines.join("\n");
+    return buildReport(this.context);
   }
 
   private persistContext() {
     if (!this.context) return;
-    try { writeFileSync(join(this.context.projectDir, CONTEXT_FILE), JSON.stringify(this.context, null, 2)); } catch { /* skip */ }
+    persistCtx(this.context, join(this.context.projectDir, CONTEXT_FILE));
   }
 
   private loadContext(projectDir: string): WorkflowContext | null {
-    const p = join(projectDir, CONTEXT_FILE);
-    if (!existsSync(p)) return null;
-    try { return JSON.parse(readFileSync(p, "utf-8")) as WorkflowContext; } catch { return null; }
+    return loadContextFromDisk(projectDir, CONTEXT_FILE);
   }
 
   getContext(): WorkflowContext | null {

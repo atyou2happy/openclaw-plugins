@@ -36,18 +36,18 @@ describe("types", () => {
 
   it("WorkflowStep covers all 12 steps", () => {
     const steps: WorkflowStep[] = [
-      "step0-analysis",
-      "step0.5-spec-update",
-      "step1-requirement",
-      "step2-brainstorm",
-      "step3-spec",
-      "step4-tech-selection",
-      "step5-development",
-      "step6-review",
-      "step7-test",
-      "step8-docs",
-      "step8.5-github",
-      "step9-delivery",
+      "step1-project-identify",
+      "step2-handover",
+      "step3-requirement",
+      "step4-spec",
+      "step5-tech-selection",
+      "step6-plan-gate",
+      "step7-development",
+      "step8-review",
+      "step9-test",
+      "step10-security-audit",
+      "step11-docs",
+      "step12-delivery",
     ];
     expect(steps).toHaveLength(12);
   });
@@ -105,7 +105,7 @@ describe("types", () => {
       projectId: "test-project",
       projectDir: "/tmp/test",
       mode: "standard",
-      currentStep: "step0-analysis",
+      currentStep: "step1-project-identify",
       spec: null,
       activeTaskIndex: 0,
       brainstormNotes: [],

@@ -1,12 +1,12 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v9。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。集中配置、async安全、连接池、测试分层、批量迁移、SDK模式。
+description: AI驱动开发工作流 v10。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search/dev-workflow 四项目实战经验。集中配置、async安全、连接池、测试分层、批量迁移、SDK模式、模块化拆分。
 user-invocable: true
 ---
 
-# Dev Workflow v9 — AI驱动开发工作流
+# Dev Workflow v10 — AI驱动开发工作流
 
-> 版本：9.0.0 | 最后更新：2026-05-07 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search) 四版经验融合
+> 版本：10.0.0 | 最后更新：2026-05-07 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow自身重构) 五版经验融合
 
 ---
 
@@ -490,41 +490,34 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ## 参考文档（按需加载）
 
-|| 文件 | 内容 |
+> ⭐v10 更新：移除12个不存在文件的引用，保留实际可用的参考文档。
+
+| 文件 | 内容 |
 |------|------|
 | `references/models.md` | ⭐v6 模型Tier配置+fallback链 |
 | `references/state-management.md` | ⭐v6 进度持久化state.json规范 |
 | `references/context-rot-detection.md` | ⭐v6 上下文腐烂检测 |
-| `references/lessons/` | ⭐v7→v8 按技术栈归档的经验库 |
-| `references/lessons/python.md` | ⭐v8 Python经验库（6条：config/async/exception/httpx/structlog） |
-| `references/lessons/testing.md` | ⭐v8 Testing经验库（6条：分层/覆盖率/mock/fixture） |
-| `references/lessons/security.md` | ⭐v8 Security经验库（4条：密钥扫描/异常吞没/环境变量/死代码） |
-|| `references/lessons/git.md` | ⭐v8 Git经验库（4条：大commit/干净起点/版本号/push验证） |
-|| `references/lessons/httpx-connection-pool-migration.md` | ⭐v9 httpx 连接池批量迁移实战（unified-search: 35 modules, 基类模式, 迁移脚本） |
-| `references/lessons/typescript.md` | ⭐v6 TypeScript经验库 |
-| `references/lessons/react.md` | ⭐v6 React经验库 |
-| `references/project-templates.md` | 5个目录结构模板 |
-| `references/feature-flags.md` | Feature Flag 开发模式 |
-| `references/working-memory.md` | Working Memory 三层架构 |
-| `references/auto-compact.md` | 上下文自动压缩策略 |
-| `references/memdir.md` | 持久记忆系统（Memdir） |
-| `references/agent-templates.md` | Spawn模板+Worker协议 |
-| `references/pr-templates.md` | PR模板+Changelog自动化 |
-| `references/handover-template.md` | 交接文档模板 |
-| `references/refactor-migration.md` | 重构迁移流程 |
+| `references/common-pitfalls.md` | ⭐v6→v8 常见陷阱清单（17条：环境/模型/async/httpx） |
 | `references/bulk-refactoring-pitfalls.md` | ⭐v7 批量重构陷阱 |
-| `references/qa-gate-template.sh` | QA Gate 脚本模板 |
-| `references/commit-conventions.md` | Conventional Commits 规范 |
-| `references/review-methodology.md` | 多视角审查方法论（6角色） |
+| `references/refactor-principles.md` | ⭐v8 重构原则+freeapi实战案例（36 files, 83% coverage） |
+| `references/code-analysis-tools.md` | 代码分析工具参考 |
 | `references/debug-methodology.md` | 根因调试方法论 |
+| `references/review-methodology.md` | 多视角审查方法论（6角色） |
 | `references/security-audit.md` | 安全审计方法论 |
 | `references/retro-methodology.md` | 周回顾方法论 |
-| `references/refactor-principles.md` | ⭐v8 重构原则+freeapi实战案例（36 files, 83% coverage） |
-| `references/common-pitfalls.md` | ⭐v6→v8 常见陷阱清单（17条：环境/模型/async/httpx） |
+| `references/lessons/python.md` | ⭐v8 Python经验库（6条：config/async/exception/httpx/structlog） |
+| `references/lessons/testing.md` | ⭐v8 Testing经验库（6条：分层/覆盖率/mock/fixture） |
+| `references/lessons/testing-strategy.md` | 测试策略参考 |
+| `references/lessons/security.md` | ⭐v8 Security经验库（4条：密钥扫描/异常吞没/环境变量/死代码） |
+| `references/lessons/git.md` | ⭐v8 Git经验库（4条：大commit/干净起点/版本号/push验证） |
+| `references/lessons/httpx-connection-pool-migration.md` | ⭐v9 httpx 连接池批量迁移实战（unified-search: 35 modules, 基类模式, 迁移脚本） |
+| `references/lessons/typescript.md` | ⭐v6 TypeScript经验库 |
+| `references/lessons/react.md` | ⭐v6 React经验库 |
+| `references/lessons/refactoring-lessons.md` | 重构经验库 |
 
 ---
 
-## v6→v7→v8→v9 变更摘要
+## v6→v7→v8→v9→v10 变更摘要
 
 | 变更 | 版本 | 说明 |
 |------|------|------|
@@ -546,7 +539,15 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 | +common-pitfalls 扩充 | v8 | 16→17条，+5条freeapi陷阱 |
 | +refactor-principles 实战案例 | v8 | +freeapi v0.1.0→v0.2.0 案例研究 |
 | +UltraQuick 模式 | v7 | 5种模式，⚡2步快速通道 |
+| +types.ts 拆分 | v10 | types.ts→types.ts+constants.ts+helpers.ts，纯类型+常量+辅助函数分离 |
+| +WorkflowStep 新编号 | v10 | step1-project-identify ~ step12-retro，统一编号 |
+| +WorkflowMode ultra | v10 | 新增 ultra 模式，5种工作流模式 |
+| +agent-orchestrator 拆分 | v10 | 694行→thin delegator + 10个 phases/ 模块 |
+| +qa-gate-tool 拆分 | v10 | 694行→60行 thin class + qa-checks.ts 358行 |
+| +engine helpers 提取 | v10 | commit/report/version 辅助函数提取到 engine/helpers.ts |
+| +参考文档清理 | v10 | 移除12个不存在文件引用，补充2个遗漏文件 |
+| +测试覆盖增强 | v10 | 新增 bootstrap/handover/feature-flags/memdir 模块测试，314 tests |
 
 ---
 
-*v9.0.0 — 四版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/测试分类)*
+*v10.0.0 — 五版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report) → v8(freeapi) → v9(unified-search) → v10(dev-workflow 自身重构：类型拆分/编号对齐/模块化拆分/文档清理)*

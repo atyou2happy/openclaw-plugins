@@ -47,7 +47,7 @@ describe("DevWorkflowEngine", () => {
     const context = await engine.initialize(testDir, "standard");
     expect(context.projectId).toBeDefined();
     expect(context.mode).toBe("standard");
-    expect(context.currentStep).toBe("step0-analysis");
+    expect(context.currentStep).toBe("step1-project-identify");
     expect(context.spec).toBeNull();
     expect(context.decisions.length).toBeGreaterThan(0);
   });
@@ -57,13 +57,13 @@ describe("DevWorkflowEngine", () => {
     const runtime = createMockRuntime();
     const engine1 = new DevWorkflowEngine(runtime);
     const ctx1 = await engine1.initialize(testDir, "full");
-    ctx1.currentStep = "step5-development";
+    ctx1.currentStep = "step7-development";
     ctx1.decisions.push("test decision");
     engine1.saveContext();
 
     const engine2 = new DevWorkflowEngine(runtime);
     const ctx2 = await engine2.initialize(testDir);
-    expect(ctx2.currentStep).toBe("step5-development");
+    expect(ctx2.currentStep).toBe("step7-development");
     expect(ctx2.decisions).toContain("test decision");
   });
 
