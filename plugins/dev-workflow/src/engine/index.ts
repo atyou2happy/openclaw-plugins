@@ -40,6 +40,8 @@ export class DevWorkflowEngine {
   private verificationFailures = new Map<string, number>();
   /** T4: Total token usage tracker across all steps */
   private totalTokenUsage = 0;
+  /** T6: Cache of recently passed gate checks — used to skip duplicate verification */
+  private passedGatesCache = new Set<string>();
 
   constructor(runtime: PluginRuntime) {
     this.runtime = runtime;
@@ -80,6 +82,7 @@ export class DevWorkflowEngine {
       activeTaskIndex: 0,
       brainstormNotes: [],
       decisions: [],
+      trajectory: [],
       qaGateResults: [],
       startedAt: new Date().toISOString(),
       openSource: null,
@@ -573,7 +576,10 @@ export class DevWorkflowEngine {
         lastResult = await this.orchestrator.executeTask(task, this.context!.projectDir, this.context!.mode, this.context!.featureFlags);
         if (lastResult.success) {
           if (this.context!.mode !== "quick") {
-            const verificationReport = await this.verificationAgent.verify(task.id, this.context!.projectDir);
+            // T6: Skip checks that already passed in gates (lint+test from task-execute-tool)
+            const skipChecks = this.passedGatesCache.size > 0 ? Array.from(this.passedGatesCache) : undefined;
+            const verificationReport = await this.verificationAgent.verify(task.id, this.context!.projectDir, skipChecks);
+            this.passedGatesCache.clear(); // Reset for next task
             this.context!.qaGateResults.push({
               name: `verification-${task.id}`,
               passed: verificationReport.verdict === "PASS",
@@ -673,6 +679,14 @@ export class DevWorkflowEngine {
 
   private persistContext() {
     if (!this.context) return;
+    // A1: Sync trajectory from decisions — catch any direct .push() calls
+    const { decisions, trajectory } = this.context;
+    if (decisions.length > trajectory.length) {
+      const now = new Date().toISOString();
+      for (let i = trajectory.length; i < decisions.length; i++) {
+        trajectory.push(`[${now}] ${decisions[i]}`);
+      }
+    }
     persistCtx(this.context, join(this.context.projectDir, CONTEXT_FILE));
   }
 
@@ -849,5 +863,16 @@ export class DevWorkflowEngine {
   /** Get total estimated token usage for this workflow run */
   getTokenUsage(): number {
     return this.totalTokenUsage;
+  }
+
+  // ── A1: Trajectory vs Decisions dual-write ──
+  /**
+   * Record a decision: push to trajectory (immutable audit trail) and decisions (LLM context).
+   * Trajectory is never compressed; decisions may be compacted by T3 grouping.
+   */
+  recordDecision(entry: string): void {
+    if (!this.context) return;
+    this.context.trajectory.push(`[${new Date().toISOString()}] ${entry}`);
+    this.context.decisions.push(entry);
   }
 }

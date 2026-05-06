@@ -93,7 +93,9 @@ export interface WorkflowContext {
   spec: WorkflowSpec | null;
   activeTaskIndex: number;
   brainstormNotes: string[];
-  decisions: string[];
+  decisions: string[];    // Compressed decisions for LLM context
+  /** A1: Immutable execution trajectory — full audit trail, never compressed */
+  trajectory: string[];
   qaGateResults: QAGateCheck[];
   refactorAssessment?: RefactorAssessment;
   startedAt: string;
@@ -270,3 +272,23 @@ export type DevWorkflowRule =
   | "karpathy-surgical-edit"
   | "karpathy-define-success-criteria"
   | "karpathy-state-assumptions";
+
+// ── A3: SubAgent Isolation Interface ──
+
+/** Isolation level for task execution */
+export type IsolationLevel = "none" | "subprocess";
+
+/** Configuration for isolated task execution */
+export interface SubAgentConfig {
+  /** Isolation level — none = same process (default), subprocess = child process with JSON IPC */
+  isolation: IsolationLevel;
+  /** Maximum execution time in ms (default: 300000 = 5 min) */
+  timeout: number;
+  /** Environment variables to pass to subprocess */
+  env?: Record<string, string>;
+}
+
+export const DEFAULT_SUBAGENT_CONFIG: SubAgentConfig = {
+  isolation: "none",
+  timeout: 300_000,
+};

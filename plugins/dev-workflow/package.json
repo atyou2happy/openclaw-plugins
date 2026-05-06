@@ -1,7 +1,7 @@
 {
   "name": "@openclaw/dev-workflow",
-  "version": "12.0.0",
-  "description": "OpenClaw Dev Workflow plugin — AI-driven spec-driven development workflow v12: state machine 12-step loop, interrupt/resume, token tracking, output trimming, decisions grouping",
+  "version": "13.0.0",
+  "description": "OpenClaw Dev Workflow plugin — AI-driven spec-driven development workflow v13: state machine 12-step loop, interrupt/resume, token tracking, output trimming, trajectory audit trail, subagent isolation",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -48,6 +48,8 @@ export interface AutoCompactConfig {
   l1MaxChars: number;
   l2MaxToolOutputs: number;
   l2MaxChars: number;
+  /** T2: L3 — max task layer entries before structured summary compression */
+  l3MaxTaskEntries: number;
   projectLayerMaxTokens: number;
   taskLayerMaxTokens: number;
 }
@@ -57,6 +59,7 @@ const DEFAULT_COMPACT_CONFIG: AutoCompactConfig = {
   l1MaxChars: 40_000,
   l2MaxToolOutputs: 50,
   l2MaxChars: 100_000,
+  l3MaxTaskEntries: 30,
   projectLayerMaxTokens: 2000,
   taskLayerMaxTokens: 3000,
 };
@@ -299,6 +302,51 @@ export class WorkingMemoryManager {
         unlinkSync(taskFile);
       } catch { /* skip */ }
     }
+  }
+
+  /**
+   * T2: L3 compression — compress accumulated task layer into structured summary
+   * when entry count exceeds threshold. Keeps recent N entries intact, compresses older ones.
+   * Inspired by OpenHands LLMSummarizingCondenser.
+   */
+  async executeL3Compact(projectDir: string, taskId: string): Promise<boolean> {
+    const taskLayer = await this.loadTaskLayer(projectDir, taskId);
+    if (!taskLayer) return false;
+
+    const totalEntries = (taskLayer.decisions?.length ?? 0) +
+      (taskLayer.completedItems?.length ?? 0) +
+      (taskLayer.pendingItems?.length ?? 0);
+
+    if (totalEntries < this.config.l3MaxTaskEntries) return false;
+
+    const logger = this.runtime.logging.getChildLogger({ level: "info" });
+    logger.info(`[WorkingMemory] L3 Compact: compressing ${totalEntries} entries for task ${taskId}`);
+
+    // Keep recent 10 entries, compress the rest into a structured summary
+    const KEEP_RECENT = 10;
+    const compressDecisions = (taskLayer.decisions ?? []).slice(0, -KEEP_RECENT);
+    const recentDecisions = (taskLayer.decisions ?? []).slice(-KEEP_RECENT);
+
+    // Build structured summary of older entries
+    const summaryParts: string[] = [`## Historical Summary (${compressDecisions.length} items compressed)`];
+    if (compressDecisions.length > 0) {
+      // Group by keywords for structure
+      const errors = compressDecisions.filter(d => /error|fail|exception/i.test(d));
+      const skips = compressDecisions.filter(d => /skip/i.test(d));
+      const decisions = compressDecisions.filter(d => !errors.includes(d) && !skips.includes(d));
+      if (decisions.length) summaryParts.push(`Decisions: ${decisions.join("; ")}`);
+      if (errors.length) summaryParts.push(`Errors resolved: ${errors.length}`);
+      if (skips.length) summaryParts.push(`Skipped: ${skips.length}`);
+    }
+
+    // Write compressed task layer
+    const compressed = {
+      ...taskLayer,
+      decisions: [...summaryParts, ...recentDecisions],
+      compressedAt: new Date().toISOString(),
+    };
+    await this.saveTaskLayer(projectDir, taskId, compressed);
+    return true;
   }
 
   private estimateTokens(content: string): number {

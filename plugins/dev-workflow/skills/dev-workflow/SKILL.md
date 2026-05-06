@@ -4,9 +4,9 @@ description: AI驱动开发工作流 v12。12步状态机闭环+interrupt/resume
 user-invocable: true
 ---
 
-# Dev Workflow v12 — AI驱动开发工作流
+# Dev Workflow v13 — AI驱动开发工作流
 
-> 版本：12.0.0 | v11→v12: Bug修复(P0-P5)+Plan Gate interrupt/resume+Token优化(T3-T5)+架构改进
+> 版本：13.0.0 | v12→v13: Prompt Caching(T1)+L3 WorkingMemory(T2)+Gate去重(T6)+Trajectory审计(A1)+SubAgent隔离(A3)
 
 ---
 

@@ -31,14 +31,16 @@ export async function buildProjectContext(projectDir: string, cachedContext?: st
   const lines: string[] = [];
   try {
     const { stdout } = await execAsync("find . -maxdepth 3 -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' | head -50", { cwd: projectDir, timeout: 10000 });
-    lines.push(`Files:\n${stdout.trim()}`);
+    // T1: Cap file listing to avoid oversized context
+    lines.push(`Files:\n${stdout.trim().slice(0, 800)}`);
   } catch { /* skip */ }
   const pkgPath = join(projectDir, "package.json");
   if (existsSync(pkgPath)) {
     try {
       const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
       lines.push(`Package: ${pkg.name || "unknown"}`);
-      if (pkg.scripts) lines.push(`Scripts: ${JSON.stringify(pkg.scripts)}`);
+      // T1: Only include script names, not full command bodies
+      if (pkg.scripts) lines.push(`Scripts: ${Object.keys(pkg.scripts).join(", ")}`);
     } catch { /* skip */ }
   }
   return lines.join("\n");
@@ -71,7 +73,11 @@ export async function executeTask(runtime: PluginRuntime, task: WorkflowTask, pr
   const rulesSection = effectiveFlags.ruleEnforcement
     ? `\n\nCode Rules (enforced):\n- No unused variables or imports\n- Prefer const over let\n- No console.log (use logger)\n- Avoid any type\n- Functions < 50 lines, files < 500 lines\n- No hardcoded secrets\n- Prefer pure functions\n- Use early returns\n- Meaningful names\n`
     : "";
-  const systemPrompt = `You are a senior engineer executing a task.\n${tddPrompt}\n${rulesSection}\nProject context:\n${projectContext}\n\n${workingMemory ? `Working memory:\n${workingMemory}\n` : ""}Task: ${task.title} - ${task.description}\nFiles: ${task.files.join(", ")}\nShip category: ${task.shipCategory}\nReturn a summary of what you did.`;
+  // T1: Split systemPrompt into reusable static context and per-task dynamic context
+  // Static portions (tddPrompt + rulesSection) are identical across tasks in same mode/flags
+  // Dynamic portions (projectContext + workingMemory + task details) vary per task
+  const staticContext = `${tddPrompt}${rulesSection}`;
+  const systemPrompt = `You are a senior engineer executing a task.\n${staticContext}\nProject context:\n${projectContext}\n\n${workingMemory ? `Working memory:\n${workingMemory}\n` : ""}Task: ${task.title} - ${task.description}\nFiles: ${task.files.join(", ")}\nShip category: ${task.shipCategory}\nReturn a summary of what you did.`;
   try {
     const runResult = await runtime.subagent.run({ sessionKey, message: `Execute task **${task.title}**: ${task.description}\nFiles: ${task.files.join(", ")}\nShip: ${task.shipCategory}`, extraSystemPrompt: systemPrompt, deliver: false });
     const timeout = mode === "full" ? 600000 : mode === "standard" ? 300000 : 180000;

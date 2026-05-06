@@ -29,13 +29,15 @@ export class VerificationAgent {
     this.runtime = runtime;
   }
 
-  async verify(taskName: string, projectDir: string): Promise<VerificationReport> {
+  async verify(taskName: string, projectDir: string, skipChecks?: string[]): Promise<VerificationReport> {
     const logger = this.runtime.logging.getChildLogger({ level: "info" });
-    logger.info(`[VerificationAgent] Starting verification for task: ${taskName}`);
+    logger.info(`[VerificationAgent] Starting verification for task: ${taskName}${skipChecks?.length ? ` (skipping: ${skipChecks.join(",")})` : ""}`);
 
-    const lintResult = await this.runLint(projectDir);
-    const testsResult = await this.runTests(projectDir);
-    const typeCheckResult = await this.runTypeCheck(projectDir);
+    // T6: Skip checks that already passed in gate checks (dedup)
+    const skip = new Set(skipChecks ?? []);
+    const lintResult = skip.has("lint") ? { passed: true, errors: 0, output: "Skipped (gate check passed)" } : await this.runLint(projectDir);
+    const testsResult = skip.has("test") ? { passed: true, errors: 0, output: "Skipped (gate check passed)" } : await this.runTests(projectDir);
+    const typeCheckResult = skip.has("typeCheck") ? { passed: true, errors: 0, output: "Skipped (gate check passed)" } : await this.runTypeCheck(projectDir);
 
     const issues: string[] = [];
     if (!lintResult.passed) issues.push(`Lint: ${lintResult.errors} error(s)`);

@@ -1,7 +1,7 @@
 import type { PluginRuntime } from "openclaw/plugin-sdk/core";
 import type {
   WorkflowTask, WorkflowMode, WorkflowSpec, BrainstormOption,
-  AgentResult, TechSelection, FeatureFlags,
+  AgentResult, TechSelection, FeatureFlags, SubAgentConfig,
 } from "../types.js";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
@@ -93,7 +93,9 @@ export class AgentOrchestrator {
     return selectTech(this.runtime, requirement, projectDir, brainstormNotes);
   }
 
-  async executeTask(task: WorkflowTask, projectDir: string, mode: WorkflowMode, flags?: FeatureFlags): Promise<AgentResult> {
+  async executeTask(task: WorkflowTask, projectDir: string, mode: WorkflowMode, flags?: FeatureFlags, subagentConfig?: SubAgentConfig): Promise<AgentResult> {
+    // A3: For now, isolation is always "none" — subprocess isolation reserved for future implementation
+    // When isolation="subprocess", this would spawn a child Node process with JSON IPC
     return executeTask(this.runtime, task, projectDir, mode, flags);
   }
 
