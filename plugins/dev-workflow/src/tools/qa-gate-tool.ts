@@ -30,8 +30,13 @@ export class QAGateTool implements AnyAgentTool {
     const checksToRun = input.checks ?? ["lint", "format", "tests", "coverage", "typecheck", "simplify", "commits", "todos", "docs", "rules"];
     const results: Array<{ name: string; passed: boolean; output?: string }> = [];
 
+    const MAX_OUTPUT_LEN = 500;
     for (const check of checksToRun) {
       const result = await runCheck(check, input.projectDir);
+      // Truncate output to cap token usage
+      if (result.output && result.output.length > MAX_OUTPUT_LEN) {
+        result.output = result.output.slice(0, MAX_OUTPUT_LEN) + "... (truncated)";
+      }
       results.push(result);
     }
 

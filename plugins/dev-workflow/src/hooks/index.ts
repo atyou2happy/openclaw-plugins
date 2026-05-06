@@ -1,25 +1,28 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/core";
 import { getEngine } from "../channel/runtime.js";
-import { HandoverManager } from "../handover/index.js";
-import { MemdirManager } from "../memdir/index.js";
-import { BootstrapManager } from "../bootstrap/index.js";
-import { FeatureFlagManager } from "../feature-flags/index.js";
-import { PermissionManager } from "../permissions/index.js";
-import { WorkingMemoryManager } from "../working-memory/index.js";
 
 export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
-  const handoverManager = new HandoverManager(api.runtime);
-  const memdirManager = new MemdirManager(api.runtime);
-  const bootstrapManager = new BootstrapManager(api.runtime);
-  const featureFlagManager = new FeatureFlagManager(api.runtime);
-  const permissionManager = new PermissionManager(api.runtime);
-  const workingMemoryManager = new WorkingMemoryManager(api.runtime);
+  // ── Unified Manager access via Engine (single-source-of-truth) ──
+  // v11 fix: All managers are created once in DevWorkflowEngine.
+  // Hooks retrieve them via getters instead of creating duplicate instances.
+  const getManagers = () => {
+    const engine = getEngine();
+    return {
+      handoverManager: engine.getHandoverManager(),
+      memdirManager: engine.getMemdirManager(),
+      bootstrapManager: engine.getBootstrapManager(),
+      featureFlagManager: engine.getFeatureFlagManager(),
+      permissionManager: engine.getPermissionManager(),
+      workingMemoryManager: engine.getWorkingMemoryManager(),
+    };
+  };
 
   api.registerHook("session_start", async (event: any) => {
     api.logger.info(`[dev-workflow] Session started: ${event?.sessionKey ?? "unknown"}`);
 
     const projectDir = event?.projectDir;
     if (projectDir) {
+      const { handoverManager, memdirManager } = getManagers();
       const context = getEngine().getContext();
       if (!context) {
         api.logger.info("[dev-workflow] No active context, checking for handover document");
@@ -43,6 +46,7 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
   api.registerHook("session_end", async (event: any) => {
     api.logger.info(`[dev-workflow] Session ended: ${event?.sessionKey ?? "unknown"}`);
 
+    const { handoverManager } = getManagers();
     const context = getEngine().getContext();
     if (context && event?.reason === "handover") {
       api.logger.info("[dev-workflow] Generating handover document");
@@ -53,6 +57,7 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
   }, { name: "dev-workflow-session-end" });
 
   api.registerHook("pre_step", async (event: any) => {
+    const { permissionManager, workingMemoryManager } = getManagers();
     const context = getEngine().getContext();
     if (!context) return;
 
@@ -74,13 +79,14 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
   }, { name: "dev-workflow-pre-step" });
 
   api.registerHook("post_step", async (event: any) => {
+    const { memdirManager, featureFlagManager } = getManagers();
     const context = getEngine().getContext();
     if (!context) return;
 
     const step = event?.step ?? "unknown";
     api.logger.info(`[dev-workflow] Post-step hook: ${step}`);
 
-    if (step === "step12-delivery" || step === "step12-delivery") {
+    if (step === "step12-delivery") {
       if (context.decisions.length > 0) {
         await memdirManager.remember(context.projectDir, {
           type: "decision",
@@ -101,6 +107,7 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
   }, { name: "dev-workflow-post-step" });
 
   api.registerHook("post_task", async (event: any) => {
+    const { workingMemoryManager } = getManagers();
     const context = getEngine().getContext();
     if (!context) return;
 
@@ -110,9 +117,6 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
 
     // T-A2 fix: verification moved to engine layer only (post_task and task_completed both called it,
     // causing 3x token waste per task). Now hooks only record completion status.
-    api.logger.info(`[dev-workflow] Task completed: ${taskId} (success: ${success})`);
-
-    // Record completion status (verification itself is done once in engine/executeTaskWithShipStrategy)
     context.qaGateResults.push({
       name: `task-${taskId}`,
       passed: success,
@@ -126,6 +130,7 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
   }, { name: "dev-workflow-post-task" });
 
   api.registerHook("pre_commit", async (event: any) => {
+    const { permissionManager } = getManagers();
     const context = getEngine().getContext();
     if (!context) return;
 
@@ -176,6 +181,7 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
   }, { name: "dev-workflow-task-completed" });
 
   api.registerHook("workflow_bootstrap", async (event: any) => {
+    const { bootstrapManager, memdirManager } = getManagers();
     api.logger.info(`[dev-workflow] Bootstrap triggered for: ${event?.projectDir ?? "unknown"}`);
 
     const projectDir = event?.projectDir;
@@ -193,7 +199,8 @@ export function registerDevWorkflowHooks(api: OpenClawPluginApi) {
   }, { name: "dev-workflow-bootstrap" });
 
   api.registerHook("workflow_delivery", async (event: any) => {
-    api.logger.info(`[dev-workflow] Delivery triggered, persisting memories`);
+    const { memdirManager, featureFlagManager } = getManagers();
+    api.logger.info("[dev-workflow] Delivery triggered, persisting memories");
 
     const context = getEngine().getContext();
     if (context) {

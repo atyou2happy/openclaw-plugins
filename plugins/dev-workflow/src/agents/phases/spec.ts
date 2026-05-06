@@ -38,23 +38,32 @@ Return ONLY valid JSON.`;
         return {
           proposal: p.proposal ?? `# Proposal\n\n${requirement}`,
           design: p.design ?? "# Design\n\nTBD",
-          tasks: (Array.isArray(p.tasks) ? p.tasks : []).map((t: any, i: number) => ({
-            // T-C1 fix: use ?? defaults so required fields are never undefined
-            id: t.id ?? `task-${i + 1}`,
-            title: t.title ?? `Task ${i + 1}`,
-            description: t.description ?? "",
-            status: "pending" as const,
-            difficulty: t.difficulty ?? "medium",
-            estimatedMinutes: t.estimatedMinutes ?? 30,
-            dependencies: Array.isArray(t.dependencies) ? t.dependencies : [],
-            files: Array.isArray(t.files) ? t.files : [],
-            shipCategory: t.shipCategory ?? "show",
-            granularity: t.granularity ?? "task",
-            suggestedModel: t.suggestedModel ?? "minimax/MiniMax-M2.7",
-            maxLines: t.maxLines ?? 200,
-            subtasks: Array.isArray(t.subtasks) ? t.subtasks : [],
-            gates: Array.isArray(t.gates) ? t.gates : [],
-          })),
+          tasks: (() => {
+            const all = (Array.isArray(p.tasks) ? p.tasks : []).map((t: any, i: number) => ({
+              // T-C1 fix: use ?? defaults so required fields are never undefined
+              id: t.id ?? `task-${i + 1}`,
+              title: t.title ?? `Task ${i + 1}`,
+              description: t.description ?? "",
+              status: "pending" as const,
+              difficulty: t.difficulty ?? "medium",
+              estimatedMinutes: t.estimatedMinutes ?? 30,
+              dependencies: Array.isArray(t.dependencies) ? t.dependencies : [],
+              files: Array.isArray(t.files) ? t.files : [],
+              shipCategory: t.shipCategory ?? "show",
+              granularity: t.granularity ?? "task",
+              suggestedModel: t.suggestedModel ?? "minimax/MiniMax-M2.7",
+              maxLines: t.maxLines ?? 200,
+              subtasks: Array.isArray(t.subtasks) ? t.subtasks : [],
+              gates: Array.isArray(t.gates) ? t.gates : [],
+            }));
+            const MAX_TASKS = 15;
+            if (all.length <= MAX_TASKS) return all;
+            const excess = all.length - MAX_TASKS;
+            const kept = all.slice(0, MAX_TASKS);
+            // Attach cap note to the last kept task's description
+            kept[kept.length - 1].description += `\n...and ${excess} more (capped for token budget)`;
+            return kept;
+          })(),
           updatedAt: new Date().toISOString(),
         };
       } catch (e) {

@@ -1,5 +1,5 @@
 import type { PluginRuntime } from "openclaw/plugin-sdk/core";
-import type { WorkflowContext, WorkflowMode, WorkflowTask, AgentResult, TechSelection, ConventionalCommit, FeatureFlags } from "../types.js";
+import type { WorkflowContext, WorkflowMode, WorkflowStep, WorkflowTask, AgentResult, TechSelection, ConventionalCommit, FeatureFlags } from "../types.js";
 import { DEFAULT_FEATURE_FLAGS } from "../types.js";
 import { AgentOrchestrator } from "../agents/agent-orchestrator.js";
 import { VerificationAgent } from "../agents/verification-agent.js";
@@ -11,11 +11,12 @@ import { PermissionManager } from "../permissions/index.js";
 import { BackgroundTaskManager } from "../background-tasks/index.js";
 import { WorkingMemoryManager } from "../working-memory/index.js";
 import { DirectoryTemplateManager } from "../directory-templates/index.js";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from "fs";
 import { join } from "path";
 import { execSync } from "child_process";
 import { RefactorAssessmentTool } from "../tools/refactor-assessment-tool.js";
 import { getVersion, gitCommit, generateCommitMessage, inferCommitType, inferScope, buildReport, persistContext as persistCtx, loadContextFromDisk } from "./helpers.js";
+import { WorkflowStateMachine, type StepResult } from "./state-machine.js";
 
 const CONTEXT_FILE = ".dev-workflow-context.json";
 const CONTEXT_MD_FILE = ".dev-workflow.md";
@@ -128,121 +129,267 @@ export class DevWorkflowEngine {
   async executeWorkflow(requirement: string): Promise<string> {
     if (!this.context) throw new Error("Workflow not initialized.");
     this.aborted = false;
+    this.verificationFailures.clear();
+    const requirement_ = requirement;
 
     try {
-      await this.runStep("step3-requirement", async () => {
-        const analysis = await this.orchestrator.analyzeRequirement(requirement, this.context!.projectDir, this.context!.mode);
-        this.context!.decisions.push(`Requirement: complexity=${analysis.complexity}, files=${analysis.estimatedFiles}`);
-      });
+      // ── Build state machine with all 12 step nodes ──
+      const sm = new WorkflowStateMachine(this.context.mode, 50);
 
-      if (this.aborted) return this.buildReport();
-
-      if (this.context.mode !== "quick") {
-        await this.runStep("step3-requirement", async () => {
-          const options = await this.orchestrator.brainstorm(requirement, this.context!.projectDir);
-          this.context!.brainstormNotes = options.map((o) => `${o.label}: ${o.description}`);
-        });
-      }
-
-      if (this.aborted) return this.buildReport();
-
-      await this.runStep("step4-spec", async () => {
-        this.context!.spec = await this.orchestrator.defineSpec(requirement, this.context!.projectDir, this.context!.brainstormNotes);
-        const openspecDir = join(this.context!.projectDir, "openspec", "changes", "dev-workflow");
-        try {
-          if (!existsSync(openspecDir)) mkdirSync(openspecDir, { recursive: true });
-          writeFileSync(join(openspecDir, "proposal.md"), this.context!.spec.proposal);
-          writeFileSync(join(openspecDir, "design.md"), this.context!.spec.design);
-          writeFileSync(join(openspecDir, "tasks.json"), JSON.stringify(this.context!.spec.tasks, null, 2));
-        } catch {
-          // T-C2 fix: previously silent — now record the failure so users can see spec writes failed
-          this.context!.decisions.push(`Spec write skipped: openspec dir or file write failed (non-critical — spec still in memory)`);
+      // Checkpoint callback — persist after every step
+      sm.onCheckpoint((step, iter) => {
+        if (this.context) {
+          this.context.currentStep = step;
+          this.persistContext();
+          this.persistCheckpoint(step, iter);
         }
       });
 
-      if (this.aborted) return this.buildReport();
+      // Abort forwarding
+      const checkAbort = (): boolean => { if (this.aborted) { sm.abort(); return true; } return false; };
 
-      if (this.context.mode === "full") {
-        await this.runStep("step5-tech-selection", async () => {
-          const tech = await this.orchestrator.selectTech(requirement, this.context!.projectDir, this.context!.brainstormNotes);
+      // ── Step 2: Handover recovery ──
+      sm.addNode({
+        step: "step2-handover",
+        execute: async () => {
+          const handoverDoc = await this.handoverManager.consume(this.context!.projectDir);
+          const statePath = join(this.context!.projectDir, ".dev-workflow", "state.json");
+          let recovered = false;
+          if (handoverDoc) {
+            const pendingCount = handoverDoc.pendingItems?.length ?? 0;
+            const completedCount = handoverDoc.completedItems?.length ?? 0;
+            this.context!.decisions.push(`Handover: recovered ${completedCount} completed, ${pendingCount} pending items`);
+            recovered = true;
+          }
+          if (existsSync(statePath)) {
+            this.context!.decisions.push("Handover: found state.json for resume");
+            recovered = true;
+          }
+          return { status: recovered ? "success" : "skipped", data: { recovered } };
+        },
+        transitions: [
+          { condition: (r) => r.status === "success" || r.status === "skipped", target: "step3-requirement" },
+        ],
+      });
+
+      // ── Step 3: Requirement exploration + brainstorm ──
+      sm.addNode({
+        step: "step3-requirement",
+        execute: async () => {
+          if (checkAbort()) return { status: "paused" };
+          const analysis = await this.orchestrator.analyzeRequirement(requirement_, this.context!.projectDir, this.context!.mode);
+          this.context!.decisions.push(`Requirement: complexity=${analysis.complexity}, files=${analysis.estimatedFiles}`);
+
+          // Brainstorm (standard/full only)
+          if (this.context!.mode !== "quick" && this.context!.mode !== "ultra") {
+            if (checkAbort()) return { status: "paused" };
+            const options = await this.orchestrator.brainstorm(requirement_, this.context!.projectDir);
+            this.context!.brainstormNotes = options.map((o) => `${o.label}: ${o.description}`);
+          }
+          return { status: "success" };
+        },
+        transitions: [
+          { condition: (r) => r.status === "success", target: "step4-spec" },
+          { condition: (r) => r.status === "paused", target: "step3-requirement" },
+        ],
+        fallback: "step3-requirement", // SKILL.md: "user says wrong -> re-explore"
+      });
+
+      // ── Step 4: Spec definition ──
+      sm.addNode({
+        step: "step4-spec",
+        execute: async () => {
+          if (checkAbort()) return { status: "paused" };
+          this.context!.spec = await this.orchestrator.defineSpec(requirement_, this.context!.projectDir, this.context!.brainstormNotes);
+          const openspecDir = join(this.context!.projectDir, "openspec", "changes", "dev-workflow");
+          try {
+            if (!existsSync(openspecDir)) mkdirSync(openspecDir, { recursive: true });
+            writeFileSync(join(openspecDir, "proposal.md"), this.context!.spec.proposal);
+            writeFileSync(join(openspecDir, "design.md"), this.context!.spec.design);
+            writeFileSync(join(openspecDir, "tasks.json"), JSON.stringify(this.context!.spec.tasks, null, 2));
+          } catch {
+            this.context!.decisions.push("Spec write skipped: openspec dir or file write failed (non-critical — spec still in memory)");
+          }
+          return { status: "success" };
+        },
+        transitions: [
+          { condition: (r) => r.status === "success", target: "step5-tech-selection" },
+          { condition: (r) => r.status === "paused", target: "step4-spec" },
+        ],
+        fallback: "step3-requirement", // SKILL.md: Plan Gate rejected -> re-design
+      });
+
+      // ── Step 5: Tech selection (full only) ──
+      sm.addNode({
+        step: "step5-tech-selection",
+        execute: async () => {
+          if (checkAbort()) return { status: "paused" };
+          const tech = await this.orchestrator.selectTech(requirement_, this.context!.projectDir, this.context!.brainstormNotes);
           this.context!.decisions.push(`Tech: ${tech.language}/${tech.framework} - ${tech.architecture} [${tech.patterns.join(", ")}]`);
           this.updateContextMd("tech-selection", `Language: ${tech.language}\nFramework: ${tech.framework}\nArchitecture: ${tech.architecture}\nPatterns: ${tech.patterns.join(", ")}`);
-        });
-
-        if (this.aborted) return this.buildReport();
-      }
-
-      await this.runStep("step6-plan-gate", async () => {
-        this.context!.decisions.push("Plan Gate: Waiting for user approval before proceeding to implementation");
-        // T-A1 fix: Block here until user confirms via plan_gate_tool (action=confirm).
-        // Plan Gate is no longer auto-proceed — user must explicitly call plan_gate tool.
-        const confirmed = await this.waitForPlanGateConfirmation(600_000);
-        if (!confirmed) {
-          this.context!.decisions.push("Plan Gate: User did not confirm within timeout. Workflow paused.");
-          this.aborted = true;
-          return;
-        }
-        this.context!.decisions.push("Plan Gate: APPROVED by user");
+          return { status: "success" };
+        },
+        transitions: [
+          { condition: (r) => r.status === "success", target: "step6-plan-gate" },
+        ],
       });
 
-      if (this.aborted) return this.buildReport();
-
-      await this.runStep("step7-development", async () => {
-        if (!this.context!.spec) return;
-        const featureBranch = `feature/${this.context!.projectId}-${Date.now()}`;
-        this.createBranch(featureBranch);
-        this.context!.branchName = featureBranch;
-        this.persistContext();
+      // ── Step 6: Plan Gate ──
+      sm.addNode({
+        step: "step6-plan-gate",
+        execute: async () => {
+          if (checkAbort()) return { status: "paused" };
+          this.context!.decisions.push("Plan Gate: Waiting for user approval before proceeding to implementation");
+          const confirmed = await this.waitForPlanGateConfirmation(600_000);
+          if (!confirmed) {
+            this.context!.decisions.push("Plan Gate: User did not confirm within timeout. Workflow paused.");
+            return { status: "paused", data: { approved: false } };
+          }
+          this.context!.decisions.push("Plan Gate: APPROVED by user");
+          return { status: "success", data: { approved: true } };
+        },
+        transitions: [
+          { condition: (r) => r.data?.approved === true, target: "step7-development" },
+          { condition: (r) => r.data?.approved === false, target: "step4-spec" }, // Rejected -> re-design
+        ],
+        fallback: "step4-spec",
       });
 
-      if (this.aborted) return this.buildReport();
+      // ── Step 7: Development ──
+      sm.addNode({
+        step: "step7-development",
+        execute: async () => {
+          if (checkAbort()) return { status: "paused" };
+          if (!this.context!.spec) return { status: "failed", error: "No spec available" };
+          const featureBranch = `feature/${this.context!.projectId}-${Date.now()}`;
+          this.createBranch(featureBranch);
+          this.context!.branchName = featureBranch;
+          this.persistContext();
 
-      await this.executeAllTasks();
+          // Execute all tasks within step 7
+          await this.executeAllTasks();
+          return { status: this.aborted ? "paused" : "success" };
+        },
+        transitions: [
+          { condition: (r) => r.status === "success", target: "step8-review" },
+          { condition: (r) => r.status === "failed", target: "step4-spec" }, // SKILL.md: test fail 3x -> redesign
+          { condition: (r) => r.status === "paused", target: "step7-development" },
+        ],
+        fallback: "step4-spec",
+      });
 
-      if (this.aborted) return this.buildReport();
-
-      if (this.context.mode !== "quick") {
-        await this.runStep("step8-review", async () => {
+      // ── Step 8: Code review ──
+      sm.addNode({
+        step: "step8-review",
+        execute: async () => {
+          if (checkAbort()) return { status: "paused" };
           const review = await this.orchestrator.runReview(this.context!.projectDir);
           this.context!.decisions.push(`Review: ${review.slice(0, 200)}`);
-        });
-
-        await this.runStep("step9-test", async () => {
-          const tests = await this.orchestrator.runTests(this.context!.projectDir);
-          this.context!.decisions.push(`Tests: ${tests.passed ? "PASSED" : "FAILED"}`);
-        });
-
-        await this.runStep("step11-docs", async () => {
-          await this.orchestrator.generateDocs(this.context!.projectDir, this.context!.spec);
-        });
-      }
-
-      if (this.aborted) return this.buildReport();
-
-      if (this.context.mode !== "quick" && this.context.featureFlags.githubIntegration) {
-        await this.runStep("step11-docs", async () => {
-          await this.runGitHubSteps();
-        });
-      }
-
-      this.context.currentStep = "step12-delivery";
-      this.updateContextMd("delivery", `Completed at ${new Date().toISOString()}`);
-      this.persistContext();
-
-      await this.memdirManager.remember(this.context.projectDir, {
-        type: "decision",
-        title: `Workflow decisions for ${this.context.projectId}`,
-        content: this.context.decisions.join("\n"),
-        tags: ["workflow", this.context.projectId],
+          const hasP0 = review.includes("P0") || review.includes("BLOCKER");
+          return { status: hasP0 ? "failed" : "success", data: { hasP0 } };
+        },
+        transitions: [
+          { condition: (r) => r.status === "success", target: "step9-test" },
+          { condition: (r) => r.status === "failed", target: "step7-development" }, // SKILL.md: P0 -> back to dev
+        ],
+        fallback: "step7-development",
       });
 
-      await this.featureFlagManager.scanForFlags(this.context.projectDir);
-      const cleanupCandidates = await this.featureFlagManager.detectCleanupCandidates(this.context.projectDir);
-      if (cleanupCandidates.length > 0) {
-        this.context.decisions.push(`Feature flags: ${cleanupCandidates.length} due for cleanup`);
-      }
+      // ── Step 9: Testing ──
+      sm.addNode({
+        step: "step9-test",
+        execute: async () => {
+          if (checkAbort()) return { status: "paused" };
+          const tests = await this.orchestrator.runTests(this.context!.projectDir);
+          this.context!.decisions.push(`Tests: ${tests.passed ? "PASSED" : "FAILED"}`);
+          return { status: tests.passed ? "success" : "failed", data: { testsPassed: tests.passed } };
+        },
+        transitions: [
+          { condition: (r) => r.status === "success", target: "step10-security-audit" },
+          { condition: (r) => r.status === "failed", target: "step7-development" }, // SKILL.md: coverage insufficient -> back to dev
+        ],
+        fallback: "step7-development",
+      });
 
-      await this.memdirManager.updateAging(this.context.projectDir);
+      // ── Step 10: Security audit ──
+      sm.addNode({
+        step: "step10-security-audit",
+        execute: async () => {
+          if (checkAbort()) return { status: "paused" };
+          try {
+            const auditTool = new (await import("../tools/security-audit-tool.js")).SecurityAuditTool();
+            const result = await auditTool.execute("sm-step10", {
+              projectDir: this.context!.projectDir,
+              mode: this.context!.mode === "full" ? "comprehensive" : "daily",
+              scope: "full",
+            });
+            const output = result.content?.[0]?.text ?? "Security audit completed";
+            this.context!.decisions.push(`Security: ${String(output).slice(0, 300)}`);
+            return { status: "success" };
+          } catch (e) {
+            this.context!.decisions.push(`Security audit skipped: ${e}`);
+            return { status: "success" }; // Non-blocking
+          }
+        },
+        transitions: [
+          { condition: (r) => r.status === "success", target: "step11-docs" },
+        ],
+      });
+
+      // ── Step 11: Docs + GitHub ──
+      sm.addNode({
+        step: "step11-docs",
+        execute: async () => {
+          if (checkAbort()) return { status: "paused" };
+          await this.orchestrator.generateDocs(this.context!.projectDir, this.context!.spec);
+          if (this.context!.featureFlags.githubIntegration) {
+            await this.runGitHubSteps();
+          }
+          return { status: "success" };
+        },
+        transitions: [
+          { condition: (r) => r.status === "success", target: "step12-delivery" },
+        ],
+      });
+
+      // ── Step 12: Delivery (terminal node) ──
+      sm.addNode({
+        step: "step12-delivery",
+        execute: async () => {
+          this.context!.currentStep = "step12-delivery";
+          this.updateContextMd("delivery", `Completed at ${new Date().toISOString()}`);
+          this.persistContext();
+
+          await this.memdirManager.remember(this.context!.projectDir, {
+            type: "decision",
+            title: `Workflow decisions for ${this.context!.projectId}`,
+            content: this.context!.decisions.join("\n"),
+            tags: ["workflow", this.context!.projectId],
+          });
+
+          await this.featureFlagManager.scanForFlags(this.context!.projectDir);
+          const cleanupCandidates = await this.featureFlagManager.detectCleanupCandidates(this.context!.projectDir);
+          if (cleanupCandidates.length > 0) {
+            this.context!.decisions.push(`Feature flags: ${cleanupCandidates.length} due for cleanup`);
+          }
+
+          await this.memdirManager.updateAging(this.context!.projectDir);
+          return { status: "success" };
+        },
+        transitions: [], // Terminal node — no outgoing transitions
+      });
+
+      // ── Run the state machine ──
+      // Try to resume from saved checkpoint, otherwise start from step2
+      const checkpoint = this.loadCheckpoint();
+      const startStep = checkpoint?.step ?? "step2-handover";
+      if (checkpoint) {
+        this.context!.decisions.push(`Resuming from checkpoint: step=${checkpoint.step}, iteration=${checkpoint.iteration}`);
+      }
+      await sm.run(startStep as any);
+
+      // Clean up checkpoint on successful completion
+      this.clearCheckpoint();
     } catch (e) {
       if (this.context) {
         this.context.decisions.push(`Workflow error at ${this.context.currentStep}: ${e}`);
@@ -490,6 +637,54 @@ export class DevWorkflowEngine {
     persistCtx(this.context, join(this.context.projectDir, CONTEXT_FILE));
   }
 
+  /**
+   * Persist a state machine checkpoint to .dev-workflow/checkpoint.json.
+   * This is separate from the context file and captures SM-specific metadata
+   * for resume-from-checkpoint scenarios.
+   */
+  private persistCheckpoint(step: WorkflowStep, iteration: number): void {
+    if (!this.context) return;
+    const dir = join(this.context.projectDir, ".dev-workflow");
+    const path = join(dir, "checkpoint.json");
+    try {
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      writeFileSync(path, JSON.stringify({
+        currentStep: step,
+        iterationCount: iteration,
+        timestamp: new Date().toISOString(),
+        projectId: this.context.projectId,
+        mode: this.context.mode,
+      }, null, 2));
+    } catch {
+      // Non-critical: checkpoint is best-effort
+    }
+  }
+
+  /**
+   * Load a previously saved checkpoint.
+   * Returns the step to resume from, or null if no checkpoint exists.
+   */
+  private loadCheckpoint(): { step: WorkflowStep; iteration: number } | null {
+    if (!this.context) return null;
+    const path = join(this.context.projectDir, ".dev-workflow", "checkpoint.json");
+    try {
+      if (!existsSync(path)) return null;
+      const data = JSON.parse(readFileSync(path, "utf-8"));
+      return { step: data.currentStep, iteration: data.iterationCount ?? 0 };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Clear checkpoint after successful workflow completion.
+   */
+  private clearCheckpoint(): void {
+    if (!this.context) return;
+    const path = join(this.context.projectDir, ".dev-workflow", "checkpoint.json");
+    try { if (existsSync(path)) unlinkSync(path); } catch { /* ignore */ }
+  }
+
   private loadContext(projectDir: string): WorkflowContext | null {
     return loadContextFromDisk(projectDir, CONTEXT_FILE);
   }
@@ -516,6 +711,22 @@ export class DevWorkflowEngine {
 
   getWorkingMemoryManager(): WorkingMemoryManager {
     return this.workingMemoryManager;
+  }
+
+  getHandoverManager(): HandoverManager {
+    return this.handoverManager;
+  }
+
+  getMemdirManager(): MemdirManager {
+    return this.memdirManager;
+  }
+
+  getFeatureFlagManager(): FeatureFlagManager {
+    return this.featureFlagManager;
+  }
+
+  getBootstrapManager(): BootstrapManager {
+    return this.bootstrapManager;
   }
 
   getDirectoryTemplateManager(): DirectoryTemplateManager {

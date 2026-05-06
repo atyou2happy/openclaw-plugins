@@ -158,10 +158,19 @@ describe("WorkingMemoryManager", () => {
     expect(result.level).toBe("none");
   });
 
-  it("shouldCompact returns true when activeFiles threshold exceeded", () => {
+  it("shouldCompact returns true when L1 threshold exceeded", () => {
     const mgr = new WorkingMemoryManager(createMockRuntime());
-    for (let i = 0; i < 6; i++) {
-      mgr.updateStepLayerCommand(`cmd output ${i}`);
+    // Each command is capped at 200 chars internally; 5 entries * 200 = 1000 chars.
+    // Use a custom config with lower thresholds for testability.
+    (mgr as any).config = {
+      l1MaxToolOutputs: 5,
+      l1MaxChars: 500,
+      l2MaxToolOutputs: 50,
+      l2MaxChars: 100_000,
+    };
+    // 5 commands * 200 chars = 1000 chars > 500 l1MaxChars
+    for (let i = 0; i < 5; i++) {
+      mgr.updateStepLayerCommand(`cmd output ${i} `.repeat(20)); // ~400 chars each
     }
     const result = mgr.shouldCompact();
     expect(result.needed).toBe(true);

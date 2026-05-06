@@ -221,26 +221,161 @@ export class HandoverManager {
   }
 
   private parseHandover(content: string): HandoverDocument | null {
-    const lines = content.split("\n");
     const getValue = (key: string): string => {
       const match = content.match(new RegExp(`> ${key}：(.+)`));
       return match ? match[1].trim() : "";
     };
+
+    // ── Parse table rows: "| col1 | col2 | col3 | col4 |" ──
+    const parseTableSection = (header: string, colCount: number): string[][] => {
+      const sectionStart = content.indexOf(`## ${header}`);
+      if (sectionStart === -1) return [];
+      const sectionEnd = content.indexOf("\n## ", sectionStart + 1);
+      const section = sectionEnd === -1
+        ? content.slice(sectionStart)
+        : content.slice(sectionStart, sectionEnd);
+
+      return section
+        .split("\n")
+        .filter((line) => line.startsWith("|") && !line.includes("---"))
+        .map((line) =>
+          line.split("|").filter((c) => c.trim() !== "").map((c) => c.trim())
+        )
+        .filter((row) => row.length === colCount);
+    };
+
+    // ── Parse list items under a section ──
+    const parseListSection = (header: string): string[] => {
+      const sectionStart = content.indexOf(`## ${header}`);
+      if (sectionStart === -1) return [];
+      const sectionEnd = content.indexOf("\n## ", sectionStart + 1);
+      const section = sectionEnd === -1
+        ? content.slice(sectionStart)
+        : content.slice(sectionStart, sectionEnd);
+
+      return section
+        .split("\n")
+        .filter((line) => line.startsWith("- "))
+        .map((line) => line.slice(2).trim());
+    };
+
+    // ── Parse numbered list items (pending items with bold title + details) ──
+    const parsePendingItems = (): HandoverDocument["pendingItems"] => {
+      const sectionStart = content.indexOf("## 未完成事项");
+      if (sectionStart === -1) return [];
+      const sectionEnd = content.indexOf("\n## ", sectionStart + 1);
+      const section = sectionEnd === -1
+        ? content.slice(sectionStart)
+        : content.slice(sectionStart, sectionEnd);
+
+      const items: HandoverDocument["pendingItems"] = [];
+      const blocks = section.split(/\n(?=\d+\.\s\*\*)/);
+      for (const block of blocks.slice(1)) { // skip first chunk (header text)
+        const titleMatch = block.match(/\d+\.\s\*\*(.+?)\*\*[：:]\s*(.+)/);
+        if (!titleMatch) continue;
+        const stateMatch = block.match(/当前状态[：:]\s*(.+)/);
+        const actionMatch = block.match(/下一步[：:]\s*(.+)/);
+        items.push({
+          title: titleMatch[1].trim(),
+          description: titleMatch[2].trim(),
+          currentState: stateMatch?.[1].trim() ?? "unknown",
+          nextAction: actionMatch?.[1].trim() ?? "N/A",
+        });
+      }
+      return items;
+    };
+
+    // ── Parse current progress table ──
+    const progressRows = parseTableSection("当前进度", 2);
+    const getProgressValue = (dimension: string): string => {
+      const row = progressRows.find((r) => r[0].includes(dimension));
+      return row ? row[1] : "";
+    };
+
+    // ── Parse tech context table ──
+    const techRows = parseTableSection("技术上下文", 2);
+    const getTechValue = (item: string): string => {
+      const row = techRows.find((r) => r[0].includes(item));
+      return row ? row[1] : "";
+    };
+
+    // ── Parse spec status table ──
+    const specRows = parseTableSection("Spec 状态", 3);
+    const getSpecEntry = (file: string): { status: string; path: string } => {
+      const row = specRows.find((r) => r[0].includes(file));
+      return { status: row?.[1] ?? "unknown", path: row?.[2] ?? "N/A" };
+    };
+
+    // ── Parse key decisions table ──
+    const decisionRows = parseTableSection("关键决策记录", 4);
+    const keyDecisions = decisionRows.map((r) => ({
+      decision: r[0],
+      choice: r[1],
+      reason: r[2],
+      impact: r[3],
+    }));
+
+    // ── Parse known issues table ──
+    const issueRows = parseTableSection("已知问题", 4);
+    const knownIssues = issueRows.map((r) => ({
+      issue: r[0],
+      severity: (["high", "medium", "low"].includes(r[1]) ? r[1] : "medium") as "high" | "medium" | "low",
+      status: r[2],
+      notes: r[3],
+    }));
+
+    // ── Parse directory snapshot (code block) ──
+    const dirMatch = content.match(/## 目录结构快照\n\n```\n([\s\S]*?)```/);
+    const directorySnapshot = dirMatch?.[1]?.trim() ?? "";
+
+    // ── Parse recovery strategy (quoted lines) ──
+    const recoveryStart = content.indexOf("## 建议的恢复策略");
+    let recoveryStrategy: string[] = [];
+    if (recoveryStart !== -1) {
+      const recoveryEnd = content.indexOf("\n## ", recoveryStart + 1);
+      const recoverySection = recoveryEnd === -1
+        ? content.slice(recoveryStart)
+        : content.slice(recoveryStart, recoveryEnd);
+      recoveryStrategy = recoverySection
+        .split("\n")
+        .filter((line) => line.startsWith("> ") && !line.includes("下一个 LLM"))
+        .map((line) => line.replace(/^>\s*\d*\.\s*/, "").trim());
+    }
+
+    // ── Parse completed items ──
+    const completedItems = parseListSection("已完成事项");
 
     return {
       generatedAt: getValue("生成时间"),
       generatedBy: getValue("生成模型"),
       projectName: getValue("项目名称"),
       projectDir: getValue("项目目录"),
-      currentProgress: { step: "unknown", currentTask: "N/A", tasksCompleted: "0/0", gitBranch: "main", uncommittedChanges: "No" },
-      completedItems: [],
-      keyDecisions: [],
-      techContext: { languageFramework: "", mode: "standard", openSource: "Unknown", techStack: "", keyDependencies: "" },
-      pendingItems: [],
-      knownIssues: [],
-      specStatus: { proposal: { status: "unknown", path: "N/A" }, design: { status: "unknown", path: "N/A" }, tasks: { status: "unknown", path: "N/A" } },
-      directorySnapshot: "",
-      recoveryStrategy: [],
+      currentProgress: {
+        step: getProgressValue("流程步骤") || "unknown",
+        currentTask: getProgressValue("当前任务") || "N/A",
+        tasksCompleted: getProgressValue("任务完成度") || "0/0",
+        gitBranch: getProgressValue("Git 分支") || "main",
+        uncommittedChanges: getProgressValue("未提交变更") || "No",
+      },
+      completedItems,
+      keyDecisions,
+      techContext: {
+        languageFramework: getTechValue("语言/框架"),
+        mode: (["quick", "standard", "full", "ultra"].includes(getTechValue("项目类型"))
+          ? getTechValue("项目类型") : "standard") as WorkflowMode,
+        openSource: getTechValue("开源/闭源"),
+        techStack: getTechValue("技术栈"),
+        keyDependencies: getTechValue("关键依赖"),
+      },
+      pendingItems: parsePendingItems(),
+      knownIssues,
+      specStatus: {
+        proposal: getSpecEntry("proposal"),
+        design: getSpecEntry("design"),
+        tasks: getSpecEntry("tasks"),
+      },
+      directorySnapshot,
+      recoveryStrategy,
     };
   }
 

@@ -45,14 +45,18 @@ export interface CompactSummary {
 
 export interface AutoCompactConfig {
   l1MaxToolOutputs: number;
-  l2TokenThreshold: number;
+  l1MaxChars: number;
+  l2MaxToolOutputs: number;
+  l2MaxChars: number;
   projectLayerMaxTokens: number;
   taskLayerMaxTokens: number;
 }
 
 const DEFAULT_COMPACT_CONFIG: AutoCompactConfig = {
-  l1MaxToolOutputs: 5,
-  l2TokenThreshold: 8000,
+  l1MaxToolOutputs: 20,
+  l1MaxChars: 40_000,
+  l2MaxToolOutputs: 50,
+  l2MaxChars: 100_000,
   projectLayerMaxTokens: 2000,
   taskLayerMaxTokens: 3000,
 };
@@ -175,9 +179,16 @@ export class WorkingMemoryManager {
   }
 
   shouldCompact(): { needed: boolean; level: "l1" | "l2" | "none" } {
-    const readCount = this.stepLayer.recentCommands.length;
-    const activeFilesCount = this.stepLayer.activeFiles.length;
-    if (readCount >= this.config.l1MaxToolOutputs || activeFilesCount >= 10) {
+    const totalEntries = this.stepLayer.recentCommands.length +
+      this.stepLayer.activeFiles.length +
+      this.stepLayer.failedAttempts.length;
+    const totalChars = this.stepLayer.recentCommands.join("").length +
+      Array.from(this.stepLayer.tempVariables.values()).join("").length;
+
+    if (totalEntries >= this.config.l2MaxToolOutputs || totalChars >= this.config.l2MaxChars) {
+      return { needed: true, level: "l2" };
+    }
+    if (totalEntries >= this.config.l1MaxToolOutputs || totalChars >= this.config.l1MaxChars) {
       return { needed: true, level: "l1" };
     }
     return { needed: false, level: "none" };
@@ -291,7 +302,10 @@ export class WorkingMemoryManager {
   }
 
   private estimateTokens(content: string): number {
-    return Math.ceil(content.length / 4);
+    // Count CJK characters (each ~1 token) separately from non-CJK (~4 chars/token).
+    // A naive length/4 overestimates Chinese/Japanese/Korean text by ~4x.
+    const cjkCount = (content.match(/[\u4e00-\u9fff\u3400-\u4dbf\u3000-\u303f]/g) || []).length;
+    return Math.ceil(cjkCount * 1 + (content.length - cjkCount) / 4);
   }
 
   private extractSection(content: string, sectionHeader: string): string[] {

@@ -1,12 +1,12 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v10。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search/dev-workflow 四项目实战经验。集中配置、async安全、连接池、测试分层、批量迁移、SDK模式、模块化拆分。
+description: AI驱动开发工作流 v11。需求探索→交接恢复→规格定义→编码→审查→安全审计→测试→交付全流程。状态机驱动、真实gate检查、checkpoint恢复、token优化。
 user-invocable: true
 ---
 
-# Dev Workflow v10 — AI驱动开发工作流
+# Dev Workflow v11 — AI驱动开发工作流
 
-> 版本：10.0.0 | 最后更新：2026-05-07 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow自身重构) 五版经验融合
+> 版本：11.0.0 | 最后更新：2026-05-07 | v10→v11: 状态机重构、真实gate检查、checkpoint恢复、token优化、handover完整解析
 
 ---
 

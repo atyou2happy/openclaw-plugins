@@ -5,6 +5,33 @@ vi.mock("openclaw/plugin-sdk/core", () => ({}));
 vi.mock("../src/channel/runtime.js", () => ({
   getEngine: vi.fn(() => ({
     getContext: vi.fn(() => null),
+    getHandoverManager: vi.fn(() => ({
+      consume: vi.fn().mockResolvedValue(null),
+      generate: vi.fn().mockResolvedValue(""),
+    })),
+    getMemdirManager: vi.fn(() => ({
+      initialize: vi.fn().mockResolvedValue(undefined),
+      updateAging: vi.fn().mockResolvedValue(undefined),
+      recall: vi.fn().mockResolvedValue([]),
+      remember: vi.fn().mockResolvedValue({}),
+    })),
+    getBootstrapManager: vi.fn(() => ({
+      bootstrap: vi.fn().mockResolvedValue({ checks: [], suggestions: [] }),
+    })),
+    getFeatureFlagManager: vi.fn(() => ({
+      scanForFlags: vi.fn().mockResolvedValue([]),
+      detectCleanupCandidates: vi.fn().mockResolvedValue([]),
+    })),
+    getPermissionManager: vi.fn(() => ({
+      upgradeToWorkspaceWrite: vi.fn(),
+      canWrite: vi.fn().mockReturnValue(true),
+      validateOperation: vi.fn().mockReturnValue({ allowed: true }),
+    })),
+    getWorkingMemoryManager: vi.fn(() => ({
+      shouldCompact: vi.fn().mockReturnValue({ needed: false }),
+      executeL1Compact: vi.fn().mockResolvedValue(undefined),
+      executeL2Compact: vi.fn().mockResolvedValue(undefined),
+    })),
   })),
 }));
 
