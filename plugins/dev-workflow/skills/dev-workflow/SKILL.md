@@ -1,12 +1,14 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v16。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。v16：Agent Team多Agent并行编排(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator)。
+description: AI驱动开发工作流 v17。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。v16：Agent Team多Agent并行编排(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator)。v17：数据流逻辑闭环设计模式(Pipeline顺序+装饰性数据陷阱+三关验证)。
 user-invocable: true
 ---
 
-# Dev Workflow v16 — AI驱动开发工作流
+# Dev Workflow v17 — AI驱动开发工作流
 
-> 版本：16.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排) 十版经验融合
+> 版本：17.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律) 七版经验融合
+
+> **v17 状态**: 新增 daily-stock-report v11 重构经验（原则57-66）：Pipeline顺序纪律、装饰性数据陷阱深度审计、三关验证法、跨模块数据流签名对齐、渲染函数参数化等数据流逻辑闭环设计模式。822测试通过。详见原则57-66
 
 > **v16 状态**: 新增Agent Team并行编排子系统(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator+AgentTeamTool)，多Agent并行执行任务，失败自动回退串行。40个测试全部通过。详见 Step 7 v16 并行编排章节
 > **v15 状态**: 新增4大代码图谱模块(SymbolGraphBuilder+PropagationEngine+CompletenessChecker+ImpactAnalyzer)，开发遗漏减少60-80%，审查token节省40-60%。详见 `references/code-graph-research.md`
@@ -87,6 +89,28 @@ user-invocable: true
 55. **每个模块必有测试** ⭐⭐⭐ v16 — 新增模块的测试覆盖是不可协商的。v16 中 AgentTeamTool（95 行代码）完全无测试，是代码审查的 P1 发现。建议在 tasks.md 中将测试任务与模块任务绑定
 
 56. **错误路径资源清理** ⭐⭐ v16 — try-catch 的 catch 分支中必须执行与正常路径等价的资源清理（如 contractLayer.clear(), ownership.clear()）。遗漏清理会导致后续 batch 执行时的脏状态
+
+### daily-stock-report v11 重构经验
+
+57. **Pipeline顺序即逻辑闭环** ⭐⭐⭐ v11-dsr — Pipeline 顺序决定数据是否有机会影响下游决策。牛股评分必须在辩论前（才能生成 bull_context 注入辩论），辩论结果必须在 Top10 重排序前（才能参与排序）。改顺序是解决 A3/A4 类逻辑闭环问题的最直接手段，而不是打补丁
+
+58. **数据影响决策而非展示决策** ⭐⭐⭐ v13 → v11-dsr — 装饰性数据陷阱的深层问题：即使字段正确展示在 HTML 中，如果排序/筛选/评分的代码路径没有引用该字段，则数据对决策零贡献。审计方法：追踪字段从数据源到决策点的完整路径（storage → calc → serialize → deserialize → calc → render），确认每一步都实际使用该字段
+
+59. **新字段不过三关 = 白加** ⭐⭐⭐ v13.1 → v11-dsr — 新字段要真正生效必须过三关：(1) 计算层产生 (2) 管道层传递 (3) 决策层使用。遗漏第3步是最常见的——字段漂亮地展示在 HTML 但不参与排序/评分/signal。验证方法：grep 决策代码确认该字段被实际使用
+
+60. **跨模块数据流签名必须对齐** ⭐⭐ v11-dsr — 跨模块（如 bull_scoring → debate_engine → selector）传递数据时，字段名必须精确匹配。Python 不会在运行时检查字段拼写，bull_score vs bull_score_ 静默失败。防御：定义数据结构的 type hint 或 dataclass，或至少在文档中明确列出字段名
+
+61. **Pipeline 中间状态完整性** ⭐⭐ v11-dsr — 多阶段 Pipeline 中，每个阶段保存独立的中间 JSON 文件（如 bull_picks_*.json 和 debate_result_*.json），不要依赖单一输出文件串联两个阶段。阶段 N 崩溃后，从阶段 N-1 的中间文件恢复，而不是从头开始
+
+62. **bull_context 注入时机** ⭐⭐ v11-dsr — bull_context 必须在 bull_scoring 完成后、debate 开始前构建并传入 debate_engine。不能在 debate_engine 内部自己加载 bull_scoring 结果（违反模块边界），也不能在 debate 结束后再注入（顺序错误）
+
+63. **行业热度/政策对齐等外部因子注入点** ⭐⭐ v11-dsr — 行业热度、政策主题等来自其他子系统的数据，最干净的注入点是评分函数的参数，而非在评分函数内部调用其他子系统。这样保持评分函数纯函数特性，便于单元测试
+
+64. **HTML渲染函数参数化** ⭐⭐ v11-dsr — 渲染函数（如 render_bull_candidates）应接收候选列表而非自行加载文件。这样 (1) 可以传入测试 mock 数据 (2) 可以传入不同数据源组合 (3) main.py 控制数据流而非渲染函数。避免渲染函数成为隐性数据加载器
+
+65. **大型表格增强先加列再填数据** ⭐⭐ v11-dsr — 给已有 HTML 表格增加新列时，先在表头（`<th>`）加上新列，再在每行数据末尾添加对应的 `<td>`。顺序错误（先加数据再加表头）会导致 HTML 结构错位。增强 render_strong_pool 的"牛股"列时先加 `<th>` 再加数据
+
+66. **政策主题列表单一真实来源** ⭐⭐ v11-dsr — 政策核心主题列表（如十五五规划的 `_POLICY_CORE_THEMES`）必须在单一位置定义，被所有模块引用（bull_scoring.py、sections.py）。硬编码两份会导致不一致。如需在不同模块显示略有不同的版本，用同一个列表做子集过滤，而不是维护两个独立列表
 
 ---
 
