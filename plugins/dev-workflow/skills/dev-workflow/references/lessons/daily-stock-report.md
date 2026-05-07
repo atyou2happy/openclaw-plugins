@@ -436,7 +436,30 @@
    436|
    437|**预防模式**：在子包 config 中使用 `from config import X, Y, Z` 逐一命名，**不要**用 `as` 映射到另一个也在本模块中定义的名字。
    438|
-   439|*Last updated: 2026-05-07（经验17-22）*
+   439|*Last updated: 2026-05-07（经验17-26）*
+
+---
+
+## 经验 24: sections.py 同名辅助函数覆盖 — `_score_color` 静默 bug ⭐⭐
+
+**问题**：`sections.py` 中存在两个同名 `_score_color(score)` 函数，第一个为 `render_decision_summary()` 定义（阈值 <30/<40/<55/<70），第二个为 `render_sentiment()` 定义（阈值 >=75/>=60/>=45/>=30）。Python 静默使用**后定义覆盖前定义**，导致 `render_decision_summary()` 使用了错误的颜色映射逻辑。
+
+**症状**：不崩溃，但颜色语义错误 — decision_summary 板块的颜色分档标准变成了 sentiment 板块的标准。
+
+**根因**：多次迭代中向 `sections.py` 追加渲染函数时，不同开发者在不同位置独立定义了同名辅助函数，未检查是否已存在。
+
+**诊断命令**：
+```bash
+grep -n 'def _score_color' scripts/report/sections.py
+# 输出两行 = 有同名冲突
+```
+
+**预防模式**：
+1. 追加新渲染函数前，`grep 'def _helper' file.py` 检查是否已有同名辅助函数
+2. 如有同名，合并为一个带参数的通用函数（如 `_score_color(score, mode='sentiment'|'decision')`）
+3. 或用模块级前缀避免冲突（如 `_sentiment_score_color` vs `_decision_score_color`）
+
+**通用教训**：大文件(>500行)多次追加函数时，辅助函数命名冲突是高频静默 bug。不同于 ImportError 会立刻暴露，函数覆盖**完全静默**，只有仔细比对输出才能发现。
    440|
    441|---
    442|
@@ -594,3 +617,79 @@ Step 3: 渲染层（展示层） — sections.py + templates.py + main.py
 - 底部突破是确认信号(20%)
 - 概念和共振是辅助(各15%)
 - 每个维度内部用分档评分（而非线性），避免极端值主导
+
+---
+
+## 经验 25: 序列化存活审计 — 中间计算字段在 JSON 重载后丢失 ⭐⭐⭐
+
+**背景**：v10 新增 `bull_scoring.py` 的 `calc_gene_strength()` 依赖 `limit_gene_detail`（包含 frequency/consecutive/seal_quality 等子字段）。经验 23 确认 SERIALIZE_KEYS 已包含该字段，但端到端验证发现**旧 JSON 文件中该字段为空**。
+
+**根因链条**：
+```
+1. technical_filter() 调用 calc_limit_gene() → 返回 {score, frequency, consecutive, ...}
+2. s["limit_gene_detail"] = gene_result  ← 计算时完整存在
+3. _serialize() 检查 "limit_gene_detail" in SERIALIZE_KEYS ✓
+4. _serialize() 执行 {k: s.get(k) for k in SERIALIZE_KEYS if k in s} ✓
+5. JSON 写入时该字段完整 ✓
+6. 但旧 JSON 文件（v8/v9 生成时 SERIALIZE_KEYS 还没该字段）→ 字段缺失
+7. 新代码从旧 JSON 读取 → limit_gene_detail 不存在 → calc_gene_strength 退化
+8. 基因维度从 91 分降到 41 分（差 50 分）
+```
+
+**影响量化**：
+- 有 detail: gene_score=82 → strength=91.0
+- 无 detail: gene_score=82 → strength=41.0（base=41, 无 bonus）
+- **差距 50 分**，占基因维度权重 25%，拉低 bull_score 约 12.5 分
+
+**关键区分**：
+- **Pipeline 实时运行**不受影响（technical_filter 会计算 limit_gene_detail）
+- **从旧 JSON 重新加载**受影响（字段缺失）
+- 影响场景：重跑报告 HTML 时使用旧的 zt_picks JSON
+
+**序列化存活审计步骤**（适用于任何新增 pipeline 阶段）：
+```
+1. 对每个新依赖字段，追踪：计算点 → SERIALIZE_KEYS → JSON → 重载 → 消费点
+2. 用旧 JSON 文件测试：加载后检查字段是否存在
+3. 在消费点加 fallback：字段缺失时用已有数据近似计算
+4. 量化影响：有/无该字段时输出差异多少分
+```
+
+**防御性编程模式**（bull_scoring 中的 fallback）：
+```python
+def calc_gene_strength(s: Dict) -> float:
+    gene_score = s.get("limit_gene", 0)
+    detail = s.get("limit_gene_detail", {})
+    if not isinstance(detail, dict):
+        detail = {}
+    # Base: 即使无 detail 也能给出基础分
+    score = gene_score * 0.5
+    # Bonus: detail 缺失则 bonus=0，不崩溃
+    freq = detail.get("frequency", 0)
+    ...
+```
+
+**通用教训**：新增评分维度时，不仅要确保 SERIALIZE_KEYS 包含依赖字段，还要验证**从历史 JSON 加载时字段是否存活**。`s.get("field", {})` 防崩溃但不防退化。
+
+---
+
+## 经验 26: 评分函数的扁平数据边界行为 — breakout_signal 反例 ⭐
+
+**问题**：`calc_breakout_signal()` 对扁平 kline（所有价格相同）的得分 = 50，而非预期的 0。
+
+**根因**：
+```python
+current = closes[-1]  # = 50
+high_20 = max(closes[-20:])  # = 50
+# current >= high_20 * 0.98  →  50 >= 49  →  True!
+# → +25 points for "突破20日高点"
+# 同理突破60日高点 +25 = 50
+```
+
+**教训**：评分函数的边界条件测试不能只测"正常"和"空数据"，必须测**退化数据**（全相同、全零、单元素等）。退化数据的得分应在设计时明确约定（是 0 还是 50？），而非由实现隐式决定。
+
+**模式 — 评分函数边界测试矩阵**：
+```
+正常数据 → 预期非零得分
+空数据 (None/[]) → 预期 0
+退化数据 (全相同) → 明确约定（通常应接近 0 或中性分）
+极端数据 (10x暴涨) → 预期高分但不超过上限

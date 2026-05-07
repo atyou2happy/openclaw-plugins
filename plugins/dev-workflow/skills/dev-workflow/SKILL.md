@@ -6,9 +6,9 @@ user-invocable: true
 
 # Dev Workflow v11 — AI驱动开发工作流
 
-> 版本：13.1.0 | 最后更新：2026-05-07 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式) 九版经验融合
+> 版本：13.2.0 | 最后更新：2026-05-07 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback) 九版经验融合
 
-> **v13.1 状态**: 新增经验23"新板块闭环设计模式" + daily-stock-report v10(10倍牛股预判板块)
+> **v13.2 状态**: 新增核心原则#31"数据缺失fallback" + daily-stock-report v10验证(基因维度fallback修复+HTML渲染验证)
 > **v12 状态**: 新增数据源约束审计步骤(Step3) + 延迟导入Mock陷阱(testing.md)
 > **v11 变更**: (1) WorkflowStateMachine + conditional transitions + checkpoint persistence, (2) Full parseHandover markdown parser, (3) Manager instance unification via engine getters, (4) Real gate checks (lint/boundary/unit-test), (5) Token optimizations (L2 compression fix, spec cap 15, QA truncation 500chars, CJK estimation)
 
@@ -52,6 +52,8 @@ user-invocable: true
 28. **Manager 单例获取** ⭐ v11 — 所有 Manager 实例从 engine getter 获取（getHandoverManager/getMemdirManager/...），消除重复实例
 29. **装饰性数据陷阱** ⭐⭐⭐ v13 — 数据存在于JSON且正确展示 ≠ 数据影响决策。审计必须追踪到数据是否参与**计算/排序/筛选**，而非仅验证展示（daily-stock-report v9 实战）
 30. **新板块闭环设计** ⭐⭐ v13.1 — 添加新板块必须同步完成：评分引擎(计算层) → SERIALIZE_KEYS(管道层) → 渲染函数(展示层) → main.py加载 → templates.py插入。漏任何一步 = 白做。新字段不加SERIALIZE_KEYS是最常见的遗漏
+31. **数据缺失 fallback** ⭐⭐ v13.2 — 评分函数每个维度都应有 fallback 路径。旧JSON可能缺少新字段，`if not detail.get("key"): recalc_from_source()` 避免低估。测试时 mock 数据源隔离 fallback。**额外陷阱**：即使SERIALIZE_KEYS已包含新字段，旧JSON文件（升级前生成的）仍缺少该字段。消费端必须用`.get(field, {})`做fallback，否则从旧数据加载时评分退化（daily-stock-report v10实战：50分差异）
+31. **同名辅助函数覆盖陷阱** ⭐⭐ v13.1 — 大文件(>500行)多次追加渲染函数时，新增的辅助函数(如`_score_color`)可能与已有同名函数冲突。Python静默使用最后定义，上游调用方拿到错误的映射/阈值/逻辑。**预防**：追加新函数前`grep 'def _helper_name' file.py`检查是否已存在同名函数；如存在，重命名或合并逻辑，不要覆盖
 
 ---
 
@@ -562,4 +564,4 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ---
 
-*v13.1.0 — 九版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计/10倍牛股5维评分/SERIALIZE_KEYS同步清单)*
+*v13.1.0 — 九版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计/10倍牛股5维评分/SERIALIZE_KEYS同步清单/序列化存活审计/评分函数边界测试)*
