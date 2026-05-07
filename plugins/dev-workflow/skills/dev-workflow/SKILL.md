@@ -59,6 +59,7 @@ user-invocable: true
 37. **LLM 自调节输出** ⭐⭐ v14 — 每个 step 的 prompt 中注入 token budget 指令（analysis:300, review:400, spec:800），LLM 自行控制输出长度。代码：`buildRegulationBlock(step)`。节省 20-30% 输出 tokens
 38. **历史三层 Condensation** ⭐⭐ v14 — 长会话中决策历史按 L0(原始5条)/L1(摘要20条)/L2(关键字) 分层压缩。触发阈值 15 条。代码：`HistoryCondenser`。节省 50-70% 历史 tokens
 39. **智能文件选择** ⭐⭐ v14 — 只注入任务相关文件（任务文件>import邻居>测试对>git变更），按相关性排序+token budget 截断。代码：`SmartFileSelector`。节省 40-60% 上下文 tokens
+40. **开源致谢纪律** ⭐⭐⭐ v14 — 开发中使用了开源项目代码、思路或灵感时：(1) 源码文件头部 JSDoc `Inspired by:` 标注来源项目+具体借鉴点 (2) 中英文 README 的 Acknowledgments/致谢 章节用表格列出：项目名(GitHub链接)+借鉴内容 (3) 评估过但未采纳的项目也应提及。这是对开源社区的尊重，也是帮助用户了解技术来源。
 
 ---
 
@@ -309,6 +310,14 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 - [ ] 板块/功能列表与实际一致
 - [ ] Spec 文件是否需要归档旧版本
 - [ ] SKILL.md 流程步骤与实际操作一致
+
+**⭐v14 开源致谢检查**（新增，参见原则 #40）：
+- [ ] `grep -rn "Inspired by" src/` — 收集所有标注的开源项目
+- [ ] 收集 `package.json` / `requirements.txt` 中的第三方依赖
+- [ ] README.md 添加 `## Acknowledgments` 表格：项目名(GitHub链接) + 借鉴内容
+- [ ] README_CN.md 添加 `## 致谢` 表格（中文翻译）
+- [ ] 评估过但未采纳的项目也提及（标注"已评估"）
+- [ ] 致谢内容与源码 `Inspired by` 注释一致（双向验证）
 
 #### Step 12: 交付+经验沉淀 ⭐ v7升级
 
@@ -570,4 +579,4 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ---
 
-*v14.0.0 — 十版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎: PromptCache/SpecCompressor/SkeletonExtractor/LLMSelfRegulator/HistoryCondenser/SmartFileSelector)*
+*v14.0.0 — 十版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎+开源致谢纪律)*
