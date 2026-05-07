@@ -70,6 +70,24 @@ user-invocable: true
 47. **Interface Contract Driven** ⭐⭐ v16 — agent 间通过 ContractLayer 发布/消费接口合约，实现松耦合通信
 48. **Parallel-to-Serial Fallback** ⭐⭐⭐ v16 — 当批次失败率超过 50% 时自动回退到串行执行，保证任务完成
 
+### v16 Agent Team 开发经验
+
+49. **配置注入原则** ⭐⭐⭐ v16 — 所有可配置项必须通过构造函数参数注入，使用 `{ ...DEFAULT, ...userConfig }` 合并模式。禁止在类内部硬编码配置常量作为运行时值。代码审查发现的 P0 bug：AgentTeamOrchestrator 使用 FALLBACK_TEAM_CONFIG 而非用户传入的 TeamConfig
+
+50. **Mock 动态返回** ⭐⭐ v16 — 测试中 mock 函数应使用 `mockImplementation` 根据输入动态返回结果，而非 `mockResolvedValue` 返回固定值。固定值在 Set/Map 去重场景下会导致计数错误（如 completedTasks 只计算为 1 而非 3）
+
+51. **关键模块亲自审查** ⭐⭐⭐ v16 — delegate_task 子 agent 适合做大量文件创建和模板代码生成，但核心调度器（如 AgentTeamOrchestrator）的逻辑应由主 agent 亲自审查或实现。子 agent 产出的代码可能遗漏配置注入等关键设计
+
+52. **并行/串行双分支提取公共方法** ⭐⭐ v16 — 当同一段逻辑在两个分支（如 all-at-once 和 sub-batch）中重复出现时，应提取为私有方法（如 processSettledResults）。代码重复是代码审查中最常见的 P1 问题
+
+53. **async 上下禁用 execSync** ⭐⭐⭐ v16 — 在 async 函数中使用 execSync 会阻塞 Node.js 事件循环，影响并发性能。应改用 `exec` 或 `spawn` 的异步版本，特别是 git commit / npm test 等可能耗时 30-120s 的操作
+
+54. **外部输入路径验证** ⭐⭐⭐ v16 — 用户/外部输入（如 taskId, filePath）拼接到文件系统路径前，必须验证不含 `..` 和绝对路径前缀。`join(baseDir, userInput)` 不能防止路径遍历
+
+55. **每个模块必有测试** ⭐⭐⭐ v16 — 新增模块的测试覆盖是不可协商的。v16 中 AgentTeamTool（95 行代码）完全无测试，是代码审查的 P1 发现。建议在 tasks.md 中将测试任务与模块任务绑定
+
+56. **错误路径资源清理** ⭐⭐ v16 — try-catch 的 catch 分支中必须执行与正常路径等价的资源清理（如 contractLayer.clear(), ownership.clear()）。遗漏清理会导致后续 batch 执行时的脏状态
+
 ---
 
 ## 五种模式
