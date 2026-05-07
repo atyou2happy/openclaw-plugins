@@ -156,8 +156,13 @@ This project draws inspiration from the following open-source projects and resea
 | [ast-grep](https://github.com/AstGrep/ast-grep) | Fast AST pattern matching for code structure extraction |
 | [Anthropic Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) | `cache_control` markers, static-prefix stability for cache hit optimization |
 | [LangGraph](https://github.com/langchain-ai/langgraph) | Checkpoint serialization pattern for stateful workflow recovery |
+| [TypeScript Compiler API](https://github.com/microsoft/TypeScript) | Symbol-level reference analysis (findReferences, findImplementations) — Phase 2 target |
+| [Sourcegraph SCIP](https://github.com/sourcegraph/scip) | Symbol-level code intelligence protocol design |
+| [Dependency Cruiser](https://github.com/sverweij/dependency-cruiser) | Module-level dependency graph patterns |
 
 Some token optimization strategies are documented in our [research notes](./skills/dev-workflow/references/token-optimization-research.md), which also evaluated [LLMLingua](https://github.com/microsoft/LLMLingua) (Microsoft), [GPTCache](https://github.com/zilliztech/GPTCache) (Zilliz), and [Selective Context](https://github.com/liyucheng09/Selective_Context).
+
+v15 impact analysis research is documented in [code-graph research](./skills/dev-workflow/references/code-graph-research.md).
 
 ## License
 

@@ -1,15 +1,15 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v11。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v11：状态机驱动(WorkflowStateMachine)+checkpoint恢复+真实Gate Checks+Token最小化+Manager实例统一。
+description: AI驱动开发工作流 v15。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。
 user-invocable: true
 ---
 
-# Dev Workflow v11 — AI驱动开发工作流
+# Dev Workflow v15 — AI驱动开发工作流
 
-> 版本：14.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎) 十版经验融合
+> 版本：15.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏) 十版经验融合
 
-> **v14 状态**: 新增6大Token最小化模块(PromptCache+SpecCompressor+SkeletonExtractor+LLMSelfRegulator+HistoryCondenser+SmartFileSelector)，综合token消耗下降40-60%，开发质量不退化。详见 `references/token-optimization-research.md`
-> **v13.2 状态**: 新增核心原则#31"数据缺失fallback" + daily-stock-report v10验证(基因维度fallback修复+HTML渲染验证)
+> **v15 状态**: 新增4大代码图谱模块(SymbolGraphBuilder+PropagationEngine+CompletenessChecker+ImpactAnalyzer)，开发遗漏减少60-80%，审查token节省40-60%。详见 `references/code-graph-research.md`
+> **v14 状态**: 6大Token最小化模块(PromptCache+SpecCompressor+SkeletonExtractor+LLMSelfRegulator+HistoryCondenser+SmartFileSelector)，综合token消耗下降40-60%。详见 `references/token-optimization-research.md`
 
 ---
 
@@ -60,6 +60,10 @@ user-invocable: true
 38. **历史三层 Condensation** ⭐⭐ v14 — 长会话中决策历史按 L0(原始5条)/L1(摘要20条)/L2(关键字) 分层压缩。触发阈值 15 条。代码：`HistoryCondenser`。节省 50-70% 历史 tokens
 39. **智能文件选择** ⭐⭐ v14 — 只注入任务相关文件（任务文件>import邻居>测试对>git变更），按相关性排序+token budget 截断。代码：`SmartFileSelector`。节省 40-60% 上下文 tokens
 40. **开源致谢纪律** ⭐⭐⭐ v14 — 开发中使用了开源项目代码、思路或灵感时：(1) 源码文件头部 JSDoc `Inspired by:` 标注来源项目+具体借鉴点 (2) 中英文 README 的 Acknowledgments/致谢 章节用表格列出：项目名(GitHub链接)+借鉴内容 (3) 评估过但未采纳的项目也应提及。这是对开源社区的尊重，也是帮助用户了解技术来源。
+41. **影响面分析先行** ⭐⭐⭐ v15 — 编码前必须用 `ImpactAnalyzer` 分析变更影响面，产出 must-change/may-change 文件列表。基于 `SymbolGraphBuilder`（正则 tag 提取）+ `PropagationEngine`（BFS 传播）。确保修改不遗漏任何依赖方。代码：`ImpactAnalyzer`
+42. **完整性校验必过** ⭐⭐⭐ v15 — 编码完成后用 `CompletenessChecker` 对比实际改动 vs 影响分析结果，遗漏文件=不通过。评分 = must-change覆盖70% + test覆盖30%。`status` 必须为 complete 或 warning 才能进入审查。代码：`CompletenessChecker`
+43. **符号级追踪优于文件级** ⭐⭐ v15 — 影响分析以符号（function/class/interface）为粒度，不是文件。好处：(1) 精确到具体函数调用链 (2) 减少误报（同文件不同函数不算影响） (3) 输出更紧凑省 token。当前用正则实现 Phase 1（~85% 准确率），Phase 2 升级到 TSC API（~99%）
+44. **Plan-Effect 对比** ⭐ v15 — Review 阶段对比 Plan（影响分析预测的改动范围）与 Effect（实际改动列表），差异即为潜在遗漏或过度修改。`CompletenessChecker.check()` 自动执行此对比
 
 ---
 

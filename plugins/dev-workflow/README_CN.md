@@ -156,8 +156,13 @@ pnpm lint
 | [ast-grep](https://github.com/AstGrep/ast-grep) | 快速 AST 模式匹配用于代码结构提取 |
 | [Anthropic Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) | `cache_control` 标记、静态前缀稳定性优化缓存命中 |
 | [LangGraph](https://github.com/langchain-ai/langgraph) | 检查点序列化模式用于有状态工作流恢复 |
+| [TypeScript Compiler API](https://github.com/microsoft/TypeScript) | 符号级引用分析（findReferences、findImplementations）— Phase 2 目标 |
+| [Sourcegraph SCIP](https://github.com/sourcegraph/scip) | 符号级代码智能协议设计 |
+| [Dependency Cruiser](https://github.com/sverweij/dependency-cruiser) | 模块级依赖图模式 |
 
 部分 Token 优化策略记录在我们的[研究笔记](./skills/dev-workflow/references/token-optimization-research.md)中，其中也评估了 [LLMLingua](https://github.com/microsoft/LLMLingua)（Microsoft）、[GPTCache](https://github.com/zilliztech/GPTCache)（Zilliz）和 [Selective Context](https://github.com/liyucheng09/Selective_Context)。
+
+v15 影响面分析调研记录在[代码图谱研究](./skills/dev-workflow/references/code-graph-research.md)中。
 
 ## 许可证
 

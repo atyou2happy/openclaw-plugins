@@ -22,12 +22,24 @@ export { HistoryCondenser } from "./history-condenser.js";
 export { SmartFileSelector } from "./smart-file-selector.js";
 export { getStepBudget, getGeneralRegulation, buildRegulationBlock, checkResponseBudget } from "./llm-self-regulator.js";
 
-// Re-export types
+// Code graph / impact analysis modules (v15)
+export { SymbolGraphBuilder } from "./symbol-graph-builder.js";
+export { PropagationEngine, isTestFile } from "./propagation-engine.js";
+export { CompletenessChecker } from "./completeness-checker.js";
+export { ImpactAnalyzer } from "./impact-analyzer.js";
+
+// Re-export types — token optimization (v14)
 export type { OptimizedPrompt, PromptBlock } from "./prompt-cache-optimizer.js";
 export type { CompressedSpec, CompressedDesign, CompressedTask } from "./spec-compressor.js";
 export type { FileSkeleton, SymbolEntry, SkeletonBudget } from "./skeleton-extractor.js";
 export type { CondensedEntry, CondensationResult, CondensationConfig } from "./history-condenser.js";
 export type { FileSelection, ScoredFile, SelectionConfig } from "./smart-file-selector.js";
+
+// Re-export types — code graph / impact analysis (v15)
+export type { SymbolGraph, SymbolTag, GraphStats, GraphBuildConfig, DefEntry, RefEntry, InheritEntry } from "./symbol-graph-builder.js";
+export type { PropagationResult, ImpactSeed, ImpactNode, ImpactReason, PropagationConfig, ScoreWeights } from "./propagation-engine.js";
+export type { CompletenessReport, MissingFile, TestStatus, ChecklistItem, CompletenessStats, CheckInput } from "./completeness-checker.js";
+export type { ImpactAnalysisConfig } from "./impact-analyzer.js";
 
 // Tool type exports
 export type { DevWorkflowTool } from "./dev-workflow-tool.js";
