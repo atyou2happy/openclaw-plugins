@@ -14,6 +14,21 @@ import { RetroTool } from "./retro-tool.js";
 import { RefactorAssessmentTool } from "./refactor-assessment-tool.js";
 import { CodeGraphTool } from "./code-graph-tool.js";
 
+// Token optimization modules (v14)
+export { PromptCacheOptimizer } from "./prompt-cache-optimizer.js";
+export { SpecCompressor } from "./spec-compressor.js";
+export { SkeletonExtractor } from "./skeleton-extractor.js";
+export { HistoryCondenser } from "./history-condenser.js";
+export { SmartFileSelector } from "./smart-file-selector.js";
+export { getStepBudget, getGeneralRegulation, buildRegulationBlock, checkResponseBudget } from "./llm-self-regulator.js";
+
+// Re-export types
+export type { OptimizedPrompt, PromptBlock } from "./prompt-cache-optimizer.js";
+export type { CompressedSpec, CompressedDesign, CompressedTask } from "./spec-compressor.js";
+export type { FileSkeleton, SymbolEntry, SkeletonBudget } from "./skeleton-extractor.js";
+export type { CondensedEntry, CondensationResult, CondensationConfig } from "./history-condenser.js";
+export type { FileSelection, ScoredFile, SelectionConfig } from "./smart-file-selector.js";
+
 // Tool type exports
 export type { DevWorkflowTool } from "./dev-workflow-tool.js";
 export type { WorkflowStatusTool } from "./workflow-status-tool.js";

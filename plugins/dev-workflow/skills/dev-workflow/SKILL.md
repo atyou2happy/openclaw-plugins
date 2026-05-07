@@ -6,11 +6,10 @@ user-invocable: true
 
 # Dev Workflow v11 — AI驱动开发工作流
 
-> 版本：13.2.0 | 最后更新：2026-05-07 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback) 九版经验融合
+> 版本：14.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎) 十版经验融合
 
+> **v14 状态**: 新增6大Token最小化模块(PromptCache+SpecCompressor+SkeletonExtractor+LLMSelfRegulator+HistoryCondenser+SmartFileSelector)，综合token消耗下降40-60%，开发质量不退化。详见 `references/token-optimization-research.md`
 > **v13.2 状态**: 新增核心原则#31"数据缺失fallback" + daily-stock-report v10验证(基因维度fallback修复+HTML渲染验证)
-> **v12 状态**: 新增数据源约束审计步骤(Step3) + 延迟导入Mock陷阱(testing.md)
-> **v11 变更**: (1) WorkflowStateMachine + conditional transitions + checkpoint persistence, (2) Full parseHandover markdown parser, (3) Manager instance unification via engine getters, (4) Real gate checks (lint/boundary/unit-test), (5) Token optimizations (L2 compression fix, spec cap 15, QA truncation 500chars, CJK estimation)
 
 ---
 
@@ -54,6 +53,12 @@ user-invocable: true
 30. **新板块闭环设计** ⭐⭐ v13.1 — 添加新板块必须同步完成：评分引擎(计算层) → SERIALIZE_KEYS(管道层) → 渲染函数(展示层) → main.py加载 → templates.py插入。漏任何一步 = 白做。新字段不加SERIALIZE_KEYS是最常见的遗漏
 31. **数据缺失 fallback** ⭐⭐ v13.2 — 评分函数每个维度都应有 fallback 路径。旧JSON可能缺少新字段，`if not detail.get("key"): recalc_from_source()` 避免低估。测试时 mock 数据源隔离 fallback。**额外陷阱**：即使SERIALIZE_KEYS已包含新字段，旧JSON文件（升级前生成的）仍缺少该字段。消费端必须用`.get(field, {})`做fallback，否则从旧数据加载时评分退化（daily-stock-report v10实战：50分差异）
 31. **同名辅助函数覆盖陷阱** ⭐⭐ v13.1 — 大文件(>500行)多次追加渲染函数时，新增的辅助函数(如`_score_color`)可能与已有同名函数冲突。Python静默使用最后定义，上游调用方拿到错误的映射/阈值/逻辑。**预防**：追加新函数前`grep 'def _helper_name' file.py`检查是否已存在同名函数；如存在，重命名或合并逻辑，不要覆盖
+34. **Prompt Cache 友好结构** ⭐⭐ v14 — 系统提示和静态内容放 prompt 最前面，动态内容放最后。API 层自动缓存命中可省 30-50% 成本。代码：`PromptCacheOptimizer`。详见 `references/token-optimization-research.md`
+35. **Spec 压缩替代自然语言** ⭐⭐ v14 — 用结构化数据（schema/signatures/tabular）替代自然语言 spec。Proposal 200词上限，Design 分 sections，Tasks tabular 格式。代码：`SpecCompressor`。节省 40-60% spec tokens
+36. **AST Skeleton 替代全文注入** ⭐⭐ v14 — 向 LLM 注入文件时，只发签名（函数名+参数+返回类型），不发函数体。用 `SkeletonExtractor` 提取骨架。节省 60-80% 文件 tokens。需要详细实现时切回完整模式
+37. **LLM 自调节输出** ⭐⭐ v14 — 每个 step 的 prompt 中注入 token budget 指令（analysis:300, review:400, spec:800），LLM 自行控制输出长度。代码：`buildRegulationBlock(step)`。节省 20-30% 输出 tokens
+38. **历史三层 Condensation** ⭐⭐ v14 — 长会话中决策历史按 L0(原始5条)/L1(摘要20条)/L2(关键字) 分层压缩。触发阈值 15 条。代码：`HistoryCondenser`。节省 50-70% 历史 tokens
+39. **智能文件选择** ⭐⭐ v14 — 只注入任务相关文件（任务文件>import邻居>测试对>git变更），按相关性排序+token budget 截断。代码：`SmartFileSelector`。节省 40-60% 上下文 tokens
 
 ---
 
@@ -472,6 +477,7 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 | `references/v10-audit.md` | v10 源码审计：P0 逻辑漏洞、token 浪费清单、getSkippedSteps ultra/debug missing、v10→v11 修复路线图 |
 | `references/v11-upgrade-proposal.md` | ⭐v11 升级方案：状态机重构、Handover解析修复、Manager实例统一、Token最小化、Gate真实化、实施计划 |
 | `references/ai-agent-architecture-patterns.md` | ⭐v11 架构参考：Aider(repo map)、OpenHands(action/observation)、SWE-agent(ACI)、LangGraph(StateGraph+checkpoint) 四项目模式提取 |
+| `references/token-optimization-research.md` | ⭐v14 Token最小化深度调研：6大开源项目分析(LLMLingua/Aider/OpenHands/SWE-agent/ast-grep/Anthropic Caching)，6大优化引擎设计+集成指南+质量保证 |
 | `references/context-rot-detection.md` | ⭐v6 上下文腐烂检测 |
 | `references/lessons/daily-stock-report.md` | daily-stock-report 项目经验（execute_code subprocess模式、__init__.py循环导入、CSV约束审计、日期验证三层防御） |
 | `references/lessons/python.md` | Python 经验（重构/配置/异步） |
@@ -564,4 +570,4 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ---
 
-*v13.1.0 — 九版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计/10倍牛股5维评分/SERIALIZE_KEYS同步清单/序列化存活审计/评分函数边界测试)*
+*v14.0.0 — 十版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎: PromptCache/SpecCompressor/SkeletonExtractor/LLMSelfRegulator/HistoryCondenser/SmartFileSelector)*
