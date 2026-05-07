@@ -1,8 +1,12 @@
 import type { PluginRuntime } from "openclaw/plugin-sdk/core";
-import type { WorkflowContext, WorkflowMode, WorkflowStep, WorkflowTask, AgentResult, TechSelection, ConventionalCommit, FeatureFlags } from "../types.js";
-import { DEFAULT_FEATURE_FLAGS } from "../types.js";
+import type { WorkflowContext, WorkflowMode, WorkflowStep, WorkflowTask, AgentResult, TechSelection, ConventionalCommit, FeatureFlags, TeamConfig, TeamState } from "../types.js";
+import { DEFAULT_FEATURE_FLAGS, DEFAULT_TEAM_CONFIG } from "../types.js";
 import { AgentOrchestrator } from "../agents/agent-orchestrator.js";
 import { VerificationAgent } from "../agents/verification-agent.js";
+import { TaskDependencyGraph } from "../agents/task-dependency-graph.js";
+import { FileOwnershipManager } from "../agents/file-ownership.js";
+import { ContractLayer } from "../agents/contract-layer.js";
+import { AgentTeamOrchestrator } from "../agents/agent-team-orchestrator.js";
 import { HandoverManager } from "../handover/index.js";
 import { BootstrapManager } from "../bootstrap/index.js";
 import { MemdirManager } from "../memdir/index.js";
@@ -508,6 +512,103 @@ export class DevWorkflowEngine {
   }
 
   private async executeAllTasks(): Promise<void> {
+    if (!this.context?.spec) return;
+    const tasks = this.context.spec.tasks.filter((t) => t.status === "pending");
+
+    // v16: Use Agent Team for parallel execution if enabled
+    if (this.context.featureFlags.agentTeamEnabled && tasks.length > 1) {
+      await this.executeWithAgentTeam(tasks);
+    } else {
+      await this.executeSerialTasks();
+    }
+  }
+
+  /**
+   * v16: Execute tasks using parallel Agent Team.
+   * Falls back to serial execution on high failure rate.
+   */
+  private async executeWithAgentTeam(tasks: WorkflowTask[]): Promise<void> {
+    if (!this.context) return;
+
+    const teamConfig: TeamConfig = { ...DEFAULT_TEAM_CONFIG, ...this.context.teamConfig };
+    this.context.decisions.push(`Agent Team: Starting parallel execution with max ${teamConfig.maxParallelAgents} agents`);
+
+    try {
+      // 1. Build dependency graph and execution plan
+      const graph = new TaskDependencyGraph();
+      const plan = graph.generateExecutionPlan(tasks);
+      this.context.decisions.push(
+        `Agent Team: Plan generated — ${plan.batches.length} batches, ~${plan.estimatedSpeedup.toFixed(1)}x estimated speedup`
+      );
+
+      // 2. Initialize file ownership manager
+      const ownershipMgr = new FileOwnershipManager();
+
+      // 3. Initialize contract layer
+      const contractLayer = new ContractLayer(this.context.projectDir);
+
+      // 4. Create team orchestrator
+      const teamOrchestrator = new AgentTeamOrchestrator(
+        this.orchestrator,
+        this.verificationAgent,
+        ownershipMgr,
+        contractLayer,
+        this.runtime,
+        this.context.teamConfig,
+      );
+
+      // 5. Execute with team
+      const result = await teamOrchestrator.execute(
+        plan,
+        this.context.projectDir,
+        this.context.mode,
+        this.context.featureFlags,
+        (msg) => this.context!.decisions.push(msg)
+      );
+
+      // 6. Update task statuses from results
+      for (const batchResult of result.batchResults) {
+        for (const [agentId, agentResult] of Object.entries(batchResult.agentResults)) {
+          const task = this.context.spec!.tasks.find((t) =>
+            agentResult.task === t.id || agentId.includes(t.id)
+          );
+          if (task) {
+            task.status = agentResult.success ? "completed" : "failed";
+          }
+        }
+      }
+
+      // 7. Update team state in context
+      this.context.teamState = {
+        currentBatchIndex: plan.batches.length,
+        activeAgents: [],
+        fileOwnership: ownershipMgr.getSnapshot(),
+        publishedContracts: contractLayer.getContracts(),
+        syncHistory: result.syncResults,
+        fallbackUsed: result.fallbackUsed,
+      };
+
+      // 8. Log summary
+      this.context.decisions.push(
+        `Agent Team: Completed — ${result.completedTasks}/${result.totalTasks} tasks, ` +
+        `${result.estimatedSpeedup.toFixed(1)}x speedup, fallback=${result.fallbackUsed}`
+      );
+
+      this.persistContext();
+    } catch (e) {
+      this.context.decisions.push(`Agent Team failed, falling back to serial: ${e}`);
+      // Fallback: reset all pending tasks and execute serially
+      for (const task of tasks) {
+        if (task.status === "in_progress") task.status = "pending";
+      }
+      await this.executeSerialTasks();
+    }
+  }
+
+  /**
+   * Serial task execution — original v15 behavior preserved.
+   */
+  private async executeSerialTasks(): Promise<void> {
     if (!this.context?.spec) return;
     const tasks = this.context.spec.tasks.filter((t) => t.status === "pending");
 

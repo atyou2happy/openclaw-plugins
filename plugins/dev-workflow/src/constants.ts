@@ -121,4 +121,19 @@ export const DEFAULT_FEATURE_FLAGS: import("./types.js").FeatureFlags = {
   readmeDualLanguage: true,
   refactorAssessmentEnabled: true,
   refactorAssessmentOnStep0: true,
+  agentTeamEnabled: false,
+  agentTeamParallelExecution: true,
+  agentTeamContractLayer: true,
+  agentTeamFileOwnership: true,
+  agentTeamAutoSync: true,
+};
+
+// ─── v16: Agent Team Defaults ──
+
+export const DEFAULT_TEAM_CONFIG: import("./types.js").TeamConfig = {
+  maxParallelAgents: 3,
+  syncAfterBatches: 2,
+  syncAfterTasks: 5,
+  failoverToSerial: true,
+  contractLayerEnabled: true,
 };

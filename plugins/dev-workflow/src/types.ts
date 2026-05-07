@@ -3,7 +3,7 @@
 // All exports re-exported here for backward compatibility.
 
 // ─── Re-exports for backward compatibility ───
-export { REFACTOR_PRINCIPLES, REFACTOR_THRESHOLDS, MODEL_TIERS, ROLE_TIERS, STEP_MIGRATION_MAP, DEV_WORKFLOW_RULES, DEFAULT_FEATURE_FLAGS } from "./constants.js";
+export { REFACTOR_PRINCIPLES, REFACTOR_THRESHOLDS, MODEL_TIERS, ROLE_TIERS, STEP_MIGRATION_MAP, DEV_WORKFLOW_RULES, DEFAULT_FEATURE_FLAGS, DEFAULT_TEAM_CONFIG } from "./constants.js";
 export { healthLevelFromScore, healthEmoji, normalizeTask } from "./helpers.js";
 
 // ─── Account ───
@@ -107,6 +107,9 @@ export interface WorkflowContext {
   planGateConfirmed?: boolean;
   // T-B1: cached project context to avoid repeated rebuilds
   _cachedProjectContext?: string;
+  // v16: Agent Team
+  teamConfig?: TeamConfig;
+  teamState?: TeamState;
 }
 
 export interface QAGateCheck {
@@ -232,6 +235,12 @@ export interface FeatureFlags {
   readmeDualLanguage: boolean;
   refactorAssessmentEnabled: boolean;
   refactorAssessmentOnStep0: boolean;
+  // v16: Agent Team flags
+  agentTeamEnabled: boolean;
+  agentTeamParallelExecution: boolean;
+  agentTeamContractLayer: boolean;
+  agentTeamFileOwnership: boolean;
+  agentTeamAutoSync: boolean;
 }
 
 // ─── Config ───
@@ -292,3 +301,114 @@ export const DEFAULT_SUBAGENT_CONFIG: SubAgentConfig = {
   isolation: "none",
   timeout: 300_000,
 };
+
+// ── v16: Agent Team Types ──
+
+export interface TeamConfig {
+  maxParallelAgents: number;
+  syncAfterBatches: number;
+  syncAfterTasks: number;
+  failoverToSerial: boolean;
+  contractLayerEnabled: boolean;
+}
+
+export interface TeamState {
+  currentBatchIndex: number;
+  activeAgents: TeamAgentInfo[];
+  fileOwnership: FileOwnershipMap;
+  publishedContracts: Contract[];
+  syncHistory: SyncResultInfo[];
+  fallbackUsed: boolean;
+}
+
+export interface TeamAgentInfo {
+  id: string;
+  assignedTaskId: string;
+  ownedFiles: string[];
+  status: "idle" | "running" | "completed" | "failed";
+}
+
+export interface TaskBatch {
+  id: string;
+  tasks: WorkflowTask[];
+  dependsOn: string[];
+  syncAfter: boolean;
+  estimatedParallelTime: number;
+}
+
+export interface SyncPoint {
+  afterBatch: string;
+  actions: SyncAction[];
+}
+
+export type SyncAction =
+  | { type: "merge"; strategy: "ff" | "no-ff" }
+  | { type: "test"; scope: "changed" | "full" }
+  | { type: "conflict-check" }
+  | { type: "lint"; scope: "changed" }
+  | { type: "contract-publish"; contracts: string[] };
+
+export interface ParallelExecutionPlan {
+  batches: TaskBatch[];
+  syncPoints: SyncPoint[];
+  totalEstimatedTime: number;
+  estimatedSpeedup: number;
+}
+
+export interface FileOwnershipMap {
+  allocations: Record<string, string[]>; // agentId → fileGlobs
+  ownership: Record<string, string>;     // filePath → agentId
+}
+
+export interface FileConflict {
+  file: string;
+  taskIds: string[];
+  resolution: "serialize" | "split" | "merge-task";
+}
+
+export interface Contract {
+  id: string;
+  taskId: string;
+  type: "interface" | "type" | "api-schema" | "function-sig";
+  name: string;
+  definition: string;
+  filePath: string;
+  publishedAt: string;
+}
+
+export interface SyncResultInfo {
+  syncPoint: string;
+  passed: boolean;
+  actions: SyncActionResult[];
+  conflicts: MergeConflict[];
+}
+
+export interface SyncActionResult {
+  type: string;
+  passed: boolean;
+  output: string;
+}
+
+export interface MergeConflict {
+  file: string;
+  agentIds: string[];
+  resolution: "auto-merged" | "manual-required";
+}
+
+export interface TeamExecutionResult {
+  totalTasks: number;
+  completedTasks: number;
+  failedTasks: number;
+  batchResults: BatchResultInfo[];
+  syncResults: SyncResultInfo[];
+  totalDurationMs: number;
+  estimatedSpeedup: number;
+  fallbackUsed: boolean;
+}
+
+export interface BatchResultInfo {
+  batchId: string;
+  agentResults: Record<string, AgentResult>;
+  allSucceeded: boolean;
+  durationMs: number;
+}

@@ -1,13 +1,14 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v15。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。
+description: AI驱动开发工作流 v16。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。v16：Agent Team多Agent并行编排(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator)。
 user-invocable: true
 ---
 
-# Dev Workflow v15 — AI驱动开发工作流
+# Dev Workflow v16 — AI驱动开发工作流
 
-> 版本：15.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏) 十版经验融合
+> 版本：16.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排) 十版经验融合
 
+> **v16 状态**: 新增Agent Team并行编排子系统(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator+AgentTeamTool)，多Agent并行执行任务，失败自动回退串行。40个测试全部通过。详见 Step 7 v16 并行编排章节
 > **v15 状态**: 新增4大代码图谱模块(SymbolGraphBuilder+PropagationEngine+CompletenessChecker+ImpactAnalyzer)，开发遗漏减少60-80%，审查token节省40-60%。详见 `references/code-graph-research.md`
 > **v14 状态**: 6大Token最小化模块(PromptCache+SpecCompressor+SkeletonExtractor+LLMSelfRegulator+HistoryCondenser+SmartFileSelector)，综合token消耗下降40-60%。详见 `references/token-optimization-research.md`
 
@@ -64,6 +65,10 @@ user-invocable: true
 42. **完整性校验必过** ⭐⭐⭐ v15 — 编码完成后用 `CompletenessChecker` 对比实际改动 vs 影响分析结果，遗漏文件=不通过。评分 = must-change覆盖70% + test覆盖30%。`status` 必须为 complete 或 warning 才能进入审查。代码：`CompletenessChecker`
 43. **符号级追踪优于文件级** ⭐⭐ v15 — 影响分析以符号（function/class/interface）为粒度，不是文件。好处：(1) 精确到具体函数调用链 (2) 减少误报（同文件不同函数不算影响） (3) 输出更紧凑省 token。当前用正则实现 Phase 1（~85% 准确率），Phase 2 升级到 TSC API（~99%）
 44. **Plan-Effect 对比** ⭐ v15 — Review 阶段对比 Plan（影响分析预测的改动范围）与 Effect（实际改动列表），差异即为潜在遗漏或过度修改。`CompletenessChecker.check()` 自动执行此对比
+45. **File Ownership First** ⭐⭐ v16 — 每个 agent 在执行前必须通过 FileOwnershipManager 声明文件所有权，防止并行写入冲突
+46. **Sync Point Gating** ⭐⭐ v16 — 批次间可选的同步点（merge/test/lint/conflict-check），确保依赖任务完成后才开始下一批次
+47. **Interface Contract Driven** ⭐⭐ v16 — agent 间通过 ContractLayer 发布/消费接口合约，实现松耦合通信
+48. **Parallel-to-Serial Fallback** ⭐⭐⭐ v16 — 当批次失败率超过 50% 时自动回退到串行执行，保证任务完成
 
 ---
 
@@ -240,6 +245,24 @@ delegate_task 适合 <200行文件的小型独立修改。实测数据：
 5. **一个大 commit**：所有迁移 + 测试放在一个 conventional commit
 6. **删除死代码**：迁移后删除旧模式的 helper 函数
 
+#### v16 Agent Team 并行编排
+
+当 `agentTeamEnabled=true` 且任务数 > 1 时，Step 7 自动使用 Agent Team 并行编排：
+
+1. **DAG 构建** — TaskDependencyGraph 根据 `dependencies` 构建有向无环图，拓扑排序生成并行批次
+2. **文件所有权分配** — FileOwnershipManager 为每个 agent 分配独占文件，检测冲突
+3. **并行执行** — 每个批次内的 agent 并行执行（maxParallelAgents=3），通过 Promise.allSettled 并发
+4. **Sync Point** — 批次间可选执行同步操作（merge/test/lint/conflict-check）
+5. **合约发布** — 完成的 agent 通过 ContractLayer 发布接口合约
+6. **失败回退** — 批次失败率 > 50% 自动回退串行执行
+
+新增模块：
+- `src/agents/task-dependency-graph.ts` — DAG 构建与拓扑排序
+- `src/agents/file-ownership.ts` — 文件所有权管理
+- `src/agents/contract-layer.ts` — 接口合约层
+- `src/agents/agent-team-orchestrator.ts` — Agent 团队并行调度核心
+- `src/tools/agent-team-tool.ts` — LLM 可调用的状态查询工具
+
 #### Step 8: 代码审查 ⭐ v6升级
 
 **6角色审查**（详见 `references/review-methodology.md`）：
@@ -378,7 +401,17 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 | SpecWrite | 📝 | 写OpenSpec文件 | Phase 1-2 |
 | ReadOnly | 🔒 | 只读 | Step 6等待确认 |
 | WorkspaceWrite | 🔓 | 全部写操作 | Plan Gate通过后 |
-| DangerFullAccess | ⚠️ | DB migration/force push等 | 用户显式授权（单次） |
+|| DangerFullAccess | ⚠️ | DB migration/force push等 | 用户显式授权（单次） |
+
+---
+
+## Feature Flags
+
+- `agentTeamEnabled` — 启用 Agent Team 并行编排（默认 false）
+- `agentTeamParallelExecution` — 启用并行执行（默认 true，需 agentTeamEnabled=true）
+- `agentTeamContractLayer` — 启用接口合约层（默认 true）
+- `agentTeamFileOwnership` — 启用文件所有权管理（默认 true）
+- `agentTeamAutoSync` — 启用自动同步点（默认 false）
 
 ---
 
@@ -583,4 +616,4 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ---
 
-*v14.0.0 — 十版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎+开源致谢纪律)*
+*v16.0.0 — 十版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎+开源致谢纪律) → v15(代码图谱化影响面分析+零遗漏) → v16(Agent Team并行编排+文件所有权+合约层+自动回退)*

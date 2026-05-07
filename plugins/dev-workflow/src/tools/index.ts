@@ -13,6 +13,7 @@ import { SecurityAuditTool } from "./security-audit-tool.js";
 import { RetroTool } from "./retro-tool.js";
 import { RefactorAssessmentTool } from "./refactor-assessment-tool.js";
 import { CodeGraphTool } from "./code-graph-tool.js";
+import { AgentTeamTool } from "./agent-team-tool.js";
 
 // Token optimization modules (v14)
 export { PromptCacheOptimizer } from "./prompt-cache-optimizer.js";
@@ -56,6 +57,7 @@ export type { SecurityAuditTool } from "./security-audit-tool.js";
 export type { RetroTool } from "./retro-tool.js";
 export type { RefactorAssessmentTool } from "./refactor-assessment-tool.js";
 export type { CodeGraphTool } from "./code-graph-tool.js";
+export type { AgentTeamTool } from "./agent-team-tool.js";
 
 export function registerDevWorkflowTools(api: OpenClawPluginApi) {
   api.registerTool(new DevWorkflowTool());
@@ -72,4 +74,5 @@ export function registerDevWorkflowTools(api: OpenClawPluginApi) {
   api.registerTool(new RetroTool());
   api.registerTool(new RefactorAssessmentTool());
   api.registerTool(new CodeGraphTool());
+  api.registerTool(new AgentTeamTool());
 }
