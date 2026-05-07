@@ -144,6 +144,21 @@ pnpm build
 pnpm lint
 ```
 
+## 致谢
+
+本项目从以下开源项目和研究工作中获得灵感：
+
+| 项目 | 借鉴内容 |
+|------|----------|
+| [Aider](https://github.com/Aider-AI/aider) | Repo-map（tree-sitter + PageRank + token 预算）、上下文腐烂检测、`chat_files` 与 `other_files` 区分机制 |
+| [OpenHands](https://github.com/All-Hands-AI/OpenHands)（原 OpenDevin） | Condenser 系统（多层历史摘要）、结构化观察格式 |
+| [SWE-agent](https://github.com/princeton-nlp/SWE-agent) | LLM 输出自调节提示、受限文件访问模式 |
+| [ast-grep](https://github.com/AstGrep/ast-grep) | 快速 AST 模式匹配用于代码结构提取 |
+| [Anthropic Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) | `cache_control` 标记、静态前缀稳定性优化缓存命中 |
+| [LangGraph](https://github.com/langchain-ai/langgraph) | 检查点序列化模式用于有状态工作流恢复 |
+
+部分 Token 优化策略记录在我们的[研究笔记](./skills/dev-workflow/references/token-optimization-research.md)中，其中也评估了 [LLMLingua](https://github.com/microsoft/LLMLingua)（Microsoft）、[GPTCache](https://github.com/zilliztech/GPTCache)（Zilliz）和 [Selective Context](https://github.com/liyucheng09/Selective_Context)。
+
 ## 许可证
 
 MIT

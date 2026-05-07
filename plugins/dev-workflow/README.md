@@ -144,6 +144,21 @@ pnpm build
 pnpm lint
 ```
 
+## Acknowledgments
+
+This project draws inspiration from the following open-source projects and research:
+
+| Project | What We Learned |
+|---------|----------------|
+| [Aider](https://github.com/Aider-AI/aider) | Repo-map (tree-sitter + PageRank + token budget), context rot detection, `chat_files` vs `other_files` distinction |
+| [OpenHands](https://github.com/All-Hands-AI/OpenHands) (formerly OpenDevin) | Condenser system (multi-tier history summarization), structured observation format |
+| [SWE-agent](https://github.com/princeton-nlp/SWE-agent) | Self-regulation prompts for concise LLM output, constrained file access patterns |
+| [ast-grep](https://github.com/AstGrep/ast-grep) | Fast AST pattern matching for code structure extraction |
+| [Anthropic Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) | `cache_control` markers, static-prefix stability for cache hit optimization |
+| [LangGraph](https://github.com/langchain-ai/langgraph) | Checkpoint serialization pattern for stateful workflow recovery |
+
+Some token optimization strategies are documented in our [research notes](./skills/dev-workflow/references/token-optimization-research.md), which also evaluated [LLMLingua](https://github.com/microsoft/LLMLingua) (Microsoft), [GPTCache](https://github.com/zilliztech/GPTCache) (Zilliz), and [Selective Context](https://github.com/liyucheng09/Selective_Context).
+
 ## License
 
 MIT
