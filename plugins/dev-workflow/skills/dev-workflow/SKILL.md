@@ -1,14 +1,14 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v17。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。v16：Agent Team多Agent并行编排(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator)。v17：数据流逻辑闭环设计模式(Pipeline顺序+装饰性数据陷阱+三关验证)。
+description: AI驱动开发工作流 v18。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。v16：Agent Team多Agent并行编排(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator)。v17：数据流逻辑闭环设计模式(Pipeline顺序+装饰性数据陷阱+三关验证)。v18：新增HTML表格多位置修改P0陷阱+局部变量遮蔽+模板函数参数防御性设计。
 user-invocable: true
 ---
 
-# Dev Workflow v17 — AI驱动开发工作流
+# Dev Workflow v18 — AI驱动开发工作流
 
-> 版本：17.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律) 七版经验融合
+> 版本：18.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽) 七版经验融合
 
-> **v17 状态**: 新增 daily-stock-report v11 重构经验（原则57-66）：Pipeline顺序纪律、装饰性数据陷阱深度审计、三关验证法、跨模块数据流签名对齐、渲染函数参数化等数据流逻辑闭环设计模式。822测试通过。详见原则57-66
+> **v18 状态**: 新增 daily-stock-report v12 开发经验（原则67-72）：HTML表格多位置修改时局部变量遮蔽陷阱、模板函数参数防御性设计、渲染层数据完整性检查。822测试通过。详见原则67-72
 
 > **v16 状态**: 新增Agent Team并行编排子系统(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator+AgentTeamTool)，多Agent并行执行任务，失败自动回退串行。40个测试全部通过。详见 Step 7 v16 并行编排章节
 > **v15 状态**: 新增4大代码图谱模块(SymbolGraphBuilder+PropagationEngine+CompletenessChecker+ImpactAnalyzer)，开发遗漏减少60-80%，审查token节省40-60%。详见 `references/code-graph-research.md`
@@ -111,6 +111,20 @@ user-invocable: true
 65. **大型表格增强先加列再填数据** ⭐⭐ v11-dsr — 给已有 HTML 表格增加新列时，先在表头（`<th>`）加上新列，再在每行数据末尾添加对应的 `<td>`。顺序错误（先加数据再加表头）会导致 HTML 结构错位。增强 render_strong_pool 的"牛股"列时先加 `<th>` 再加数据
 
 66. **政策主题列表单一真实来源** ⭐⭐ v11-dsr — 政策核心主题列表（如十五五规划的 `_POLICY_CORE_THEMES`）必须在单一位置定义，被所有模块引用（bull_scoring.py、sections.py）。硬编码两份会导致不一致。如需在不同模块显示略有不同的版本，用同一个列表做子集过滤，而不是维护两个独立列表
+
+### daily-stock-report v12 开发经验
+
+67. **HTML表格多位置增强时局部变量遮蔽** ⭐⭐⭐ v12-dsr — 增强 HTML 表格时，如果先在函数开头定义 `concept_list = [c.strip() for c in concepts.split(",") if c.strip()]`（在enhanced block 中），而函数后半部分有旧代码也引用同名 `concept_list`，则后半部分的代码会使用旧值而非新值。**防御**：增强现有表格时，先 grep 全文确认同名变量是否已存在；新增变量放在循环内部而非函数开头；或在 patch 前完整读整个函数
+
+68. **模板函数参数防御性设计** ⭐⭐ v12-dsr — `build_report_html(date_str, sections_html, generated_at, pipeline_version="v4.0")` 增加带默认值的参数，使旧调用方无需改动（向后兼容）。Python 不支持真正的函数重载，用默认参数值模拟。设计新 API 时优先考虑向后兼容的默认参数
+
+69. **渲染函数内联数据构建时机** ⭐⭐ v12-dsr — 在渲染函数（如 `render_bull_candidates`）内部构建辅助数据（如 `concept_list`、`risk_display`、`industry_display`）应在使用前的最近位置，而非函数顶部。这样当 patch 移动代码块时，不会意外遗留孤立的变量定义
+
+70. **数据完整性三重检查点** ⭐⭐ v12-dsr — 修改渲染函数后，至少在 3 个场景验证：(1) mock 数据直接传入渲染函数 (2) 从真实 JSON 文件加载数据传入 (3) 完整 pipeline 运行生成 HTML。单一测试不够，P0 bug 可能在边界条件才触发
+
+71. **HTML表格td/th顺序一致性** ⭐⭐ v12-dsr — 给表格增加新列时，表头 `<th>` 和数据 `<td>` 必须按相同顺序增加。常见错误：先加 `<td>` 数据再加 `<th>` 表头，导致列错位。正确顺序：先遍历所有 `<th>` → 再遍历所有 `<tr>` 生成 `<td>`
+
+72. **Pipeline超时时的中间文件保护** ⭐⭐ v12-dsr — 当 pipeline 超时（如 debate 步骤 300s 不够），已完成的中间步骤（选股结果）已写入 JSON。报告生成应能从 `output/zt_picks_*.json` 独立运行，不依赖完整 pipeline。设计时确保各阶段输出文件自包含，阶段 N 崩溃不影响阶段 N+1 的输入
 
 ---
 
