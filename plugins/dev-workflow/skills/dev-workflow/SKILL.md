@@ -1,14 +1,14 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v21。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。v16：Agent Team多Agent并行编排(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator)。v17：数据流逻辑闭环设计模式(Pipeline顺序+装饰性数据陷阱+三关验证)。v18：新增HTML表格多位置修改P0陷阱+局部变量遮蔽+模板函数参数防御性设计。v19：新增逻辑闭环设计（双池问题+注入机制+阈值校准）+字段名静默错配检测+结果与存储一致性验证。v20：缩进断裂静默丢失+9链路审计方法论。v21：SVG→Canvas交互式升级路径+硬编码数据限制多层清理。
+description: AI驱动开发工作流 v22。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析。v16：Agent Team多Agent并行编排。v17：数据流逻辑闭环设计模式。v18：HTML表格多位置修改P0陷阱。v19：逻辑闭环双池注入+字段名静默错配。v20：缩进断裂静默丢失+9链路审计。v21：SVG→Canvas交互式升级+硬编码限制多层清理。v22：12链路审计+辨识度/行业/概念进入total_score+Pipeline层截断vs展示层截断。
 user-invocable: true
 ---
 
-# Dev Workflow v21 — AI驱动开发工作流
+# Dev Workflow v22 — AI驱动开发工作流
 
-> 版本：21.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性)→v20(缩进断裂静默丢失+9链路审计方法论)→v21(SVG→Canvas交互式升级+硬编码限制多层清理) 九版经验融合
+> 版本：22.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性)→v20(缩进断裂静默丢失+9链路审计方法论)→v21(SVG→Canvas交互式升级+硬编码限制多层清理)→v22(12链路审计+辨识度/行业/概念进入total_score+Pipeline层截断vs展示层截断) 九版经验融合
 
-> **v21 状态**: 新增 daily-stock-report v16 开发经验（原则85-86）：SVG静态图升级为Canvas交互式折线图的完整路径（函数签名兼容、数据量扩展、鼠标悬停最近点匹配、最大最小标注、tooltip定位、Canvas 2x DPR）+ 硬编码数据限制多层清理（main.py[:30] + sections.py[:25] 两处截断在不同文件中）。830测试通过。详见原则85-86。
+> **v22 状态**: 新增 daily-stock-report v16 开发经验（原则81-89）：12链路逻辑闭环审计→visibility(辨识度)/industry(行业)/concepts(概念)进入total_score→news_scoring去掉Pipeline层[:30]截断→长概念名缩短匹配。12链路全部闭合（11/12闭环 + 1/12展示性）。830测试通过。详见原则81-89。
 
 > **v18 状态**: 新增 daily-stock-report v12 开发经验（原则67-72）：HTML表格多位置修改时局部变量遮蔽陷阱、模板函数参数防御性设计、渲染层数据完整性检查。822测试通过。详见原则67-72
 
@@ -146,7 +146,7 @@ user-invocable: true
 
 80. **测试数据要与生产数据同分布** ⭐⭐ v13-dsr — 测试中的 mock pool 的 score 分布（bull_score 60-89，limit_gene 70-89）可能与生产数据（bull_score 69-84，limit_gene 65-77）完全不同。用 mock 数据校准的阈值（≥75）在生产中可能太宽松或太严格。**防御**：测试数据的 score 分布区间应覆盖生产数据的典型范围；关键阈值（≥75）应在测试中明确标注，并附带「生产数据典型范围」注释
 
-### daily-stock-report v15 审计 + 交互式图表经验
+### daily-stock-report v15-v16 审计 + 交互式图表 + 逻辑闭环经验
 
 81. **缩进断裂=静默渲染丢失** ⭐⭐⭐ v15-dsr — Python for循环体缩进从8sp断裂为4sp时，循环体之后的167行代码全部在循环外执行，只渲染最后一条数据（5张牛股卡片只渲染1张）。无报错、无异常、HTML正常生成但内容丢失。**防御**：(1) 代码审查逐行检查缩进一致性 (2) 对比修改前后的输出文件大小（537KB→565KB增量验证） (3) 对关键渲染函数做 snapshot diff 测试
 
@@ -159,6 +159,12 @@ user-invocable: true
 85. **SVG静态图→Canvas交互式的升级路径** ⭐⭐⭐ v16-dsr — 静态SVG图表升级为交互式Canvas时：(1) 函数签名用默认参数保持向后兼容 `sent_chart_json="{}"` (2) 数据量从20条扩展到60条时，Canvas自动缩放 `(i/(n-1))*cw` (3) 鼠标悬停用最近点匹配（遍历所有点取距离最小），而非严格x坐标匹配 (4) 最大最小值标注用 ▲▼ 符号 + 日期+分数 (5) tooltip 用 absolute定位+pointer-events:none 避免遮挡 (6) Canvas 2x DPR 缩放保证高清
 
 86. **硬编码数据限制要去干净** ⭐⭐ v16-dsr — `news[:30]` 限制只显示了200条新闻中的30条。去掉 `main.py` 的 `[:30]` 后，`sections.py` 内还有 `regular[:25]` 的独立限制。两处截断在不同文件中，容易改一处漏另一处。**防御**：搜索所有调用链中的切片操作 `grep '\[:.*\]' caller.py callee.py`，确保全部去掉
+
+87. **辨识度→total_score 必须闭环** ⭐⭐⭐ v16-dsr — visibility(辨识度) 由 industry(行业热度20%) + concepts(概念数量20%) + ths_rank(排名30%) + 年内最大涨幅(30%) 综合计算，但原 total_score 公式中不含 visibility，导致辨识度只影响 bull_score 的 market_resonance 维度，不影响 Top10 排序。**修复**：SCORE_WEIGHTS 新增 visibility: 0.10，tech 从 0.40 降到 0.35。**诊断方法**：12链路审计中逐条追踪「字段是否出现在决策代码中(grep排序/筛选/评分)」
+
+88. **news_scoring 的[:30]是Pipeline层面的截断** ⭐⭐ v16-dsr — render_news 的 `[:30]` 只是展示截断，但 news_scoring 函数内的 `news_data[:30]` 是**决策层面**的截断：只从前30条新闻匹配概念关键词，后面的170条新闻被完全忽略。这意味着 73.5% 的新闻对排序零贡献。**防御**：截断操作分两类——展示截断(可接受) 和 决策截断(不可接受)，搜索决策代码中的所有切片操作
+
+89. **长概念名需要缩短匹配** ⭐⭐ v16-dsr — 概念关键词如"人形机器人概念"在新闻标题"人形机器人概念股震荡走高"中能匹配，但在"人形机器人板块大涨"中匹配不到（因为"概念"不在标题中）。修复：对超过4字的概念取前4字做匹配 `c_match = c if len(c) <= 4 else c[:4]`，兼顾准确率和召回率
 
 ---
 
