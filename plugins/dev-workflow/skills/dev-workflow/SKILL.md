@@ -1,12 +1,14 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v18。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。v16：Agent Team多Agent并行编排(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator)。v17：数据流逻辑闭环设计模式(Pipeline顺序+装饰性数据陷阱+三关验证)。v18：新增HTML表格多位置修改P0陷阱+局部变量遮蔽+模板函数参数防御性设计。
+description: AI驱动开发工作流 v19。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。v16：Agent Team多Agent并行编排(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator)。v17：数据流逻辑闭环设计模式(Pipeline顺序+装饰性数据陷阱+三关验证)。v18：新增HTML表格多位置修改P0陷阱+局部变量遮蔽+模板函数参数防御性设计。v19：新增逻辑闭环设计（双池问题+注入机制+阈值校准）+字段名静默错配检测+结果与存储一致性验证。
 user-invocable: true
 ---
 
-# Dev Workflow v18 — AI驱动开发工作流
+# Dev Workflow v19 — AI驱动开发工作流
 
-> 版本：18.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽) 七版经验融合
+> 版本：19.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性) 八版经验融合
+
+> **v19 状态**: 新增 daily-stock-report v13 开发经验（原则73-80）：逻辑闭环双池问题（评分池≠筛选池）+注入机制设计+阈值校准+字段名静默错配+结果与存储一致性+装饰性展示vs决策闭环。830测试通过。详见原则73-80
 
 > **v18 状态**: 新增 daily-stock-report v12 开发经验（原则67-72）：HTML表格多位置修改时局部变量遮蔽陷阱、模板函数参数防御性设计、渲染层数据完整性检查。822测试通过。详见原则67-72
 
@@ -125,6 +127,24 @@ user-invocable: true
 71. **HTML表格td/th顺序一致性** ⭐⭐ v12-dsr — 给表格增加新列时，表头 `<th>` 和数据 `<td>` 必须按相同顺序增加。常见错误：先加 `<td>` 数据再加 `<th>` 表头，导致列错位。正确顺序：先遍历所有 `<th>` → 再遍历所有 `<tr>` 生成 `<td>`
 
 72. **Pipeline超时时的中间文件保护** ⭐⭐ v12-dsr — 当 pipeline 超时（如 debate 步骤 300s 不够），已完成的中间步骤（选股结果）已写入 JSON。报告生成应能从 `output/zt_picks_*.json` 独立运行，不依赖完整 pipeline。设计时确保各阶段输出文件自包含，阶段 N 崩溃不影响阶段 N+1 的输入
+
+### daily-stock-report v13 开发经验（逻辑闭环深度设计）
+
+73. **双池问题：评分池 ≠ 筛选池** ⭐⭐⭐ v13-dsr — 当两个独立模块（如 bull_candidates 和 top10）各自从同一个数据源但不同过滤条件筛选时，它们天然可能无重叠。bull_candidates 从原始池（582只）选 top 5，top10 从过滤池（426只）选——两者来自同一源但不同时间点，导致重叠为0。**诊断方法**：打印两个集合的来源池大小和过滤条件，确认是否来自同一子集。**修复**：让高评分方（如 bull_candidates）参与筛选过程本身，而非事后合并
+
+74. **注入机制优于事后合并** ⭐⭐⭐ v13-dsr — 当需要让 A 模块的评分影响 B 模块的排序时，在 B 的排序公式中直接引用 A 的评分字段，而非在 B 完成后把 A 的结果塞进去。事后合并的阈值如果设得太低（≥50），所有 B 结果都被合并（无意义）；设得太高（≥75），只有极少数被合并（等于没合并）。注入机制让数据自然参与排序，无需阈值调参
+
+75. **阈值校准三步法** ⭐⭐ v13-dsr — 注入阈值（supplement threshold）不要拍脑袋：Step1：分析目标集合的 score 分布（`min/max/avg/p25/p75`）；Step2：找到天然断点（如分布直方图的低谷）；Step3：验证阈值能区分「真正有资格」和「勉强合格」两个级别。阈值75来自 bull_score 分布的 p75，实战有效；阈值50太宽松等于没设
+
+76. **字段名静默错配（Python运行时无报错）** ⭐⭐⭐ v13-dsr — Python 字典访问不存在的 key 返回 `None`/空集合，不报错。`_bull_llm_reasoning` 设置 `bull_verdict`，但 `render_bull_candidates` 读取 `debate_verdict`——运行时两者都存在（有值），HTML 正常渲染，但置信度计算逻辑用错了字段。**防御**：所有跨模块数据传递字段名必须在接口文档或 dataclass 中明确列出；Python type hint 不是强制的，但命名一致性必须通过代码审查保证
+
+77. **返回值 dict ≠ 存储 JSON** ⭐⭐ v13-dsr — `run_selection()` 返回的 `result` dict 被 `main()` 打印到日志，但它不包含 `bull_candidates`（只传给 JSON dump）。日志正确但数据实际在 JSON 里——调试时只查日志会误判数据丢失。**防御**：返回值 dict 和 save_data dict 应保持结构一致，或者在 docstring 中明确标注哪些字段只出现在返回值 vs 只出现在存储文件
+
+78. **逻辑闭环验证要从实际数据入手** ⭐⭐ v13-dsr — 代码逻辑看起来正确（supplement 逻辑存在、阈值75已校准）不等于运行时有效。必须用**真实数据**验证：打印 JSON 文件中两个集合的实际内容，计算重叠数量。测试数据（mock pool）可能掩盖问题：mock 数据的 score 分布与生产数据完全不同，导致阈值在测试中通过但在生产中失效。**实战**：用 `output/zt_picks_2026-05-07.json` 验证，发现所有 top10 都被 supplement（阈值50的问题）
+
+79. **装饰性展示 ≠ 决策闭环** ⭐⭐ v13-dsr — `bull_candidates` 数据漂亮地出现在 HTML 报告（板块6、板块4双重认证标记）≠ 牛股评分对投资决策有贡献。必须追踪「bull_score → total_score → _select_top10 排序 → top10 排序结果」这条链路，确认 bull_score 真正改变了 top10 的排序顺序，而非只是被读取然后展示。验证方法：对比注入前后的 top10 排序差异
+
+80. **测试数据要与生产数据同分布** ⭐⭐ v13-dsr — 测试中的 mock pool 的 score 分布（bull_score 60-89，limit_gene 70-89）可能与生产数据（bull_score 69-84，limit_gene 65-77）完全不同。用 mock 数据校准的阈值（≥75）在生产中可能太宽松或太严格。**防御**：测试数据的 score 分布区间应覆盖生产数据的典型范围；关键阈值（≥75）应在测试中明确标注，并附带「生产数据典型范围」注释
 
 ---
 
