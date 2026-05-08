@@ -1,14 +1,14 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v19。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。v16：Agent Team多Agent并行编排(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator)。v17：数据流逻辑闭环设计模式(Pipeline顺序+装饰性数据陷阱+三关验证)。v18：新增HTML表格多位置修改P0陷阱+局部变量遮蔽+模板函数参数防御性设计。v19：新增逻辑闭环设计（双池问题+注入机制+阈值校准）+字段名静默错配检测+结果与存储一致性验证。
+description: AI驱动开发工作流 v20。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析(SymbolGraphBuilder+PropagationEngine+CompletenessChecker)+零遗漏开发。v16：Agent Team多Agent并行编排(TaskDependencyGraph+FileOwnershipManager+ContractLayer+AgentTeamOrchestrator)。v17：数据流逻辑闭环设计模式(Pipeline顺序+装饰性数据陷阱+三关验证)。v18：新增HTML表格多位置修改P0陷阱+局部变量遮蔽+模板函数参数防御性设计。v19：新增逻辑闭环设计（双池问题+注入机制+阈值校准）+字段名静默错配检测+结果与存储一致性验证。v20：新增缩进断裂静默丢失+版本号覆盖兼容性+9链路审计方法论（daily-stock-report v15）。
 user-invocable: true
 ---
 
 # Dev Workflow v19 — AI驱动开发工作流
 
-> 版本：19.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性) 八版经验融合
+> 版本：20.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性) 八版经验融合
 
-> **v19 状态**: 新增 daily-stock-report v13 开发经验（原则73-80）：逻辑闭环双池问题（评分池≠筛选池）+注入机制设计+阈值校准+字段名静默错配+结果与存储一致性+装饰性展示vs决策闭环。830测试通过。详见原则73-80
+> **v20 状态**: 新增 daily-stock-report v13 开发经验（原则73-80）：逻辑闭环双池问题（评分池≠筛选池）+注入机制设计+阈值校准+字段名静默错配+结果与存储一致性+装饰性展示vs决策闭环。830测试通过。详见原则73-80
 
 > **v18 状态**: 新增 daily-stock-report v12 开发经验（原则67-72）：HTML表格多位置修改时局部变量遮蔽陷阱、模板函数参数防御性设计、渲染层数据完整性检查。822测试通过。详见原则67-72
 
@@ -145,6 +145,18 @@ user-invocable: true
 79. **装饰性展示 ≠ 决策闭环** ⭐⭐ v13-dsr — `bull_candidates` 数据漂亮地出现在 HTML 报告（板块6、板块4双重认证标记）≠ 牛股评分对投资决策有贡献。必须追踪「bull_score → total_score → _select_top10 排序 → top10 排序结果」这条链路，确认 bull_score 真正改变了 top10 的排序顺序，而非只是被读取然后展示。验证方法：对比注入前后的 top10 排序差异
 
 80. **测试数据要与生产数据同分布** ⭐⭐ v13-dsr — 测试中的 mock pool 的 score 分布（bull_score 60-89，limit_gene 70-89）可能与生产数据（bull_score 69-84，limit_gene 65-77）完全不同。用 mock 数据校准的阈值（≥75）在生产中可能太宽松或太严格。**防御**：测试数据的 score 分布区间应覆盖生产数据的典型范围；关键阈值（≥75）应在测试中明确标注，并附带「生产数据典型范围」注释
+
+### daily-stock-report v15 审计修复经验
+
+81. **缩进断裂 = 静默渲染丢失** ⭐⭐⭐ v15-dsr — Python for 循环体如果缩进意外回到与 for 语句同级，后续代码只执行一次而非每次迭代。在 HTML 渲染函数中表现为：只有最后一个元素渲染了完整卡片。**审计方法**：对每个 for 循环，用 AST 或手动检查确认循环体结尾位置。**预防**：大函数(>500行)追加代码时，先确认当前缩进层级再粘贴。daily-stock-report v15 实战：L700 for 循环在 L733 处缩进从 8sp 降到 4sp，导致 167 行代码（L735-921）全部在循环外执行，4只牛股候选的卡片丢失
+
+82. **未定义变量 NameError 是 P2 而非 P0** ⭐⭐ v15-dsr — `lr_count` 在 print 语句中使用但未定义，但 pipeline 在此之前已完成 JSON 写入，所以数据不丢、只影响日志输出。**教训**：评估 BUG 严重性时，看它是否影响数据/决策输出（P0）还是只影响日志/展示（P2）。print 语句中的未定义变量不应被当作 P0
+
+83. **版本号覆盖的条件逻辑必须向后兼容** ⭐⭐ v15-dsr — `if "v11" not in pipeline_version: pipeline_version = "v4.0"` 这段代码在 v11 之后永远覆盖版本号，导致 v12/v13/v14 报告全部显示 "v4.0"。**教训**：版本号处理应该 (1) 直接使用 JSON 中的 version 字段 (2) 或用 `>=` 比较而非字符串包含检查 (3) 任何条件覆盖逻辑都需要覆盖所有已知版本号。代码审查时 grep `if "vXX" in` 模式
+
+84. **重复定义函数名 = 最后一个静默生效** ⭐⭐ v15-dsr — 原则 #31 已提到同名辅助函数覆盖，这里延伸：**两个同名但逻辑不同的模块级函数**更危险。第一个（用于 A 场景）被第二个（用于 B 场景）覆盖后，A 场景的颜色/阈值/映射全部错误但不报错。**防御**：(1) 函数名应包含场景后缀（如 `_score_color_sentiment` vs `_score_color`）(2) 用 `grep 'def _func_name' file.py` 检查重复 (3) pylint --redefining-builtin 或 flake8 检测
+
+85. **9链路审计方法论** ⭐⭐⭐ v15-dsr — 对数据驱动型项目（如投资报告生成器），审计逻辑闭环的标准化方法：(1) 列出所有关键数据字段 (2) 对每个字段追踪完整路径：数据源→计算→序列化→反序列化→决策→渲染 (3) 每条链路标注 L1(存在)/L2(展示)/L3(决策) (4) L3 未闭环 = BUG (5) 展示性(L2 only)需明确标注。daily-stock-report v15 实战：9条链路审计发现 8/9 完全闭环、1/9 展示性（置信度仅展示不参与决策，属设计选择）、0/9 断裂
 
 ---
 
@@ -692,4 +704,4 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ---
 
-*v16.0.0 — 十版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎+开源致谢纪律) → v15(代码图谱化影响面分析+零遗漏) → v16(Agent Team并行编排+文件所有权+合约层+自动回退)*
+*v20.0.0 — 十一版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎+开源致谢纪律) → v15(代码图谱化影响面分析+零遗漏) → v16(Agent Team并行编排+文件所有权+合约层+自动回退)*
