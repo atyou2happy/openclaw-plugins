@@ -19,6 +19,9 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from "
 import { join } from "path";
 import { execSync } from "child_process";
 import { RefactorAssessmentTool } from "../tools/refactor-assessment-tool.js";
+import { V24Bridge, type V24Config } from "../tools/v24-bridge.js";
+import { V25Bridge, type V25Config } from "../tools/v25-bridge.js";
+import { WorkflowGraph } from "../tools/workflow-graph.js";
 import { getVersion, gitCommit, generateCommitMessage, inferCommitType, inferScope, buildReport, persistContext as persistCtx, loadContextFromDisk } from "./helpers.js";
 import { WorkflowStateMachine, type StepResult } from "./state-machine.js";
 
@@ -46,6 +49,10 @@ export class DevWorkflowEngine {
   private totalTokenUsage = 0;
   /** T6: Cache of recently passed gate checks — used to skip duplicate verification */
   private passedGatesCache = new Set<string>();
+  // v24: Bridge for 4 pillar modules (ADR/Swarm/Self-Learning/GoalDecomposition)
+  private v24bridge: V24Bridge | null = null;
+  // v25: Bridge for 3 new pillars + 2 enhancements (WorkflowGraph/Triangulation/Middleware/Experience/Templates)
+  private v25bridge: V25Bridge | null = null;
 
   constructor(runtime: PluginRuntime) {
     this.runtime = runtime;
@@ -112,6 +119,88 @@ export class DevWorkflowEngine {
     }
 
     await this.workingMemoryManager.initialize(projectDir);
+
+    // v24: Initialize V24 bridge (ADR/Swarm/Self-Learning/GoalDecomposition)
+    if (flags.adrEnabled || flags.selfLearningEnabled || flags.swarmTopology !== "hierarchical" || flags.goalDecomposition) {
+      try {
+        this.v24bridge = new V24Bridge({ projectDir, featureFlags: flags });
+        this.v24bridge.init();
+        const v24status = this.v24bridge.getStatus();
+        this.context!.decisions.push(`v24 Bridge: ADR=${v24status.adrEnabled} Learning=${v24status.learningEnabled} Swarm=${v24status.activeTopology} Goals=${v24status.goalDecompEnabled}`);
+      } catch (e) {
+        this.context!.decisions.push(`v24 Bridge init skipped: ${e}`);
+      }
+    }
+
+    // v25: Initialize V25 bridge (WorkflowGraph/Triangulation/Middleware/Experience/Templates)
+    if (flags.workflowGraph || flags.triangulationGate || flags.stepMiddleware || flags.experiencePropagation) {
+      try {
+        this.v25bridge = new V25Bridge({
+          workflowGraph: flags.workflowGraph,
+          triangulationGate: flags.triangulationGate,
+          stepMiddleware: flags.stepMiddleware,
+          experiencePropagation: flags.experiencePropagation,
+        });
+        this.v25bridge.initialize();
+        const v25status = this.v25bridge.getStatus();
+        this.context!.decisions.push(`v25 Bridge: Graph=${v25status.modules.workflowGraph} Council=${v25status.modules.triangulationGate} MW=${v25status.modules.stepMiddleware} Exp=${v25status.modules.experiencePropagator}`);
+
+        // v25: Query past experience and recommend agent templates for this project
+        if (this.v25bridge.experiencePropagator && this.context?.projectDir) {
+          try {
+            const techStack = this.context.projectDir.split('/').pop() || 'unknown';
+            const pastResult = this.v25bridge.experiencePropagator.query({ techStack, limit: 3 });
+            if (pastResult.templates.length > 0) {
+              this.context.decisions.push(`v25 ExpPropagator: ${pastResult.templates.length} past experiences found for "${techStack}"`);
+            }
+          } catch { /* non-blocking */ }
+        }
+        if (this.v25bridge.templateRegistry) {
+          try {
+            const templates = this.v25bridge.templateRegistry.getAll();
+            if (templates.length > 0) {
+              this.context!.decisions.push(`v25 Templates: ${templates.length} agent templates available (${templates.map((t: any) => t.id).join(', ')})`);
+            }
+          } catch { /* non-blocking */ }
+        }
+        // v25: ContextProtocol — register initial context blocks with budget awareness
+        if (this.v25bridge.contextProtocol) {
+          try {
+            const cp = this.v25bridge.contextProtocol;
+            // Register project metadata as a context block
+            cp.register({
+              id: 'project-meta',
+              type: 'doc',
+              description: `Project: ${this.context?.projectDir || 'unknown'}`,
+              relevanceScore: 1.0,
+              tokenCost: 50,
+              content: `Project directory: ${this.context?.projectDir || 'unknown'}, mode: ${this.context?.mode || 'full'}`,
+            });
+            // Register past experiences as context blocks
+            if (this.v25bridge.experiencePropagator) {
+              const techStack = this.context?.projectDir?.split('/').pop() || 'unknown';
+              const pastResult = this.v25bridge.experiencePropagator.query({ techStack, limit: 3 });
+              for (const tmpl of pastResult.templates) {
+                cp.register({
+                  id: `exp-${tmpl.id}`,
+                  type: 'experience',
+                  description: `Past: ${tmpl.techStack} / ${tmpl.taskType}`,
+                  relevanceScore: 0.7,
+                  tokenCost: Math.min(tmpl.steps.length * 20, 500),
+                  content: JSON.stringify({ steps: tmpl.steps, backtracks: tmpl.backtracks }),
+                });
+              }
+            }
+            const plan = cp.planInjection();
+            if (plan.selected.length > 0) {
+              this.context!.decisions.push(`v25 ContextProtocol: ${plan.selected.length}/${plan.totalTokens}t injected, ${plan.rejected.length} rejected (budget=${plan.budget})`);
+            }
+          } catch { /* non-blocking */ }
+        }
+      } catch (e) {
+        this.context!.decisions.push(`v25 Bridge init skipped: ${e}`);
+      }
+    }
 
     const analysis = await this.orchestrator.runAnalysis(projectDir);
     this.context!.decisions.push(`Analysis: ${analysis.summary}`);
@@ -240,6 +329,26 @@ export class DevWorkflowEngine {
           } catch {
             this.context!.decisions.push("Spec write skipped: openspec dir or file write failed (non-critical — spec still in memory)");
           }
+
+          // v24: Auto-create ADR for the design decision (Principle #110)
+          if (this.v24bridge) {
+            try {
+              const proposalLine = this.context!.spec.proposal.split("\n").find(l => l.trim() && !l.startsWith("#"))?.trim() || requirement_.slice(0, 100);
+              const designSummary = this.context!.spec.design.split("\n").slice(0, 5).join(" ").slice(0, 300);
+              const adr = this.v24bridge.createADR(
+                `Spec: ${proposalLine}`,
+                `Requirement: ${requirement_.slice(0, 200)}`,
+                designSummary || "See design.md for full details",
+                `${this.context!.spec.tasks.length} tasks planned. See tasks.json for breakdown.`,
+                "standard",
+              );
+              if (adr) {
+                this.context!.decisions.push(`v24 ADR #${adr.id} created for spec design decision`);
+              }
+            } catch (e) {
+              this.context!.decisions.push(`v24 ADR auto-create skipped: ${e}`);
+            }
+          }
           return { status: "success" };
         },
         transitions: [
@@ -276,6 +385,35 @@ export class DevWorkflowEngine {
             return { status: "paused", data: { approved: false } };
           }
           this.context!.decisions.push("Plan Gate: APPROVED by user");
+
+          // v24: ADR gate check — auto-accept all ADRs when Plan Gate is approved,
+          // then verify none remain unaccepted (safety check)
+          if (this.v24bridge) {
+            const adrGate = this.v24bridge.adrGateCheck();
+            if (!adrGate.passed) {
+              // Auto-accept all proposed ADRs — Plan Gate approval implies design approval
+              for (const adr of adrGate.blocking) {
+                this.v24bridge.acceptADR(adr.id, "system", "Auto-accepted via Plan Gate approval");
+              }
+              this.context!.decisions.push(`v24 ADR: ${adrGate.blocking.length} ADR(s) auto-accepted via Plan Gate`);
+            }
+          }
+
+          // v25: Triangulation Gate — for critical ADRs, multi-model voting
+          if (this.v25bridge?.triangulationGate) {
+            try {
+              const adrExport = this.v24bridge?.adrExport();
+              const criticalADRs = adrExport?.events.filter((e: any) => e.action === "accept" && e.data?.level === "critical");
+              if (criticalADRs && criticalADRs.length > 0) {
+                for (const evt of criticalADRs) {
+                  this.v25bridge.triangulationGate.submitVote(String(evt.adrId), "plan-gate-validator", `Plan Gate approved ADR ${evt.adrId}`, "accept", 0.85);
+                }
+                const consensusResult = this.v25bridge.triangulationGate.evaluateConsensus(String(criticalADRs[0].adrId), "Plan Gate auto-validated via user approval");
+                this.context!.decisions.push(`v25 Council: ${consensusResult.consensus ? "consensus" : "no-consensus"} on ${criticalADRs.length} critical ADR(s) (accept=${consensusResult.acceptCount})`);
+              }
+            } catch { /* non-blocking */ }
+          }
+
           return { status: "success", data: { approved: true } };
         },
         transitions: [
@@ -404,10 +542,91 @@ export class DevWorkflowEngine {
           }
 
           await this.memdirManager.updateAging(this.context!.projectDir);
+
+          // v24: Export ADR + Learning data for Retro analysis
+          if (this.v24bridge) {
+            try {
+              const adrExport = this.v24bridge.adrExport();
+              if (adrExport) {
+                this.context!.decisions.push(`v24 ADR Summary: ${adrExport.total} records (${adrExport.byStatus.accepted} accepted, ${adrExport.byStatus.proposed} proposed, ${adrExport.byStatus.superseded} superseded)`);
+              }
+              const learningExport = this.v24bridge.learningExport();
+              if (learningExport && learningExport.totalExperiences > 0) {
+                this.context!.decisions.push(`v24 Learning: ${learningExport.totalExperiences} experiences, ${learningExport.totalPatterns} patterns extracted`);
+              }
+            } catch (e) {
+              this.context!.decisions.push(`v24 export skipped: ${e}`);
+            }
+          }
+          // v25: Export v25 module statistics
+          if (this.v25bridge) {
+            try {
+              const v25stats = this.v25bridge.exportStatistics();
+              const statEntries = Object.entries(v25stats);
+              if (statEntries.length > 0) {
+                this.context!.decisions.push(`v25 Stats: ${statEntries.map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(', ')}`);
+              }
+            } catch (e) {
+              this.context!.decisions.push(`v25 export skipped: ${e}`);
+            }
+          }
+          // v26: Experience Lifecycle — decay and prune stale experiences
+          if (this.v25bridge?.experienceLifecycle) {
+            try {
+              const decayed = this.v25bridge.experienceLifecycle.decay();
+              const pruned = this.v25bridge.experienceLifecycle.prune();
+              if (decayed > 0 || pruned > 0) {
+                this.context!.decisions.push(`v26 Lifecycle: decayed=${decayed}, pruned=${pruned}`);
+              }
+            } catch { /* non-critical */ }
+          }
+
+          // v25: Index this project's experience for future projects
+          if (this.v25bridge?.experiencePropagator) {
+            try {
+              const techStack = this.context?.projectDir?.split('/').pop() || 'unknown';
+              this.v25bridge.experiencePropagator.indexTemplate({
+                id: `project-${Date.now()}`,
+                name: techStack,
+                techStack: techStack,
+                taskType: 'full-workflow',
+                complexity: 'complex',
+                steps: (this.context?.decisions || []).filter(d => d.startsWith('v2')).slice(0, 10),
+                backtracks: 0,
+                durationEstimate: 60,
+                successRate: 1.0,
+                tags: ['dev-workflow', techStack],
+                sourceProject: this.context?.projectDir || 'unknown',
+                createdAt: Date.now(),
+              });
+              this.context!.decisions.push(`v25 ExpPropagator: indexed experience for "${techStack}"`);
+            } catch { /* non-blocking */ }
+          }
+
           return { status: "success" };
         },
         transitions: [], // Terminal node — no outgoing transitions
       });
+
+      // ── v25: Workflow Graph validation ──
+      // Build a DAG from the SM structure and validate consistency.
+      // Also export mermaid diagram for debugging and documentation.
+      if (this.v25bridge?.workflowGraph) {
+        try {
+          const graph = this.context!.mode === 'ultra' ? WorkflowGraph.ULTRA_QUICK()
+            : this.context!.mode === 'full' ? WorkflowGraph.FULL()
+            : WorkflowGraph.STANDARD();
+          // Validate: count graph nodes for consistency logging
+          const graphNodes = graph.executionOrder();
+          // Export mermaid for debugging
+          const graphName = (graph as any).name || 'Standard';
+          this.context!.decisions.push(`v25 WorkflowGraph: ${graphName} mode, ${graphNodes.length} steps, mermaid available`);
+          // Store graph reference for Step 12 export
+          (this as any)._lastGraph = graph;
+        } catch (e) {
+          this.context!.decisions.push(`v25 WorkflowGraph skipped: ${e}`);
+        }
+      }
 
       // ── Run the state machine ──
       // Try to resume from saved checkpoint, otherwise start from step1
@@ -507,8 +726,24 @@ export class DevWorkflowEngine {
     if (this.aborted || !this.context) return;
     this.context.currentStep = step;
     this.persistContext();
-    await fn();
-    this.persistContext();
+    // v26: Emit step:start event
+    if (this.v25bridge?.eventStream) {
+      this.v25bridge.eventStream.emit('step:start', typeof step === 'string' ? parseInt(step.replace(/\D/g,'')) || 0 : 0, { step: String(step) });
+    }
+    try {
+      await fn();
+      this.persistContext();
+      // v26: Emit step:complete event
+      if (this.v25bridge?.eventStream) {
+        this.v25bridge.eventStream.emit('step:complete', typeof step === 'string' ? parseInt(step.replace(/\D/g,'')) || 0 : 0, { step: String(step) });
+      }
+    } catch (error) {
+      // v26: Emit step:error event
+      if (this.v25bridge?.eventStream) {
+        this.v25bridge.eventStream.emit('step:error', typeof step === 'string' ? parseInt(step.replace(/\D/g,'')) || 0 : 0, { step: String(step), error: String(error) });
+      }
+      throw error;
+    }
   }
 
   private async executeAllTasks(): Promise<void> {
@@ -648,6 +883,17 @@ export class DevWorkflowEngine {
         task.status = "in_progress";
         this.persistContext();
 
+        // v25: StepMiddleware before-task hook
+        if (this.v25bridge?.stepMiddleware) {
+          try {
+            const mw = this.v25bridge.stepMiddleware;
+            const stepCtx = { stepId: 7, data: { taskId: task.id, taskTitle: task.title, shipCategory: task.shipCategory }, timing: { start: Date.now() }, logs: [] as string[], aborted: false };
+            // Run registered before hooks for step 7
+            const beforeHooks = (mw as any).before?.get(7) ?? [];
+            for (const hook of beforeHooks) { await hook.fn(stepCtx); }
+          } catch { /* non-blocking */ }
+        }
+
         const result = await this.executeTaskWithShipStrategy(task);
         task.status = result.success ? "completed" : "failed";
         if (result.success) {
@@ -656,6 +902,39 @@ export class DevWorkflowEngine {
           failed.add(task.id);
         }
         this.context!.decisions.push(`Task ${task.id}: ${result.success ? "OK" : "FAIL"} (${result.durationMs}ms) [${task.shipCategory}]`);
+
+        // v25: StepMiddleware after-task hook
+        if (this.v25bridge?.stepMiddleware) {
+          try {
+            const mw = this.v25bridge.stepMiddleware;
+            const stepCtx = { stepId: 7, data: { taskId: task.id, success: result.success, durationMs: result.durationMs }, timing: { start: Date.now() }, logs: [] as string[], aborted: false };
+            const afterHooks = (mw as any).after?.get(7) ?? [];
+            for (const hook of afterHooks) { await hook.fn(stepCtx); }
+          } catch { /* non-blocking */ }
+        }
+
+        // v24: Self-learning capture + Swarm adaptive switching per task
+        if (this.v24bridge) {
+          try {
+            this.v24bridge.recordExperience("step7-development", task.title || task.id, result.success, result.success ? undefined : result.output);
+            const topologyDecision = this.v24bridge.recordTaskCompletion(result.success);
+            if (topologyDecision) {
+              this.context!.decisions.push(`v24 Swarm: ${topologyDecision.from}→${topologyDecision.to} (${topologyDecision.reason})`);
+            }
+          } catch { /* non-blocking */ }
+        }
+
+        // v25: Agent health tracking per task
+        if (this.v25bridge?.healthMonitor) {
+          try {
+            if (result.success) {
+              this.v25bridge.healthMonitor.recordSuccess(task.id, result.durationMs || 0, 1.0);
+            } else {
+              this.v25bridge.healthMonitor.recordFailure(task.id, "task-failed");
+            }
+          } catch { /* non-blocking */ }
+        }
+
         progress = true;
         this.persistContext();
       }

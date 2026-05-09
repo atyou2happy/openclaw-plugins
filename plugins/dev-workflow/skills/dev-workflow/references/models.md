@@ -28,10 +28,10 @@ lightweight:
   primary: "Llama 3.3 70B"           # 0.3s, 免费, 极稳定
   fallback:
     - "MiniMax M2.5 Free"             # 1.6s, 免费
-    - "MiniMax M2.7"           # 免费
+    - "Qwen 3.6 Plus Free"           # 免费
 
 standard:
-  primary: "MiniMax M2.7"       # 免费, 通用强
+  primary: "Qwen 3.6 Plus Free"       # 免费, 通用强
   fallback:
     - "MiniMax M2.5 Free"
     - "Llama 3.3 70B"

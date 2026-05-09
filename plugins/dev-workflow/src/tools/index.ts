@@ -42,6 +42,59 @@ export type { PropagationResult, ImpactSeed, ImpactNode, ImpactReason, Propagati
 export type { CompletenessReport, MissingFile, TestStatus, ChecklistItem, CompletenessStats, CheckInput } from "./completeness-checker.js";
 export type { ImpactAnalysisConfig } from "./impact-analyzer.js";
 
+// ADR Manager & Swarm Topology (v24)
+export { ADRManager } from "./adr-manager.js";
+export type { ADR, ADRStatus, ADRAction, DecisionLevel, ADREvent, ADRExport } from "./adr-manager.js";
+export { SwarmTopologySelector, DEFAULT_SWARM_CONFIG } from "./swarm-topology.js";
+export type { SwarmTopology, AgentCapabilities, TaskRequirements, SwarmConfig, RoutingMatch, TopologyDecision } from "./swarm-topology.js";
+
+// Self-Learning & Goal Decomposition (v24)
+export { SelfLearningEngine } from "./self-learning.js";
+export type { Experience, ExperienceCategory, Pattern, AdaptiveThreshold, ThresholdAdjustment, LearningExport } from "./self-learning.js";
+export { GoalDecompositionEngine, DEFAULT_DECOMPOSITION_CONFIG } from "./goal-decomposition.js";
+export type { Goal, GoalComplexity, DecompositionStrategy, DecompositionResult, DecompositionConfig } from "./goal-decomposition.js";
+
+// v24 Integration Bridge
+export { V24Bridge } from "./v24-bridge.js";
+export type { V24Config, V24Status } from "./v24-bridge.js";
+
+// Workflow Graph Engine (v25 Pillar 5)
+export { WorkflowGraph } from "./workflow-graph.js";
+export type { WorkflowNode, WorkflowEdge, WorkflowGraphConfig, ExecutionResult, NodeType, EdgeGuard } from "./workflow-graph.js";
+
+// Council Gate / Triangulation (v25 Pillar 6)
+export { TriangulationGate } from "./triangulation-gate.js";
+export type { VoteRecord, GateResult, Counterfactual, TriangulationConfig, Verdict } from "./triangulation-gate.js";
+
+// Step Middleware Pipeline (v25 Pillar 7)
+export { StepMiddleware } from "./step-middleware.js";
+export type { StepContext, MiddlewareFn, MiddlewareEntry } from "./step-middleware.js";
+
+// Agent Health Monitor (v25 Pillar 7)
+export { AgentHealthMonitor } from "./agent-health-monitor.js";
+export type { HealthRecord, HealthConfig } from "./agent-health-monitor.js";
+
+// Experience Propagator (v25 Enhancement)
+export { ExperiencePropagator } from "./experience-propagator.js";
+export type { ExperienceTemplate, PropagationQuery, PropagationResult as ExperiencePropagationResult } from "./experience-propagator.js";
+
+// Agent Template Registry (v25 Enhancement)
+export { AgentTemplateRegistry } from "./agent-template-registry.js";
+export type { AgentTemplate, AgentTier, TemplateMatch } from "./agent-template-registry.js";
+
+// v25 Integration Bridge
+export { V25Bridge } from "./v25-bridge.js";
+export type { V25Config } from "./v25-bridge.js";
+
+// Context Injection Protocol (v25 Principle #127)
+export { ContextProtocol } from "./context-protocol.js";
+
+// v26 Pillars 8-10: Safe Execution, Observable Pipeline, Experience Evolution
+export { ExecutionSandbox } from "./execution-sandbox.js";
+export { StepEventStream } from "./step-event-stream.js";
+export { ExperienceLifecycle } from "./experience-lifecycle.js";
+export type { ContextBlock, ContextType, InjectionPlan } from "./context-protocol.js";
+
 // Tool type exports
 export type { DevWorkflowTool } from "./dev-workflow-tool.js";
 export type { WorkflowStatusTool } from "./workflow-status-tool.js";

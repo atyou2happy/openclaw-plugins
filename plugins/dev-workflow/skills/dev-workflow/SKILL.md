@@ -1,14 +1,16 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v22。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验。v15：代码图谱化影响面分析。v16：Agent Team多Agent并行编排。v17：数据流逻辑闭环设计模式。v18：HTML表格多位置修改P0陷阱。v19：逻辑闭环双池注入+字段名静默错配。v20：缩进断裂静默丢失+9链路审计。v21：SVG→Canvas交互式升级+硬编码限制多层清理。v22：12链路审计+辨识度/行业/概念进入total_score+Pipeline层截断vs展示层截断。
+description: AI驱动开发工作流 v25。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验 + 30+开源项目调研。v25：7大支柱26新原则(102-127) — v24(Swarm+Self-Learning+ADR+GoalDecomp) + v25(WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation)。v23：搜索质量升级12原则(90-101)。v22：12链路审计+辨识度/行业/概念进入total_score。
 user-invocable: true
 ---
 
-# Dev Workflow v22 — AI驱动开发工作流
+# Dev Workflow v25 — AI驱动开发工作流
 
-> 版本：22.0.0 | 最后更新：2026-05-08 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性)→v20(缩进断裂静默丢失+9链路审计方法论)→v21(SVG→Canvas交互式升级+硬编码限制多层清理)→v22(12链路审计+辨识度/行业/概念进入total_score+Pipeline层截断vs展示层截断) 九版经验融合
+> 版本：25.0.0 | 最后更新：2026-05-09 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性)→v20(缩进断裂静默丢失+9链路审计方法论)→v21(SVG→Canvas交互式升级+硬编码限制多层清理)→v22(12链路审计+辨识度/行业/概念进入total_score)→v24(20+开源项目调研→4大支柱14原则: Swarm Intelligence+Self-Learning+ADR+Goal Decomposition)→v25(30+开源项目深度调研→3新支柱+1增强12原则: WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation) 十版经验融合
 
-> **v22 状态**: 新增 daily-stock-report v16 开发经验（原则81-89）：12链路逻辑闭环审计→visibility(辨识度)/industry(行业)/concepts(概念)进入total_score→news_scoring去掉Pipeline层[:30]截断→长概念名缩短匹配。12链路全部闭合（11/12闭环 + 1/12展示性）。830测试通过。详见原则81-89。
+> **v25 状态**: 深度调研30+高质量开源项目（Ruflo/AG2/CrewAI/ChatDev/MASFactory/Houmao/CoReason-MACO/MAF等），在v24四支柱基础上新增3大支柱+1增强：Pillar 5 Workflow Graph Engine(原则116-118)、Pillar 6 Council Gate三角验证(原则119-121)、Pillar 7 Step Middleware Pipeline(原则122-124)、Enhancement Experience Propagation(原则125-127)。详见 `references/v25-multi-agent-research.md`
+
+> **v24 状态**: 4大支柱已全部实施完毕。Pillar 1 Swarm Intelligence(原则102-105)、Pillar 2 Self-Learning Loop(原则106-109)、Pillar 3 ADR+Phase Gates(原则110-112)、Pillar 4 Goal Decomposition(原则113-115)。详见 `references/v24-multi-agent-research.md`(注：该文件在v24过程中未独立保存，内容已合并到v25报告中)
 
 > **v18 状态**: 新增 daily-stock-report v12 开发经验（原则67-72）：HTML表格多位置修改时局部变量遮蔽陷阱、模板函数参数防御性设计、渲染层数据完整性检查。822测试通过。详见原则67-72
 
@@ -146,6 +148,24 @@ user-invocable: true
 
 80. **测试数据要与生产数据同分布** ⭐⭐ v13-dsr — 测试中的 mock pool 的 score 分布（bull_score 60-89，limit_gene 70-89）可能与生产数据（bull_score 69-84，limit_gene 65-77）完全不同。用 mock 数据校准的阈值（≥75）在生产中可能太宽松或太严格。**防御**：测试数据的 score 分布区间应覆盖生产数据的典型范围；关键阈值（≥75）应在测试中明确标注，并附带「生产数据典型范围」注释
 
+### unified-search v2.0 搜索质量升级经验
+
+90. **RRF融合归一化必须在排序后** ⭐⭐⭐ v2-us — RRF分数 `min(score*100, 1.0)` 导致所有结果分数被截断为接近0的值，排序信息完全丢失。**修复**：先用原始RRF分数排序，再用 `score/max_score` 归一化到[0,1]。这是所有元搜索引擎的核心bug模式——SearXNG同样用归一化而非截断
+
+91. **查询增强Pipeline无LLM依赖** ⭐⭐ v2-us — 拼写纠错(编辑距离map) + 同义词扩展(预定义映射) + 跨语言改写(中英互查表) + 增强意图识别(多信号加权)，全pipeline零外部依赖、亚毫秒延迟。不引入LLM保证搜索延迟不退化。借鉴SearXNG的轻量级查询处理
+
+92. **多维度质量评分优于单一relevance** ⭐⭐ v2-us — 单一 `relevance: 0.7` 静态值无法区分高质量和低质量结果。4维评分(relevance 40% + authority 20% + freshness 20% + completeness 20%)让排序更精准。Authority用3层域名信任度，Freshness用指数衰减，Completeness用内容完整度
+
+93. **PerformanceTracker EMA+熔断器** ⭐⭐ v2-us — 模块性能追踪用EMA(指数移动平均)平滑数据，用连续失败计数实现熔断器模式(5次失败→跳过→5分钟后恢复探测)。动态权重 = 基础权重 × 成功率因子 × 质量因子 × 速度因子。类似SearXNG的引擎超时配置+Circuit Breaker模式
+
+94. **多样性注入防止单源霸屏** ⭐⭐ v2-us — 融合排序后，同源结果上限 `max_per_source=3`，溢出结果追加到尾部。未做多样性注入时，单个高质量模块（如tabbit）可能占据前8位，用户看不到其他源的结果。与搜索引擎"搜索结果多样化"原则一致
+
+95. **位置衰减避免低质量尾部** ⭐⭐ v2-us — 排序后应用位置衰减 `1/(1+0.02*i)`，第50位结果的relevance自动降为原始的50%。避免低质量结果占据尾部时仍显示高relevance值，误导下游消费者
+
+96. **搜索质量Benchmark闭环** ⭐⭐ v2-us — Benchmark 20题关键词命中率 + PerformanceTracker模块级指标 + 搜索日志 → 自动计算MRR/覆盖率/模块可靠性。没有量化指标的搜索质量优化是盲人摸象。每次升级后跑benchmark对比前后，确认提升≥15%
+
+97. **查询增强不影响延迟** ⭐⭐⭐ v2-us — QueryEnhancer全pipeline亚毫秒(纯字典查找+正则匹配)。关键约束：搜索是延迟敏感型服务，任何增强步骤增加的延迟必须 <10ms。如果需要LLM调用，必须走异步路径（如CDP搜索），不能阻塞主搜索路径
+
 ### daily-stock-report v15-v16 审计 + 交互式图表 + 逻辑闭环经验
 
 81. **缩进断裂=静默渲染丢失** ⭐⭐⭐ v15-dsr — Python for循环体缩进从8sp断裂为4sp时，循环体之后的167行代码全部在循环外执行，只渲染最后一条数据（5张牛股卡片只渲染1张）。无报错、无异常、HTML正常生成但内容丢失。**防御**：(1) 代码审查逐行检查缩进一致性 (2) 对比修改前后的输出文件大小（537KB→565KB增量验证） (3) 对关键渲染函数做 snapshot diff 测试
@@ -165,6 +185,114 @@ user-invocable: true
 88. **news_scoring 的[:30]是Pipeline层面的截断** ⭐⭐ v16-dsr — render_news 的 `[:30]` 只是展示截断，但 news_scoring 函数内的 `news_data[:30]` 是**决策层面**的截断：只从前30条新闻匹配概念关键词，后面的170条新闻被完全忽略。这意味着 73.5% 的新闻对排序零贡献。**防御**：截断操作分两类——展示截断(可接受) 和 决策截断(不可接受)，搜索决策代码中的所有切片操作
 
 89. **长概念名需要缩短匹配** ⭐⭐ v16-dsr — 概念关键词如"人形机器人概念"在新闻标题"人形机器人概念股震荡走高"中能匹配，但在"人形机器人板块大涨"中匹配不到（因为"概念"不在标题中）。修复：对超过4字的概念取前4字做匹配 `c_match = c if len(c) <= 4 else c[:4]`，兼顾准确率和召回率
+
+### unified-search v2.0 搜索质量升级经验
+
+90. **RRF分数归一化必须在排序后** ⭐⭐⭐ v2-us — `rrf_scores[url_key] * 100` 然后 `min(..., 1.0)` 是 P0 bug：乘100再截断到1.0等于所有高分结果都变成1.0，完全丧失区分度。正确做法：RRF原始分数排序后，再线性归一化到 [0,1]（`score / max_score`）。融合算法中任何中间截断都会破坏排序质量
+
+91. **搜索质量6维诊断框架** ⭐⭐⭐ v2-us — 搜索系统质量诊断应从6个维度评估：(1)意图识别准确度 (2)召回率(模块覆盖) (3)结果相关性(排序算法) (4)融合质量(RRF/去重) (5)多样性(同源占比) (6)性能(延迟/超时)。每个维度独立评分，找到最弱的1-2个维度重点改进。unified-search诊断结果：意图(弱)、融合(有bug)、多样性(缺失)→集中改进这三个
+
+92. **查询增强不需要LLM** ⭐⭐ v2-us — 搜索系统的查询增强可以用纯规则实现：(1)拼写纠错：编辑距离字典 (2)查询扩展：同义词表+领域术语 (3)跨语言改写：中文→英文关键词映射 (4)问句检测：正则匹配疑问词。无需引入 LLM 调用，避免增加延迟和成本。借鉴 SearXNG 的启发式方法
+
+93. **多维度质量评分权重需数据校准** ⭐⭐ v2-us — 质量评分公式如 `relevance*0.4 + authority*0.2 + freshness*0.2 + completeness*0.2` 的权重不能拍脑袋。校准方法：(1)用 benchmark 测试集跑评分 (2)人工标注 top-K 结果质量 (3)调整权重使自动评分与人工标注相关性最高 (4)权重变动 >0.05 必须重新校准
+
+94. **模块性能追踪驱动自适应调度** ⭐⭐ v2-us — 搜索模块的成功率/速度/质量不是静态的：网络波动、API限额、服务降级都会影响。性能追踪器(PerformanceTracker)记录最近N次调用的三元组(成功/失败, 耗时, 结果数)，动态计算：(1)模块选择优先级 (2)超时分配（快速模块短超时，慢速模块长超时） (3)降级决策（连续5次失败自动排除）。比硬编码 SOURCE_WEIGHTS 更可靠
+
+95. **搜索结果多样性是质量指标** ⭐⭐ v2-us — 融合后的结果如果同源占比超过30%，用户体验差——看到5个 Google 结果不如2个Google+2个DDG+1个Wikipedia。多样性注入方法：(1) max_per_source=3 限制 (2) category分组确保各类型有代表 (3) 已选结果与候选的相似度过滤（排除过于相似的结果）。SearXNG 的 category 分面聚合是最佳实践
+
+### unified-search v2.1 搜索质量升级经验
+
+98. **双重加权是隐蔽的P0排序bug** ⭐⭐⭐ v2.1-us — 当两处代码都对同一信号应用权重时（如 rrf_fuse 和 rerank 都乘 SOURCE_WEIGHTS），排序严重偏向高权重模块（tabbit 1.5×1.5=2.25x vs ddg 0.95×0.95=0.9x）。**防御**：权重只在一个位置应用，用grep确认`SOURCE_WEIGHTS`出现次数。这也是"装饰性数据陷阱"的排序变体——权重存在但不生效或重复生效
+
+99. **多样性不删除结果只重排序** ⭐⭐ v2.1-us — diversity injection 的正确语义是"diverse 优先 + overflow 追加"，不是"删除 overflow"。测试不能断言总数减少，只能断言前N条中同源≤K。这避免了误删有效结果，同时保证用户看到的前几条是多样化的
+
+100. **动态超时分配优于固定超时** ⭐⭐ v2.1-us — 用 perf_tracker.suggest_timeout() 为每个模块分配独立超时（P95估算: avg*2，clamp [5,60]s），而非所有模块用同一个 request.timeout。好处：(1) 快模块(DDG 0.3s)不被等慢模块(tabbit 8s) (2) 慢模块得到合理超时 (3) 总延迟下降因为快模块提前释放资源
+
+101. **搜索日志是质量改进的前提** ⭐⭐ v2.1-us — 没有搜索日志=无法量化任何改进。SearchLogger(JSONL追加+10MB轮转)记录每次搜索的query/sources/results/elapsed/errors/intent，get_stats()输出平均耗时/结果数/错误率/高频查询。benchmark脚本可基于日志计算MRR/覆盖率
+
+### v24 Pillar 1: Swarm Intelligence（群体智能拓扑）
+
+> 来源：Ruflo(swarm topology+SONA+100+agents) / ClawTeam(adaptive topology) / CrewAI(role/goal/backstory+process=sequential/hierarchical) / AG2(GroupChat+ConversableAgent)
+
+102. **Swarm拓扑必须匹配任务结构** ⭐⭐⭐ v24 — 拓扑模式选择：(1) **Hierarchical**（CEO→workers），适合顺序任务、明确分工的场景（标准开发）(2) **Mesh**（peer-to-peer），适合头脑风暴、方案探索、多视角审查 (3) **Adaptive**（自动切换），根据执行反馈动态调整。默认：Hierarchical。借鉴 Ruflo swarm topology + ClawTeam adaptive。配置：`swarmTopology: "hierarchical" | "mesh" | "adaptive"`
+
+103. **Agent角色=能力档案而非硬编码名称** ⭐⭐ v24 — 每个 agent 声明能力集合（如 `capabilities: ["review","security","python","async"]`），不固定角色名。路由匹配任务需求到 agent 能力：`requirements ∩ capabilities ≠ ∅`。新增 agent 只需注册能力，无需改路由代码。借鉴 CrewAI Agent(role/goal/backstory) + AG2 ConversableAgent
+
+104. **自适应拓扑在失败时切换** ⭐⭐ v24 — 当并行批次失败率 >50% 时，自动从 mesh→hierarchical（更可控）；当连续3步零回退通过时，自动从 hierarchical→mesh（更多并行）。切换阈值可配置。借鉴 ClawTeam "One Command → Full Automation" 自适应模式
+
+105. **关键决策需共识协议** ⭐ v24 — 设计/架构类决策需要 N/2+1 个 agent 同意后才执行，防止单 agent 幻觉传播。非关键决策（编码风格、测试命名）由执行 agent 自主决定。决策分级：Critical(共识) / Standard(自主) / Trivial(自动)。借鉴 Ruflo swarm consensus
+
+### v24 Pillar 2: Self-Learning Loop（自学习闭环）
+
+> 来源：Ruflo SONA(neural patterns+ReasoningBank) / AG2(trajectory learning) / ChatDev(waterfall chain)
+
+106. **完成运行自动提取模式** ⭐⭐⭐ v24 — Step 12 交付后自动提取：(1) 有效决策（最终被采纳的方案）(2) 踩坑记录（回退/重做的步骤）(3) 模式模板（X类型任务走Y步骤序列最快）→ 存入 `references/lessons/` 带标签。不是手动的——从实际执行轨迹提取。借鉴 Ruflo SONA ReasoningBank
+
+107. **执行轨迹→可复用模板** ⭐⭐ v24 — 成功执行路径（如"Python async重构"走 1→3→4→7→8→9→12 共0次回退）保存为命名模板。未来相似任务自动推荐模板。模板结构：`{name, task_type, tech_stack, steps[], backtracks:0, duration_estimate}`。借鉴 ChatDev waterfall chain（设计→编码→测试→文档的链式模板）
+
+108. **跨会话记忆按相关性检索** ⭐⭐ v24 — 过去运行结果按 (tech_stack, task_type, complexity) 三元组索引。新会话查询："给定当前栈+任务类型，之前什么有效？"返回 top-3 相关经验。存储：`.dev-workflow/memory.jsonl`（JSONL追加，按时间衰减）。借鉴 Ruflo RVF(cross-session memory) + AG2 trajectory learning
+
+109. **反模式黑名单自动维护** ⭐ v24 — 失败方案（3+次回退 或 用户拒绝）自动加入反模式列表。未来运行在执行前检查：`if approach in anti_patterns: warn_and_suggest_alternative`。反模式条目：`{pattern, context, failure_count, last_seen, alternative}`。借鉴 Ruflo SONA self-optimizing
+
+### v24 Pillar 3: ADR + Phase Gates（架构决策记录+阶段门禁）
+
+> 来源：Ruflo ADR / 行业标准(Michael Nygard ADR pattern) / Ruflo SPARC(5-phase quality gates)
+
+110. **ADR记录每个设计决策** ⭐⭐⭐ v24 — Step 4 (Spec) 必须产出 ADR 条目：Title / Status(proposed/accepted/deprecated/superseded) / Context / Decision / Consequences。存储在 `docs/adr/NNNN-kebab-case.md`。ADR 是结构化的，不是 context.decisions[] 里的字符串。新增场景：Step 4 产出 proposal.md + design.md + tasks.md + **ADR/**。借鉴 Ruflo ADR plugin
+
+111. **Phase Gate强制ADR覆盖** ⭐⭐ v24 — 每个阶段转换（Plan→Build, Build→Review, Review→Deliver）检查：前一阶段所有 ADR 的 status 必须为 accepted。proposed-only 的 ADR 阻塞转换。Gate 检查清单：(1) 所有 design decisions 有 ADR (2) 所有 ADR accepted (3) 无 superseded-but-not-replaced。借鉴 Ruflo SPARC 5-phase quality gates
+
+112. **决策审计轨迹事件溯源** ⭐⭐ v24 — 每个决策变更（create/accept/reject/supersede）作为事件存入 `.dev-workflow/decisions.jsonl`。事件可回放用于 Retro 分析。事件结构：`{timestamp, adr_id, action, actor, reason}`。Step 12 Retro 可查询：哪些决策被推翻最多？哪个阶段产生最多 proposed-but-not-accepted？借鉴 Ruflo + 行业标准 ADR event log
+
+### v24 Pillar 4: Goal Decomposition（目标分解规划器）
+
+> 来源：Ruflo Goals(GOAP A* planner) / ChatDev seminars / Motia/iii(zero-integration worker)
+
+113. **目标→子任务通过依赖图分解** ⭐⭐⭐ v24 — 高层目标分解为子任务 + 显式依赖关系。A*搜索找最优执行顺序（关键路径优先），不是扁平任务列表。依赖图：DAG（有向无环图），拓扑排序生成执行批次。与 v16 TaskDependencyGraph 的区别：(1) 自动分解而非手动定义 (2) 考虑关键路径时间优化 (3) 支持子任务粒度调整。借鉴 Ruflo Goals GOAP A*
+
+114. **能力驱动任务路由** ⭐⭐ v24 — 任务路由基于 agent 声明的能力（非硬编码角色名）。Agent 注册：`registerCapabilities(["review","security","python"])`。任务匹配：`task.requirements ∩ agent.capabilities ≠ ∅`。多个匹配时按 (capability_overlap × success_rate × speed) 排序。新增 Agent 注册机制替代 routing.ts 硬编码。借鉴 AG2 ConversableAgent + CrewAI
+
+115. **零配置工具注册** ⭐⭐ v24 — 新工具/worker 通过 `registerTool(spec)` 自动注册，无需编辑 tools/index.ts。Tool spec 包含：name, capabilities, dependencies, default_execution_mode(autonomous/approval/manual)。注册后自动出现在工具列表和路由表中。v23 已提出 ToolRegistry 概念，v24 将其与 Goal Decomposition 整合。借鉴 Motia/iii zero-integration + Ruflo plugin marketplace
+
+### v25 Pillar 5: Workflow Graph Engine（工作流图引擎）
+
+> 来源：MASFactory(Vibe Graphing+Node/Edge) / Microsoft Agent Framework(graph-based patterns) / Ruflo(GOAP A* planner)
+
+116. **Workflow-as-Graph** ⭐⭐⭐ v25 — 12步流水线本身是一个有向无环图(DAG)。不同模式(UltraQuick/Standard/Full)是这个DAG的不同子图。UltraQuick = {1→7}，Standard = {1→2→3→4→5→6→7→8→9→10→11→12}，Full = Standard + 所有v24/v25增强节点。Graph Node = Step，Edge = 数据依赖+执行顺序。条件分支通过 Edge.guard 实现。借鉴 MASFactory Graph-style composition + MAF graph-based patterns
+
+117. **Spec自动生成依赖图** ⭐⭐ v25 — Step 4 Spec产出后，自动解析 design.md + tasks.md 提取模块间依赖关系，生成可视化DAG。用户在Plan Gate直观确认任务执行顺序和并行可能性。输出格式：mermaid图 + JSON DAG。借鉴 MASFactory Vibe Graphing（意图→图结构设计→预览→编译）+ CrewAI YAML config-driven
+
+118. **条件分支和子图** ⭐⭐ v25 — 工作流图支持条件分支：Step 6 Plan Gate → {accepted → Step 7, rejected → Step 4}。子图：Debug流程是Step 7的子图，安全审计是Step 10的子图。Loop：Step 7→8→7的审查循环。执行器按DAG拓扑排序+并行执行无依赖节点。借鉴 MASFactory subgraphs/loops/branches
+
+### v25 Pillar 6: Council Gate（三角验证门禁）
+
+> 来源：CoReason-MACO(Architectural Triangulation) / Ruflo(Swarm Consensus) / ChatDev(Ceo+Cto seminars)
+
+119. **关键决策三角验证** ⭐⭐⭐ v25 — 架构级ADR（数据库选型、API设计范式、认证方案等Critical级决策）不能只靠一个模型。至少2个独立模型给出意见 + 人工确认。实现：TriangulationGate class，配置多个LLM provider，对Critical ADR自动触发多模型投票。标准级ADR仍由执行agent自主决定。借鉴 CoReason-MACO Council of Models + Ruflo Swarm Consensus
+
+120. **Glass Box决策可视化** ⭐⭐ v25 — 三角验证过程可追踪：每个模型的独立意见、投票结果、Judge综合结论，全部记录在ADR的decisions.jsonl事件日志中。Step 12 Retro可查询：哪些决策被推翻最多？三角验证与单一模型决策的质量差异。借鉴 CoReason-MACO Glass Box Visualization
+
+121. **反事实推演(What-If)** ⭐ v25 — 对被拒绝的ADR方案，记录"如果采用方案B会怎样"的分析。当Retro发现决策失误时，可回溯查看备选方案。Counterfactual记录存储在ADR的alternatives字段中。借鉴 CoReason-MACO Counterfactual Simulation
+
+### v25 Pillar 7: Step Middleware Pipeline（Step级中间件管道）
+
+> 来源：Microsoft Agent Framework(Middleware system) / aixgo(structured output validation) / Ruflo(Hooks system)
+
+122. **Step级before/after钩子** ⭐⭐⭐ v25 — 每个Step执行前后可注册中间件。中间件类型：LoggingMiddleware(审计日志)、TimingMiddleware(性能追踪)、TokenBudgetMiddleware(token预算检查)、QualityCheckMiddleware(质量门禁)、RetryMiddleware(失败重试)。中间件按注册顺序执行，支持异步。借鉴 MAF Middleware system + Ruflo Hooks
+
+123. **Agent健康监控** ⭐⭐ v25 — 追踪每个子agent的成功率/延迟/质量评分。当agent连续失败超过阈值时自动降级（从delegate_task回退到主会话直接执行）。健康数据持久化，跨会话可用。实现：AgentHealthMonitor class，EMA平滑 + 熔断器模式。借鉴 Houmao fault-isolation + v22 unified-search PerformanceTracker
+
+124. **结构化输出自动验证** ⭐⭐ v25 — 每个Step的LLM输出自动验证schema。Spec必须有proposal/design/tasks字段，Review必须有findings数组，ADR必须有title/status/decision。验证失败自动重试(max 2次)。实现：SchemaValidatorMiddleware，注册在after钩子。借鉴 aixgo structured output validation with auto-retry
+
+### v25 Enhancement: Experience Propagation（经验跨项目传播）
+
+> 来源：ChatDev IER(Iterative Experience Refinement) / CrewAI(Flows) / AG2(trajectory learning) / Claude Orchestra(47 role templates)
+
+125. **经验跨项目传播** ⭐⭐⭐ v25 — 成功路径模板按 (tech_stack, task_type, complexity) 三元组索引。新项目Step 1自动查询："相同技术栈+相似任务类型，之前什么有效？"返回 top-3 相关经验模板。存储：`.dev-workflow/experience-index.jsonl`。与v24 Self-Learning的区别：(1)跨项目而非单项目 (2)模板化而非原始经验 (3)主动推荐而非被动查询。借鉴 ChatDev IER experience propagation
+
+126. **角色模板注册** ⭐⭐ v25 — Agent角色通过模板注册而非硬编码。模板结构：`{name, capabilities, tier, system_prompt_template, tools, model_requirements}`。内置模板：coder/reviewer/security-architect/tester/debugger。用户可通过YAML自定义模板。新增角色只需添加模板文件，无需改routing.ts。借鉴 Claude Orchestra 47 agents + CrewAI Agent(role/goal/backstory)
+
+127. **上下文注入协议** ⭐⭐ v25 — 经验/文档/搜索结果的注入遵循统一协议ContextBlock。每个上下文源声明：type(memory/doc/search)、relevance_score、token_cost。注入时按 relevance_score × (1/token_cost) 排序，在token预算内截断。避免当前经验注入的"一股脑全塞"问题。借鉴 MASFactory ContextBlock + Ruflo RAG memory
 
 ---
 
@@ -257,6 +385,12 @@ Step 7: 直接编码 → commit → 汇报
 `kilo run "用 openspec-propose，需求：XXX" --dir <项目>`
 
 输出：proposal.md | design.md | tasks.md
+
+**⭐v24 ADR产出**（新增）：
+- Step 4 必须同时产出 `docs/adr/` 目录下的架构决策记录
+- 每个影响架构的决策一个ADR文件，格式：`NNNN-kebab-case.md`
+- ADR模板：Title / Status(proposed) / Context / Decision / Consequences
+- Plan Gate (Step 6) 检查所有ADR status=accepted 才放行
 
 **⭐v7 数据语义定义**（新增）：
 - 每个字段的精确含义，特别是百分比/比率类
@@ -508,6 +642,15 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 - `agentTeamContractLayer` — 启用接口合约层（默认 true）
 - `agentTeamFileOwnership` — 启用文件所有权管理（默认 true）
 - `agentTeamAutoSync` — 启用自动同步点（默认 false）
+- `swarmTopology` — v24 群体拓扑模式：`"hierarchical"` | `"mesh"` | `"adaptive"`（默认 hierarchical）
+- `selfLearningEnabled` — v24 自学习闭环（默认 true）— 自动提取模式/模板/反模式
+- `adrEnabled` — v24 ADR决策记录（默认 true）— Step 4产出ADR，Phase Gate强制覆盖
+- `goalDecomposition` — v24 目标分解（默认 false）— A*依赖图分解替代扁平任务列表
+- `capabilityRouting` — v24 能力驱动路由（默认 false）— 替代routing.ts硬编码角色
+- `workflowGraph` — v25 DAG工作流引擎（默认 false）— 12步流水线变DAG，支持条件分支和子图
+- `triangulationGate` — v25 三角验证门禁（默认 false）— Critical ADR多模型投票（需多provider配置）
+- `stepMiddleware` — v25 Step级中间件管道（默认 true）— before/after钩子，含日志/计时/token预算/质量检查
+- `experiencePropagation` — v25 跨项目经验传播（默认 false）— 按(tech_stack, task_type)索引推荐
 
 ---
 
@@ -647,8 +790,55 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 | `references/debug-methodology.md` | 根因调试方法论 |
 | `references/security-audit.md` | 安全审计方法论 |
 | `references/retro-methodology.md` | 周回顾方法论 |
+| `references/v23-architecture-upgrade-research.md` | ⭐v23 架构升级调研：8个开源项目(Claude Code/OpenHands/Aider/SWE-agent/Codex/Cline/Goose/LangGraph)深度对比分析+6大升级模块设计+原则90-95提案 |
+| `references/v24-multi-agent-research.md` | ⭐v24 多智能体深度调研：20+开源项目(Ruflo/AG2/CrewAI/ChatDev/ClawTeam/Motia等)架构分析+4大升级支柱(Swarm Intelligence+Self-Learning+ADR+Goal Decomposition)+原则102-115提案+致谢表 |
+| `references/v25-multi-agent-research.md` | ⭐v25 多智能体深度调研：30+开源项目(Ruflo/AG2/CrewAI/ChatDev/MASFactory/Houmao/CoReason-MACO/MAF等)架构分析+8大模式提炼+3新支柱+1增强(WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation)+原则116-127提案+致谢表 |
+| `references/search-quality-research.md` | ⭐v22.1 搜索质量升级调研：SearXNG/Perplexica/Whoogle借鉴+6维质量诊断+RRF归一化修复+QueryEnhancer/QualityScorer/AdaptiveScheduler设计+原则90-95 |
 
 ---
+
+> **v25 状态**: 7大支柱全部实施。26条原则(102-127)。4个新FF。Engine 12个集成点(Step1/4/6/7/12+SM构建后)。12个v25+v26 TS模块。704测试全通过(56 v25/v26单元 + 15 v24×v25集成)。代码模块映射：
+
+| 支柱 | 源文件 | 行数 |
+|------|--------|------|
+| **v24 P1** Swarm Intelligence | `src/tools/swarm-topology.ts` | 251 |
+| **v24 P2** Self-Learning | `src/tools/self-learning.ts` | 341 |
+| **v24 P3** ADR | `src/tools/adr-manager.ts` | 289 |
+| **v24 P4** Goal Decomposition | `src/tools/goal-decomposition.ts` | 301 |
+| **v24 Integration** Bridge | `src/tools/v24-bridge.ts` | 216 |
+| **v25 P5** Workflow Graph | `src/tools/workflow-graph.ts` | 271 |
+| **v25 P6** Council Gate | `src/tools/triangulation-gate.ts` | 185 |
+| **v25 P7** Step Middleware | `src/tools/step-middleware.ts` | 162 |
+| **v25 P7** Agent Health | `src/tools/agent-health-monitor.ts` | 185 |
+| **v25 Enh** Experience Propagation | `src/tools/experience-propagator.ts` | 165 |
+| **v25 Enh** Agent Templates | `src/tools/agent-template-registry.ts` | 166 |
+| **v25 Enh** Context Protocol | `src/tools/context-protocol.ts` | 155 |
+| **v26 P8** Execution Sandbox | `src/tools/execution-sandbox.ts` | 142 |
+| **v26 P9** Step Event Stream | `src/tools/step-event-stream.ts` | 121 |
+| **v26 P10** Experience Lifecycle | `src/tools/experience-lifecycle.ts` | 148 |
+| **v25 Integration** Bridge | `src/tools/v25-br...[truncated]
+
+Engine集成点：
+- **Step 1** Init → ExpPropagator查询历史经验 + TemplateRegistry推荐Agent模板 + ContextProtocol预算感知上下文注入
+- **Step 4** Spec → V24Bridge自动创建ADR
+- **Step 6** Plan Gate → V24Bridge adrGateCheck(auto-accept) + TriangulationGate critical投票
+- **Step 7** Dev → before/after钩子 + 健康追踪 + 经验记录 + ExecutionSandbox snapshot
+- **Step 12** Delivery → 学习导出 + 统计 + 经验索引 + ExperienceLifecycle decay/prune
+- **runStep** (全局) → StepEventStream emit step:start/complete/error
+- **SM构建后** → DAG验证 + mermaid导出
+> **v24 状态**: 4大支柱已全部实施完毕。14条新原则(102-115)已写入SKILL.md。5个新Feature Flags已定义。633测试全通过(含29个v24专项测试)。代码模块映射：
+
+| 支柱 | 源文件 | 测试 |
+|------|--------|------|
+| Swarm Intelligence | `src/tools/swarm-topology.ts` (251行) | v24-modules.test.ts |
+| Self-Learning | `src/tools/self-learning.ts` (341行) | v24-modules.test.ts |
+| ADR | `src/tools/adr-manager.ts` (289行) | v24-modules.test.ts |
+| Goal Decomposition | `src/tools/goal-decomposition.ts` (301行) | v24-modules.test.ts |
+| Integration Bridge | `src/tools/v24-bridge.ts` (216行) | v24-modules.test.ts |
+
+详见 `references/v25-multi-agent-research.md`
+
+> **v23 计划状态**: 6大升级模块已设计完毕（EventStream+ToolHooks+Sandbox+OutputGuard+DiffCheckpoint+ToolRegistry），待实施。详见 `references/v23-architecture-upgrade-research.md`
 
 > **v10 状态**: v10 升级已完成，所有 P0 漏洞已修复（详见 `references/v10-audit.md`）
 
@@ -712,4 +902,4 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ---
 
-*v16.0.0 — 十版实战融合：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎+开源致谢纪律) → v15(代码图谱化影响面分析+零遗漏) → v16(Agent Team并行编排+文件所有权+合约层+自动回退)*
+*v25.0.0 — 十版实战融合+30+开源调研：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎+开源致谢纪律) → v15(代码图谱化影响面分析+零遗漏) → v16(Agent Team并行编排+文件所有权+合约层+自动回退) → v22.1(unified-search v2.0: 搜索质量6维诊断+RRF归一化修复+自适应调度+多样性注入) → v24(Ruflo/AG2/CrewAI/ChatDev/ClawTeam等20+项目调研→Swarm Intelligence+Self-Learning Loop+ADR+Goal Decomposition 4大支柱14新原则) → v25(MASFactory/MAF/CoReason-MACO/Houmao/aixgo等30+项目深度调研→Workflow Graph Engine+Council Gate三角验证+Step Middleware Pipeline+Experience Propagation 3新支柱+1增强12新原则)*

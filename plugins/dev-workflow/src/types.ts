@@ -241,6 +241,17 @@ export interface FeatureFlags {
   agentTeamContractLayer: boolean;
   agentTeamFileOwnership: boolean;
   agentTeamAutoSync: boolean;
+  // v24: Swarm Intelligence & ADR flags
+  swarmTopology: "hierarchical" | "mesh" | "adaptive";
+  selfLearningEnabled: boolean;
+  adrEnabled: boolean;
+  goalDecomposition: boolean;
+  capabilityRouting: boolean;
+  // v25: Workflow Graph, Council Gate, Middleware, Experience
+  workflowGraph: boolean;
+  triangulationGate: boolean;
+  stepMiddleware: boolean;
+  experiencePropagation: boolean;
 }
 
 // ─── Config ───

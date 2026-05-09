@@ -126,6 +126,17 @@ export const DEFAULT_FEATURE_FLAGS: import("./types.js").FeatureFlags = {
   agentTeamContractLayer: true,
   agentTeamFileOwnership: true,
   agentTeamAutoSync: true,
+  // v24: Swarm Intelligence & ADR
+  swarmTopology: "hierarchical",
+  selfLearningEnabled: true,
+  adrEnabled: true,
+  goalDecomposition: false,
+  capabilityRouting: false,
+  // v25: Workflow Graph, Council Gate, Middleware, Experience
+  workflowGraph: false,
+  triangulationGate: false,
+  stepMiddleware: true,
+  experiencePropagation: false,
 };
 
 // ─── v16: Agent Team Defaults ──

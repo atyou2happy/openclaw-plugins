@@ -1,53 +1,111 @@
 # Testing 经验库
-> 自动从项目开发中积累 | v8.0.0
+
+> 自动从项目开发中积累 | v7.0.0
 
 ---
 
-## 覆盖率目标：API 项目 80%+，实用主义
-- **来源**：freeapi 重构 (2026-05-06)
-- **症状**：初始测试覆盖率约 20-30%，只测了 Provider 适配器
-- **根因**：缺少对配置、中间件、CLI、路由、异常的测试
-- **方案**：新增 8 个测试文件覆盖所有模块。最终 114 tests, 83% coverage。务实目标：核心逻辑 >90%，胶水代码 50-70%
-- **关键要点**：不要追求 100% 覆盖率。核心业务逻辑 >90%，配置/CLI/中间件 50-70%，整体 >80% 即可
+## FastAPI TestClient + 全局状态 Mock
 
-## httpx.AsyncClient.is_closed 是只读属性
-- **来源**：freeapi 重构 (2026-05-06)
-- **症状**：mock AsyncClient 时尝试设置 `client.is_closed = False` 报 `AttributeError: can't set attribute`
-- **根因**：is_closed 是 httpx.AsyncClient 的 @property，由内部状态计算，不可直接赋值
-- **方案**：使用 `MagicMock(spec=AsyncClient)` 创建完整 mock，或 mock `aclose()` 方法而非 is_closed
-- **关键要点**：mock httpx.AsyncClient 时用 MagicMock(spec=...) 而非手动设置属性
+**场景**: routes.py 有全局 `_client: FreeAPIClient | None = None`，TestClient 测试需要 mock 它。
 
-## FastAPI TestClient + pytest fixture 模式
-- **来源**：freeapi 重构 (2026-05-06)
-- **症状**：需要在测试中覆盖 API 端点、中间件、异常处理等多个层次
-- **根因**：缺乏统一的测试基础设施
-- **方案**：
-  1. conftest.py 提供共享 fixture（如 clear_settings_cache）
-  2. TestClient(app) 测试路由和中间件
-  3. CliRunner 测试 Click 命令
-  4. 每个测试文件对应一个源文件模块
-- **关键要点**：测试文件结构与源码结构 1:1 对应。conftest.py 放共享 fixture
+**方案**: 在 fixture 中直接设置模块级变量：
 
-## pydantic-settings 缓存污染测试
-- **来源**：freeapi 重构 (2026-05-06)
-- **症状**：修改环境变量后 get_settings() 仍返回旧值，测试互相影响
-- **根因**：@lru_cache() 缓存了 Settings 实例，跨测试用例不清理
-- **方案**：conftest.py 提供 `clear_settings_cache` fixture（autouse=True），每个测试前调用 get_settings.cache_clear()
-- **关键要点**：pydantic-settings + lru_cache 的测试必须清理缓存，用 autouse fixture
+```python
+@pytest.fixture
+def client():
+    with patch("freeapi.api.routes.get_client") as mock_get_client:
+        mock_client = _make_mock_client()
+        mock_get_client.return_value = mock_client
+        import freeapi.api.routes as routes_mod
+        routes_mod._client = mock_client  # Set global
 
-## 测试分层：utils → business → integration
-- **来源**：freeapi 重构 (2026-05-06)
-- **症状**：测试无分层，所有测试都是同一种模式
-- **根因**：缺乏测试架构规划
-- **方案**：三层测试架构：
-  1. **Unit**：纯函数/类，mock 所有外部依赖（config, logger, httpx）
-  2. **Business Logic**：Provider 适配器，mock HTTP 响应但测试真实业务逻辑
-  3. **Integration**：TestClient 测试完整请求链路（中间件→路由→Provider）
-- **关键要点**：从底层向上测试。Unit 最快最多，Integration 最慢最少（金字塔模型）
+        from freeapi.main import create_app
+        app = create_app()
+        tc = TestClient(app)
+        yield tc
 
-## Click CLI 测试用 CliRunner
-- **来源**：freeapi 重构 (2026-05-06)
-- **症状**：CLI 命令测试需要模拟终端输入和输出
-- **根因**：直接调用 click 命令函数无法捕获 stdout/exit code
-- **方案**：使用 `click.testing.CliRunner`，调用 `runner.invoke(cli, ['args'])`，检查 `result.output` 和 `result.exit_code`
-- **关键要点**：CLI 测试 = CliRunner + mock 依赖 + 断言 output + exit_code
+        routes_mod._client = None  # Cleanup
+```
+
+**关键**: yield 后必须清理全局状态，否则测试顺序影响结果。
+
+---
+
+## Mock httpx AsyncClient 的正确姿势
+
+**场景**: Provider 的 `chat_completion` 使用 `self.get_http_client()` 获取共享 client。
+
+**反模式**: `patch("httpx.AsyncClient.post", ...)` — 这会 patch 类级别，影响所有测试。
+
+**正确做法**: `patch.object(adapter, "get_http_client", return_value=mock_client)`：
+
+```python
+mock_response = MagicMock()
+mock_response.status_code = 200
+mock_response.json.return_value = {"choices": [...]}
+
+mock_client = AsyncMock()
+mock_client.post = AsyncMock(return_value=mock_response)
+
+with patch.object(adapter, "get_http_client", return_value=mock_client):
+    result = await adapter.chat_completion(messages=messages, model="test")
+```
+
+---
+
+## pydantic-settings 测试需要清理 lru_cache
+
+**场景**: `get_settings()` 用 `@lru_cache` 缓存，测试之间会共享状态。
+
+**方案**: `conftest.py` 中 autouse fixture：
+
+```python
+@pytest.fixture(autouse=True)
+def clear_settings_cache():
+    from freeapi.config import get_settings
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+```
+
+---
+
+## 分层测试策略（实测有效）
+
+**原则**: 底层优先 → 业务逻辑 → 集成层 → Mock 外部依赖
+
+**覆盖率目标**: 60% 务实，83% 在一次重构中可达。关键是：
+- utils/config: 100%
+- 核心业务逻辑 (providers): 85-95%
+- API 端点 (routes): 70-80%
+- CLI: 50-60%（交互式命令难测）
+
+**CLI 测试**: 用 `click.testing.CliRunner` + `patch("module.get_client")` mock SDK client。不要试图测试 asyncio 内部。
+
+---
+
+## Mock 路径陷阱：延迟导入（Lazy Import）
+
+**场景**: 函数体内部用 `from X import Y` 延迟导入，测试需要 mock `Y`。
+
+**反模式**: `patch("calling_module.Y")` — 因为 `Y` 不存在于 calling module 的命名空间（只在函数体内临时存在），会抛 `AttributeError`。
+
+**正确做法**: patch 源模块 `patch("source_module.X.Y")`：
+
+```python
+# run_check() 内部有: from signals.sentiment_tracker.scanner import scan_market_sentiment
+# ❌ patch("decision.sentiment.index.scan_market_sentiment")  → AttributeError
+# ✅ patch("signals.sentiment_tracker.scanner.scan_market_sentiment")
+```
+
+**判断规则**: 如果 import 语句在函数体内（而非模块顶层），patch 目标应该是 **被导入函数的原始定义位置**，而不是调用者的模块。
+
+**诊断**: 看到 `does not have the attribute 'X'` 错误时，先检查 import 是模块级还是函数级。
+
+---
+
+## 覆盖率 fail_under 设保守值
+
+**原则**: CI 中 `fail_under` 设为实际覆盖率的 90%，避免因新增代码导致 CI 不稳定。
+
+**示例**: 实际 83% → `fail_under = 75`
