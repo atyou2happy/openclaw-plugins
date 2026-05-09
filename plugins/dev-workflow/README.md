@@ -1,24 +1,111 @@
 # @openclaw/dev-workflow
+
 [中文文档](./README_CN.md)
 
-AI-driven spec-driven development workflow plugin for [OpenClaw](https://github.com/openclaw/openclaw), integrating Claw Code harness patterns with multi-agent orchestration.
+AI-driven spec-driven development workflow plugin for [OpenClaw](https://github.com/openclaw/openclaw), integrating multi-agent orchestration with 29 principles across 10 pillars.
 
-> **v9.0.0** — Now with battle-tested batch-migration patterns from unified-search (35 modules, 58 files).
+> **v26.0.0** — 12 new TypeScript modules (v24-v26), 704 tests, 29 principles (#102-130), 15 engine integration points. Research-driven upgrade from 18 open-source projects including Ruflo, AG2, ChatDev 2.0, E2B, and coreason-maco.
 
 ## Features
 
+### Core Workflow
+
 - **5 Complexity Modes**: UltraQuick (single file), Quick (fast fixes), Standard (balanced), Full (production-grade), Debug (root cause)
-- **12-Step Workflow**: Analysis → Recovery → Requirement → Spec → Tech Selection → Plan Gate → Development → Review → Test → Security → Docs → Delivery
+- **12-Step Pipeline**: Analysis → Recovery → Requirement → Spec → Tech Selection → Plan Gate → Development → Review → Test → Security → Docs → Delivery
 - **Ship/Show/Ask Framework**: Automatic categorization of changes for safe delivery
-- **Multi-Agent Orchestration**: Subagent runtime for LLM calls, code review, test execution
 - **TDD Cycle Enforcement**: RED → GREEN → REFACTOR → VERIFY → COMMIT (strict in Full mode)
 - **Conventional Commits**: Auto-generated `type(scope): description` commit messages
-- **Working Memory**: 3-layer context system (Project → Task → Step)
-- **QA Gate**: 10 quality checks including lint, format, tests, coverage, typecheck, simplify, commits, todos, docs, and rule enforcement
+- **QA Gate**: 10 quality checks (lint, format, tests, coverage, typecheck, simplify, commits, todos, docs, rules)
 - **Rule Enforcement**: 21 built-in code quality rules (configurable via feature flags)
 - **Feature Flags**: Fine-grained control over workflow behavior
-- **GitHub Integration**: Auto-tag releases, merge feature branches, update repo descriptions
-- **Git Branch Management**: Automatic `feature/<project>-<timestamp>` branch creation
+
+### v24 — Pillars 1-4 (Principles #102-115)
+
+| Pillar | Module | Description |
+|--------|--------|-------------|
+| **1. Swarm Topology** | `swarm-topology.ts` | Agent capability mesh with auto-routing |
+| **2. Self-Learning** | `self-learning.ts` | Experience recording with adaptive thresholds |
+| **3. ADR Lifecycle** | `adr-manager.ts` | Lightweight Architecture Decision Records |
+| **4. Goal Decomposition** | `goal-decomposition.ts` | Tree-based task breakdown |
+| **Integration** | `v24-bridge.ts` | Unified facade with FF-driven initialization |
+
+### v25 — Pillars 5-7 + Enhancements (Principles #116-127)
+
+| Pillar | Module | Description |
+|--------|--------|-------------|
+| **5. Workflow Graph** | `workflow-graph.ts` | DAG presets (ULTRA_QUICK / STANDARD / FULL) |
+| **6. Council Gate** | `triangulation-gate.ts` | Multi-model consensus voting for critical decisions |
+| **7. Step Middleware** | `step-middleware.ts` | Before/after hooks with priority ordering |
+| **Agent Health** | `agent-health-monitor.ts` | Per-agent health tracking and recommendations |
+| **Experience Propagation** | `experience-propagator.ts` | Cross-project experience sharing |
+| **Agent Templates** | `agent-template-registry.ts` | Built-in role templates (coder, reviewer, security-architect, tester, debugger) |
+| **Context Protocol** | `context-protocol.ts` | Budget-aware context injection |
+
+### v26 — Pillars 8-10 (Principles #128-130)
+
+| Pillar | Module | Source | Description |
+|--------|--------|--------|-------------|
+| **8. Safe Execution** | `execution-sandbox.ts` | E2B + ChatDev | Snapshot-on-write, budget-gated execution with rollback |
+| **9. Observable Pipeline** | `step-event-stream.ts` | coreason-maco | Event-sourced state changes, pub/sub, causal chain tracking |
+| **10. Experience Evolution** | `experience-lifecycle.ts` | ChatDev IER | Acquire → utilize → propagate → expire lifecycle with decay and reinforcement |
+
+## Architecture
+
+```
+src/
+├── index.ts                         # Plugin entry point
+├── types.ts                         # Domain types & feature flags
+├── constants.ts                     # Default configurations
+├── channel/
+│   ├── dev-workflow-channel.ts      # Channel plugin definition
+│   └── runtime.ts                   # Runtime singleton
+├── agents/
+│   ├── index.ts                     # AgentOrchestrator (9 agent methods)
+│   └── agent-team-orchestrator.ts   # Parallel agent team execution
+├── engine/
+│   ├── index.ts                     # DevWorkflowEngine (12-step + 15 integration points)
+│   └── state-machine.ts             # State machine for step transitions
+├── tools/
+│   ├── dev-workflow-tool.ts         # Start workflow tool
+│   ├── workflow-status-tool.ts      # Status check tool
+│   ├── task-execute-tool.ts         # Task execution tool
+│   ├── spec-view-tool.ts            # Spec viewer tool
+│   ├── qa-gate-tool.ts              # QA gate (10 checks)
+│   ├── # ── v24 Modules ──
+│   ├── swarm-topology.ts            # Agent capability mesh
+│   ├── self-learning.ts             # Adaptive learning engine
+│   ├── adr-manager.ts               # ADR lifecycle management
+│   ├── goal-decomposition.ts        # Task tree breakdown
+│   ├── v24-bridge.ts                # v24 unified facade
+│   ├── # ── v25 Modules ──
+│   ├── workflow-graph.ts            # DAG workflow presets
+│   ├── triangulation-gate.ts        # Multi-model consensus
+│   ├── step-middleware.ts           # Step hooks
+│   ├── agent-health-monitor.ts      # Health tracking
+│   ├── experience-propagator.ts     # Cross-project experience
+│   ├── agent-template-registry.ts   # Role templates
+│   ├── context-protocol.ts          # Budget-aware context
+│   ├── v25-bridge.ts                # v25+v26 unified facade
+│   ├── # ── v26 Modules ──
+│   ├── execution-sandbox.ts         # Safe execution + rollback
+│   ├── step-event-stream.ts         # Event-sourced observability
+│   ├── experience-lifecycle.ts      # Experience decay lifecycle
+│   └── index.ts                     # Tool registration + exports
+└── hooks/
+    └── index.ts                     # Event hooks (4 hooks)
+```
+
+### Engine Integration Points (15)
+
+| Location | Integration |
+|----------|-------------|
+| **Step 1** Init | ExpPropagator (historical experience) + TemplateRegistry (agent templates) + ContextProtocol (budget injection) |
+| **Step 4** Spec | V24Bridge (auto-create ADR) |
+| **Step 6** Plan Gate | V24Bridge (ADR gate) + TriangulationGate (critical ADR voting) |
+| **Step 7** Dev | StepMiddleware (before/after hooks) + HealthMonitor (per-task tracking) + ExecutionSandbox (snapshot) |
+| **Step 12** Delivery | V25Bridge (stats export) + ExpPropagator (experience indexing) + ExperienceLifecycle (decay/prune) |
+| **runStep** (global) | StepEventStream (step:start / step:complete / step:error events) |
+| **Post-SM** | WorkflowGraph (DAG validation + mermaid export) |
 
 ## Installation
 
@@ -30,20 +117,6 @@ pnpm add @openclaw/dev-workflow --workspace
 Or add to `extensions/` directory for local development.
 
 ## Usage
-
-### As an OpenClaw Extension
-
-The plugin registers automatically when loaded by OpenClaw's plugin discovery system.
-
-### Tools Provided
-
-| Tool | Description |
-|------|-------------|
-| `dev_workflow_start` | Start a new workflow with a requirement |
-| `workflow_status` | Check current workflow progress |
-| `task_execute` | Execute a specific task by ID |
-| `spec_view` | View the spec (proposal, design, tasks) |
-| `qa_gate_check` | Run quality gate checks |
 
 ### Starting a Workflow
 
@@ -74,74 +147,19 @@ dev_workflow_start({
 | `coverageThreshold` | `80` | Minimum test coverage percentage |
 | `maxFileLines` | `500` | Maximum lines per file before warning |
 | `maxFunctionLines` | `50` | Maximum lines per function before warning |
-
-### QA Gate Checks
-
-1. **lint** — ESLint or project lint script
-2. **format** — Prettier or project format script
-3. **tests** — Test suite execution
-4. **coverage** — Coverage threshold enforcement
-5. **typecheck** — TypeScript type checking
-6. **simplify** — Complex function/file detection
-7. **commits** — Conventional Commits format validation
-8. **todos** — TODO/FIXME/HACK/XXX detection
-9. **docs** — README.md existence and content
-10. **rules** — 21 built-in code quality rules
-
-### Rule Enforcement (21 Rules)
-
-Rules are checked during QA gate and embedded in agent prompts during task execution:
-
-- No unused variables, prefer const, no console.log
-- No any type, explicit return types, no magic numbers
-- File/function size limits, no inline styles
-- Prefer immutable patterns, avoid deep nesting
-- No duplicate code, meaningful names, single responsibility
-- No commented code, no debugger, no hardcoded secrets
-- Prefer early return, avoid boolean params
-- No global mutation, prefer pure functions
-
-## Architecture
-
-```
-src/
-├── index.ts                    # Plugin entry point
-├── types.ts                    # Domain types & feature flags
-├── channel/
-│   ├── dev-workflow-channel.ts # Channel plugin definition
-│   └── runtime.ts              # Runtime singleton
-├── agents/
-│   └── index.ts                # AgentOrchestrator (9 agent methods)
-├── engine/
-│   └── index.ts                # DevWorkflowEngine (10-step workflow)
-├── tools/
-│   ├── dev-workflow-tool.ts    # Start workflow tool
-│   ├── workflow-status-tool.ts # Status check tool
-│   ├── task-execute-tool.ts    # Task execution tool
-│   ├── spec-view-tool.ts       # Spec viewer tool
-│   ├── qa-gate-tool.ts         # QA gate with 10 checks
-│   └── index.ts                # Tool registration
-└── hooks/
-    └── index.ts                # Event hooks (4 hooks)
-```
+| `workflowGraph` | `false` | Enable DAG workflow graph (v25) |
+| `triangulationGate` | `false` | Enable multi-model consensus (v25) |
+| `stepMiddleware` | `true` | Enable step hooks (v25) |
+| `experiencePropagation` | `false` | Enable cross-project experience (v25) |
 
 ## Development
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Type check
-pnpm typecheck
-
-# Run tests
-pnpm test
-
-# Build
-pnpm build
-
-# Lint
-pnpm lint
+pnpm install       # Install dependencies
+pnpm typecheck     # Type check
+pnpm test          # Run tests (45 files, 704 tests)
+pnpm build         # Build
+pnpm lint          # Lint
 ```
 
 ## Acknowledgments
@@ -150,19 +168,18 @@ This project draws inspiration from the following open-source projects and resea
 
 | Project | What We Learned |
 |---------|----------------|
-| [Aider](https://github.com/Aider-AI/aider) | Repo-map (tree-sitter + PageRank + token budget), context rot detection, `chat_files` vs `other_files` distinction |
-| [OpenHands](https://github.com/All-Hands-AI/OpenHands) (formerly OpenDevin) | Condenser system (multi-tier history summarization), structured observation format |
-| [SWE-agent](https://github.com/princeton-nlp/SWE-agent) | Self-regulation prompts for concise LLM output, constrained file access patterns |
-| [ast-grep](https://github.com/AstGrep/ast-grep) | Fast AST pattern matching for code structure extraction |
-| [Anthropic Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) | `cache_control` markers, static-prefix stability for cache hit optimization |
-| [LangGraph](https://github.com/langchain-ai/langgraph) | Checkpoint serialization pattern for stateful workflow recovery |
-| [TypeScript Compiler API](https://github.com/microsoft/TypeScript) | Symbol-level reference analysis (findReferences, findImplementations) — Phase 2 target |
-| [Sourcegraph SCIP](https://github.com/sourcegraph/scip) | Symbol-level code intelligence protocol design |
-| [Dependency Cruiser](https://github.com/sverweij/dependency-cruiser) | Module-level dependency graph patterns |
-
-Some token optimization strategies are documented in our [research notes](./skills/dev-workflow/references/token-optimization-research.md), which also evaluated [LLMLingua](https://github.com/microsoft/LLMLingua) (Microsoft), [GPTCache](https://github.com/zilliztech/GPTCache) (Zilliz), and [Selective Context](https://github.com/liyucheng09/Selective_Context).
-
-v15 impact analysis research is documented in [code-graph research](./skills/dev-workflow/references/code-graph-research.md).
+| [Aider](https://github.com/Aider-AI/aider) | Repo-map (tree-sitter + PageRank + token budget), context rot detection |
+| [OpenHands](https://github.com/All-Hands-AI/OpenHands) | Condenser system (multi-tier history summarization) |
+| [SWE-agent](https://github.com/princeton-nlp/SWE-agent) | Self-regulation prompts, constrained file access patterns |
+| [Ruflo](https://github.com/ruvnet/ruflo) | SONA self-learning, background workers, ADR plugin system, context management |
+| [AG2](https://github.com/ag2ai/ag2) | Conversable agents, group chat orchestration, human-in-the-loop patterns |
+| [ChatDev 2.0](https://github.com/OpenBMB/ChatDev) | Virtual software company, chat chain, MacNet DAG, Iterative Experience Refinement (IER) |
+| [E2B](https://github.com/e2b-dev/E2B) | Isolated sandbox execution, budget-gated runtime |
+| [coreason-maco](https://github.com/CoReason-AI/coreason-maco) | Glass Box visualization, Council consensus, GxP determinism |
+| [Motia](https://github.com/motia-dev/motia) | Pipeline step composition, observable step middleware |
+| [CrewAI](https://github.com/crewAIInc/crewAI) | Role-based agent crews, sequential/hierarchical process |
+| [LangGraph](https://github.com/langchain-ai/langgraph) | Checkpoint serialization for stateful workflow recovery |
+| [Anthropic Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) | `cache_control` markers, static-prefix stability |
 
 ## License
 

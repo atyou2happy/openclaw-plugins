@@ -1,24 +1,111 @@
 # @openclaw/dev-workflow
+
 [English Docs](./README.md)
 
-基于 AI 的规格驱动开发工作流插件，适用于 [OpenClaw](https://github.com/openclaw/openclaw)，集成 Claw Code harness 模式与多智能体编排。
+基于 AI 的规格驱动开发工作流插件，适用于 [OpenClaw](https://github.com/openclaw/openclaw)，集成多智能体编排与 10 大支柱 29 条原则。
 
-> **v9.0.0** — 融入 unified-search 批量迁移实战经验（35 模块，58 文件）。
+> **v26.0.0** — 12 个新增 TypeScript 模块（v24-v26），704 项测试，29 条原则（#102-130），15 个引擎集成点。基于 Ruflo、AG2、ChatDev 2.0、E2B、coreason-maco 等 18 个开源项目调研驱动的升级。
 
 ## 功能特性
 
-- **5 种复杂度模式**: UltraQuick（单文件）、Quick（快速修复）、Standard（均衡模式）、Full（生产级）、Debug（根因调试）
-- **12 步工作流**: 分析 → 恢复 → 需求 → 规格 → 技术选型 → 计划门 → 开发 → 评审 → 测试 → 安全 → 文档 → 交付
+### 核心工作流
+
+- **5 种复杂度模式**: UltraQuick（单文件）、Quick（快速修复）、Standard（均衡）、Full（生产级）、Debug（根因调试）
+- **12 步流水线**: 分析 → 恢复 → 需求 → 规格 → 技术选型 → 计划门 → 开发 → 评审 → 测试 → 安全 → 文档 → 交付
 - **Ship/Show/Ask 框架**: 自动分类变更以安全交付
-- **多智能体编排**: 通过子智能体运行时进行 LLM 调用、代码评审、测试执行
 - **TDD 周期强制**: RED → GREEN → REFACTOR → VERIFY → COMMIT（Full 模式下严格）
 - **约定式提交**: 自动生成 `type(scope): description` 提交信息
-- **工作记忆**: 3 层上下文系统（项目 → 任务 → 步骤）
-- **QA 质量门**: 10 项质量检查，包括 lint、格式化、测试、覆盖率、类型检查、简化、提交、TODO、文档和规则执行
+- **QA 质量门**: 10 项质量检查（lint、格式化、测试、覆盖率、类型检查、简化、提交、TODO、文档、规则）
 - **规则执行**: 21 条内置代码质量规则（通过 feature flags 配置）
 - **Feature Flags**: 细粒度控制工作流行为
-- **GitHub 集成**: 自动标签发布、合并特性分支、更新仓库描述
-- **Git 分支管理**: 自动创建 `feature/<project>-<timestamp>` 分支
+
+### v24 — 支柱 1-4（原则 #102-115）
+
+| 支柱 | 模块 | 描述 |
+|------|------|------|
+| **1. 群体拓扑** | `swarm-topology.ts` | 智能体能力网格 + 自动路由 |
+| **2. 自学习** | `self-learning.ts` | 经验记录 + 自适应阈值 |
+| **3. ADR 生命周期** | `adr-manager.ts` | 轻量级架构决策记录 |
+| **4. 目标分解** | `goal-decomposition.ts` | 树形任务分解 |
+| **集成** | `v24-bridge.ts` | 统一门面，FF 驱动初始化 |
+
+### v25 — 支柱 5-7 + 增强（原则 #116-127）
+
+| 支柱 | 模块 | 描述 |
+|------|------|------|
+| **5. 工作流图** | `workflow-graph.ts` | DAG 预设（ULTRA_QUICK / STANDARD / FULL） |
+| **6. 委员会门** | `triangulation-gate.ts` | 多模型共识投票，用于关键决策 |
+| **7. 步骤中间件** | `step-middleware.ts` | 前置/后置钩子，优先级排序 |
+| **智能体健康** | `agent-health-monitor.ts` | 逐智能体健康追踪与推荐 |
+| **经验传播** | `experience-propagator.ts` | 跨项目经验共享 |
+| **智能体模板** | `agent-template-registry.ts` | 内置角色模板（coder、reviewer、security-architect、tester、debugger） |
+| **上下文协议** | `context-protocol.ts` | 预算感知的上下文注入 |
+
+### v26 — 支柱 8-10（原则 #128-130）
+
+| 支柱 | 模块 | 来源 | 描述 |
+|------|------|------|------|
+| **8. 安全执行** | `execution-sandbox.ts` | E2B + ChatDev | 写前快照、预算门控执行、失败回滚 |
+| **9. 可观测流水线** | `step-event-stream.ts` | coreason-maco | 事件溯源状态变更、发布/订阅、因果链追踪 |
+| **10. 经验进化** | `experience-lifecycle.ts` | ChatDev IER | 获取 → 利用 → 传播 → 淘汰生命周期，含衰减与强化 |
+
+## 架构
+
+```
+src/
+├── index.ts                         # 插件入口
+├── types.ts                         # 领域类型 & feature flags
+├── constants.ts                     # 默认配置
+├── channel/
+│   ├── dev-workflow-channel.ts      # 频道插件定义
+│   └── runtime.ts                   # 运行时单例
+├── agents/
+│   ├── index.ts                     # AgentOrchestrator（9 个智能体方法）
+│   └── agent-team-orchestrator.ts   # 并行智能体团队执行
+├── engine/
+│   ├── index.ts                     # DevWorkflowEngine（12步 + 15个集成点）
+│   └── state-machine.ts             # 步骤转换状态机
+├── tools/
+│   ├── dev-workflow-tool.ts         # 启动工作流工具
+│   ├── workflow-status-tool.ts      # 状态检查工具
+│   ├── task-execute-tool.ts         # 任务执行工具
+│   ├── spec-view-tool.ts            # 规格查看工具
+│   ├── qa-gate-tool.ts              # QA 质量门（10 项检查）
+│   ├── # ── v24 模块 ──
+│   ├── swarm-topology.ts            # 智能体能力网格
+│   ├── self-learning.ts             # 自适应学习引擎
+│   ├── adr-manager.ts               # ADR 生命周期管理
+│   ├── goal-decomposition.ts        # 任务树分解
+│   ├── v24-bridge.ts                # v24 统一门面
+│   ├── # ── v25 模块 ──
+│   ├── workflow-graph.ts            # DAG 工作流预设
+│   ├── triangulation-gate.ts        # 多模型共识
+│   ├── step-middleware.ts           # 步骤钩子
+│   ├── agent-health-monitor.ts      # 健康追踪
+│   ├── experience-propagator.ts     # 跨项目经验
+│   ├── agent-template-registry.ts   # 角色模板
+│   ├── context-protocol.ts          # 预算感知上下文
+│   ├── v25-bridge.ts                # v25+v26 统一门面
+│   ├── # ── v26 模块 ──
+│   ├── execution-sandbox.ts         # 安全执行 + 回滚
+│   ├── step-event-stream.ts         # 事件溯源可观测性
+│   ├── experience-lifecycle.ts      # 经验衰减生命周期
+│   └── index.ts                     # 工具注册 + 导出
+└── hooks/
+    └── index.ts                     # 事件钩子（4 个钩子）
+```
+
+### 引擎集成点（15 个）
+
+| 位置 | 集成内容 |
+|------|---------|
+| **Step 1** 初始化 | ExpPropagator（历史经验）+ TemplateRegistry（智能体模板）+ ContextProtocol（预算注入） |
+| **Step 4** 规格 | V24Bridge（自动创建 ADR） |
+| **Step 6** 计划门 | V24Bridge（ADR 门控）+ TriangulationGate（关键 ADR 投票） |
+| **Step 7** 开发 | StepMiddleware（前置/后置钩子）+ HealthMonitor（逐任务追踪）+ ExecutionSandbox（快照） |
+| **Step 12** 交付 | V25Bridge（统计导出）+ ExpPropagator（经验索引）+ ExperienceLifecycle（衰减/淘汰） |
+| **runStep**（全局） | StepEventStream（step:start / step:complete / step:error 事件） |
+| **SM 构建后** | WorkflowGraph（DAG 验证 + mermaid 导出） |
 
 ## 安装
 
@@ -30,20 +117,6 @@ pnpm add @openclaw/dev-workflow --workspace
 或添加到 `extensions/` 目录进行本地开发。
 
 ## 使用方法
-
-### 作为 OpenClaw 扩展
-
-插件在 OpenClaw 插件发现系统加载时自动注册。
-
-### 提供的工具
-
-| 工具 | 描述 |
-|------|------|
-| `dev_workflow_start` | 启动新的工作流 |
-| `workflow_status` | 检查当前工作流进度 |
-| `task_execute` | 按 ID 执行特定任务 |
-| `spec_view` | 查看规格（提案、设计、任务） |
-| `qa_gate_check` | 运行质量门检查 |
 
 ### 启动工作流
 
@@ -74,74 +147,19 @@ dev_workflow_start({
 | `coverageThreshold` | `80` | 最低测试覆盖率百分比 |
 | `maxFileLines` | `500` | 文件最大行数警告阈值 |
 | `maxFunctionLines` | `50` | 函数最大行数警告阈值 |
-
-### QA 质量门检查
-
-1. **lint** — ESLint 或项目 lint 脚本
-2. **format** — Prettier 或项目格式化脚本
-3. **tests** — 测试套件执行
-4. **coverage** — 覆盖率阈值检查
-5. **typecheck** — TypeScript 类型检查
-6. **simplify** — 复杂函数/文件检测
-7. **commits** — 约定式提交格式验证
-8. **todos** — TODO/FIXME/HACK/XXX 检测
-9. **docs** — README.md 存在性和内容检查
-10. **rules** — 21 条内置代码质量规则
-
-### 规则执行（21 条规则）
-
-规则在 QA 质量门期间检查，并在任务执行期间嵌入智能体提示：
-
-- 无未使用变量、优先使用 const、禁止 console.log
-- 禁止 any 类型、显式返回类型、禁止魔术数字
-- 文件/函数大小限制、禁止内联样式
-- 优先不可变模式、避免深层嵌套
-- 禁止重复代码、有意义命名、单一职责
-- 禁止注释代码、禁止 debugger、禁止硬编码密钥
-- 优先早期返回、避免布尔参数
-- 禁止全局变异、优先纯函数
-
-## 架构
-
-```
-src/
-├── index.ts                    # 插件入口
-├── types.ts                    # 领域类型 & feature flags
-├── channel/
-│   ├── dev-workflow-channel.ts # 频道插件定义
-│   └── runtime.ts              # 运行时单例
-├── agents/
-│   └── index.ts                # AgentOrchestrator（9 个智能体方法）
-├── engine/
-│   └── index.ts                # DevWorkflowEngine（10 步工作流）
-├── tools/
-│   ├── dev-workflow-tool.ts    # 启动工作流工具
-│   ├── workflow-status-tool.ts # 状态检查工具
-│   ├── task-execute-tool.ts    # 任务执行工具
-│   ├── spec-view-tool.ts       # 规格查看工具
-│   ├── qa-gate-tool.ts         # QA 质量门（10 项检查）
-│   └── index.ts                # 工具注册
-└── hooks/
-    └── index.ts                # 事件钩子（4 个钩子）
-```
+| `workflowGraph` | `false` | 启用 DAG 工作流图（v25） |
+| `triangulationGate` | `false` | 启用多模型共识（v25） |
+| `stepMiddleware` | `true` | 启用步骤钩子（v25） |
+| `experiencePropagation` | `false` | 启用跨项目经验（v25） |
 
 ## 开发
 
 ```bash
-# 安装依赖
-pnpm install
-
-# 类型检查
-pnpm typecheck
-
-# 运行测试
-pnpm test
-
-# 构建
-pnpm build
-
-# Lint
-pnpm lint
+pnpm install       # 安装依赖
+pnpm typecheck     # 类型检查
+pnpm test          # 运行测试（45 文件，704 测试）
+pnpm build         # 构建
+pnpm lint          # Lint
 ```
 
 ## 致谢
@@ -150,19 +168,18 @@ pnpm lint
 
 | 项目 | 借鉴内容 |
 |------|----------|
-| [Aider](https://github.com/Aider-AI/aider) | Repo-map（tree-sitter + PageRank + token 预算）、上下文腐烂检测、`chat_files` 与 `other_files` 区分机制 |
-| [OpenHands](https://github.com/All-Hands-AI/OpenHands)（原 OpenDevin） | Condenser 系统（多层历史摘要）、结构化观察格式 |
+| [Aider](https://github.com/Aider-AI/aider) | Repo-map（tree-sitter + PageRank + token 预算）、上下文腐烂检测 |
+| [OpenHands](https://github.com/All-Hands-AI/OpenHands) | Condenser 系统（多层历史摘要） |
 | [SWE-agent](https://github.com/princeton-nlp/SWE-agent) | LLM 输出自调节提示、受限文件访问模式 |
-| [ast-grep](https://github.com/AstGrep/ast-grep) | 快速 AST 模式匹配用于代码结构提取 |
+| [Ruflo](https://github.com/ruvnet/ruflo) | SONA 自学习、后台 worker、ADR 插件系统、上下文管理 |
+| [AG2](https://github.com/ag2ai/ag2) | 可对话智能体、群聊编排、人在环路模式 |
+| [ChatDev 2.0](https://github.com/OpenBMB/ChatDev) | 虚拟软件公司、聊天链、MacNet DAG、迭代经验精炼（IER） |
+| [E2B](https://github.com/e2b-dev/E2B) | 隔离沙盒执行、预算门控运行时 |
+| [coreason-maco](https://github.com/CoReason-AI/coreason-maco) | Glass Box 可视化、委员会共识、GxP 确定性 |
+| [Motia](https://github.com/motia-dev/motia) | 流水线步骤组合、可观测步骤中间件 |
+| [CrewAI](https://github.com/crewAIInc/crewAI) | 基于角色的智能体团队、顺序/层级流程 |
+| [LangGraph](https://github.com/langchain-ai/langgraph) | 检查点序列化用于有状态工作流恢复 |
 | [Anthropic Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) | `cache_control` 标记、静态前缀稳定性优化缓存命中 |
-| [LangGraph](https://github.com/langchain-ai/langgraph) | 检查点序列化模式用于有状态工作流恢复 |
-| [TypeScript Compiler API](https://github.com/microsoft/TypeScript) | 符号级引用分析（findReferences、findImplementations）— Phase 2 目标 |
-| [Sourcegraph SCIP](https://github.com/sourcegraph/scip) | 符号级代码智能协议设计 |
-| [Dependency Cruiser](https://github.com/sverweij/dependency-cruiser) | 模块级依赖图模式 |
-
-部分 Token 优化策略记录在我们的[研究笔记](./skills/dev-workflow/references/token-optimization-research.md)中，其中也评估了 [LLMLingua](https://github.com/microsoft/LLMLingua)（Microsoft）、[GPTCache](https://github.com/zilliztech/GPTCache)（Zilliz）和 [Selective Context](https://github.com/liyucheng09/Selective_Context)。
-
-v15 影响面分析调研记录在[代码图谱研究](./skills/dev-workflow/references/code-graph-research.md)中。
 
 ## 许可证
 
