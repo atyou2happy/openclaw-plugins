@@ -1,7 +1,7 @@
 {
   "name": "@openclaw/dev-workflow",
-  "version": "13.0.0",
-  "description": "OpenClaw Dev Workflow plugin — AI-driven spec-driven development workflow v13: state machine 12-step loop, interrupt/resume, token tracking, output trimming, trajectory audit trail, subagent isolation",
+  "version": "27.0.0",
+  "description": "OpenClaw Dev Workflow plugin — AI-driven spec-driven development workflow v27: 15 pillars, 44 principles, LSP-first code intelligence, spec-vibe hybrid mode, agent collaboration protocol, cost-aware pipeline, meta-workflow optimization",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -56,7 +56,10 @@
       "docsPath": "/channels/dev-workflow",
       "docsLabel": "dev-workflow",
       "blurb": "Spec-driven AI development workflow with multi-agent orchestration, inspired by Claw Code harness patterns.",
-      "aliases": ["dwf", "devflow"],
+      "aliases": [
+        "dwf",
+        "devflow"
+      ],
       "order": 50,
       "quickstartAllowFrom": true
     },
@@ -71,5 +74,13 @@
     "release": {
       "publishToNpm": true
     }
-  }
+  },
+  "files": [
+    "dist",
+    "skills",
+    "openclaw.plugin.json",
+    "README.md",
+    "README_CN.md",
+    "CHANGELOG.md"
+  ]
 }

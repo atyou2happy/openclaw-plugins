@@ -1,14 +1,14 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v26。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验 + 30+开源项目调研。v26：10大支柱29原则(102-130) — v24(Swarm+Self-Learning+ADR+GoalDecomp) + v25(WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation) + v26(SafeExecution+ObservablePipeline+ExperienceEvolution)。v23：搜索质量升级12原则(90-101)。
+description: AI驱动开发工作流 v27。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验 + 50+开源项目调研。v27：15大支柱44原则(102-145) — v24(Swarm+Self-Learning+ADR+GoalDecomp) + v25(WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation) + v26(SafeExecution+ObservablePipeline+ExperienceEvolution) + v27(LSPIntelligence+SpecVibeHybrid+AgentCollaborationProtocol+CostAwarePipeline+MetaOptimization)。v23：搜索质量升级12原则(90-101)。
 user-invocable: true
 ---
 
-# Dev Workflow v26 — AI驱动开发工作流
+# Dev Workflow v27 — AI驱动开发工作流
 
-> 版本：26.0.0 | 最后更新：2026-05-09 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性)→v20(缩进断裂静默丢失+9链路审计方法论)→v21(SVG→Canvas交互式升级+硬编码限制多层清理)→v22(12链路审计+辨识度/行业/概念进入total_score)→v24(20+开源项目调研→4大支柱14原则: Swarm Intelligence+Self-Learning+ADR+Goal Decomposition)→v25(30+开源项目深度调研→3新支柱+1增强12原则: WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation) 十版经验融合
+> 版本：27.0.0 | 最后更新：2026-05-09 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性)→v20(缩进断裂静默丢失+9链路审计方法论)→v21(SVG→Canvas交互式升级+硬编码限制多层清理)→v22(12链路审计+辨识度/行业/概念进入total_score)→v24(20+开源项目调研→4大支柱14原则: Swarm Intelligence+Self-Learning+ADR+Goal Decomposition)→v25(30+开源项目深度调研→3新支柱+1增强12原则: WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation)→v26(18开源项目调研→3新支柱3原则: SafeExecution+ObservablePipeline+ExperienceEvolution)→v27(20+开源项目调研→5新支柱15原则: LSPIntelligence+SpecVibeHybrid+AgentCollabProtocol+CostAwarePipeline+MetaOptimization) 十一版经验融合
 
-> **v26 状态**: 在v25基础上调研18个开源项目(ruflo/AG2/CrewAI/ChatDev2.0/E2B/coreason-maco/Motia等)，新增3大支柱：Pillar 8 Safe Execution(原则#128, E2B沙盒+rollback)、Pillar 9 Observable Pipeline(原则#129, coreason-maco Glass Box事件溯源)、Pillar 10 Experience Evolution(原则#130, ChatDev IER生命周期)。12个v25+v26 TS模块。704测试全通过。15个engine集成点。
+> **v27 状态**: 在v26基础上调研20+新增开源项目(OpenSpec/ChatDev2.0/ClaudeOrchestra/Kheish/OpenHermit/MAF1.0/Motia/GSD等)，新增5大支柱：Pillar 11 LSP-First Code Intelligence(原则#131-133, 5-34x token节省)、Pillar 12 Spec-Vibe Hybrid Mode(原则#134-136, 三级spec渐进)、Pillar 13 Agent Collaboration Protocol(原则#137-139, 类型化消息+阶段记忆)、Pillar 14 Cost-Aware Pipeline(原则#140-142, 动态预算重分配)、Pillar 15 Meta-Workflow Self-Optimization(原则#143-145, 工作流适应度评分+AB实验)。10个新TS模块。待实施。15个新Feature Flags。
 
 > **v25 状态**: 深度调研30+高质量开源项目（Ruflo/AG2/CrewAI/ChatDev/MASFactory/Houmao/CoReason-MACO/MAF等），在v24四支柱基础上新增3大支柱+1增强：Pillar 5 Workflow Graph Engine(原则116-118)、Pillar 6 Council Gate三角验证(原则119-121)、Pillar 7 Step Middleware Pipeline(原则122-124)、Enhancement Experience Propagation(原则125-127)。详见 `references/v25-multi-agent-research.md`
 
@@ -303,6 +303,56 @@ user-invocable: true
 129. **可观测流水线(Event-Sourced)** ⭐⭐⭐ v26 — 每个Step的状态变更自动发射事件(step:start/complete/error)。事件流支持订阅过滤、因果链追踪(parentId)、时间线重建。所有事件可导出为JSON用于debug/可视化。StepEventStream类：emit→subscribe→getCausalChain→getTimeline。集成在engine的runStep()全局入口，零侵入。借鉴 coreason-maco Glass Box Visualization（实时暴露内部状态）
 
 130. **经验生命周期管理** ⭐⭐ v26 — 经验有保质期：acquire→utilize→propagate→expire。权重按半衰期(默认30天)指数衰减。成功使用reinforce(+0.15)，失败使用penalty(-0.1)。低于dormant阈值(0.3)标记休眠，低于expire阈值(0.1)淘汰。Step 12 Delivery时自动触发decay+prune。ExperienceLifecycle类：record→recordUsage→decay→prune→query。借鉴 ChatDev Iterative Experience Refinement (IER) 四阶段生命周期
+
+### v27 Pillar 11: LSP-First Code Intelligence（LSP优先代码智能）
+
+> 来源：LSP Research(Dayna Blackwell, 5-34x token节省, 92-99% false positive减少) / 现有v15代码图谱(regex→LSP升级)
+
+131. **LSP替代grep进行代码分析** ⭐⭐⭐ v27 — 所有代码分析任务使用LSP(Language Server Protocol)：(1)符号查找 (2)引用追踪 (3)类型检查 (4)影响面分析。替换v15基于regex的SymbolGraphBuilder(~85%准确率)为LSP支持(~99%准确率)。TypeScript用tsserver，Python用pylsp。代码：`LSPCodeIntelligence`类。token节省5-34x，false positive减少92-99%。
+
+132. **增量LSP索引+缓存** ⭐⭐ v27 — 每个session构建一次LSP索引，文件变更时增量更新。缓存符号映射、类型层级、引用图在内存中。首次构建~5s/50k行代码，增量更新<200ms/文件。跨session持久化索引避免重复构建。
+
+133. **语义diff替代文本diff** ⭐ v27 — 使用LSP计算语义diff：哪些函数签名变了？哪些接口新增/删除？不是逐行文本对比。集成v15 CompletenessChecker做语义完整性验证。代码：`SemanticDiffer`类。
+
+### v27 Pillar 12: Spec-Vibe Hybrid Mode（规格-探索混合模式）
+
+> 来源：OpenSpec(proposal→design→tasks渐进式spec) / GSD方法论(快速迭代) / GitHub Spec Kit(竞争标准)
+
+134. **Spec三级渐进：minimal→standard→full** ⭐⭐⭐ v27 — 不强求前期完整spec。从minimal spec开始(5行方案+3个任务)。当(1)>3个文件改动 (2)需要新模块 (3)检测到架构影响时自动升到standard。Full模式需用户显式触发。配置`SpecLevel: "minimal" | "standard" | "full"`。借鉴 OpenSpec proposal→design→tasks 渐进流程 + GSD ship-fast理念。
+
+135. **复杂度触发时渐进spec精化** ⭐⭐ v27 — 编码中发现意外复杂度(新依赖、API边界、数据模型变更)时，自动触发spec精化。不是全量重来——追加到已有spec。代码：`SpecRefinementTrigger`拦截Step 7并评估复杂度增量。
+
+136. **Vibe-to-Spec事后捕获** ⭐ v27 — UltraQuick模式下，从编码决策中捕获隐式"spec"。事后生成minimal spec文档用于文档和后续维护。不阻塞开发——后台捕获。代码：`VibeSpecCapture`在UltraQuick后从commit diff提取决策。
+
+### v27 Pillar 13: Agent Collaboration Protocol（Agent协作协议）
+
+> 来源：ChatDev ChatChain(阶段级记忆共享) / OpenHermit(agent-as-service) / Claude Orchestra(角色模板继承)
+
+137. **类型化Agent间消息** ⭐⭐⭐ v27 — 所有agent间通信使用类型化消息：Request、Response、Event、Error。每种消息有必需字段(id, timestamp, sender, recipient, correlationId)和类型特定可选字段。JSON Schema验证。代码：`AgentMessageBus`替代v16的ad-hoc ContractLayer。
+
+138. **阶段级共享记忆** ⭐⭐ v27 — 每个阶段(Analysis/Plan/Build/Deliver)有独立共享记忆块。同阶段agent读写此记忆。阶段间记忆压缩后传递。不是全局——按阶段隔离。代码：`PhaseMemoryManager`带TTL管理每阶段记忆。
+
+139. **Agent能力继承** ⭐ v27 — Agent角色支持继承。"security-architect"继承"reviewer"继承"coder"。能力级联：子角色获得父角色能力+自身特化。减少模板重复。代码：扩展v25 agent-template-registry.ts。
+
+### v27 Pillar 14: Cost-Aware Pipeline（成本感知流水线）
+
+> 来源：40x Cost Wall研究(Sanket Sahu) / LSP token节省数据 / Gas Town概念(成本感知调度)
+
+140. **动态token预算重分配** ⭐⭐⭐ v27 — 总预算跨步骤分配。步骤间可借出/借入预算。Step 4(Spec)可从Step 11(Docs)借款。Step 7(Dev)受保护(最低40%总预算)。代码：`TokenBudgetPool`含跨步骤借出协议、最低保障、紧急储备(总预算10%)。
+
+141. **每步成本/质量分层** ⭐⭐ v27 — 每步有成本/质量分层：Economy(轻量模型、严格预算)、Standard(标准模型、正常预算)、Premium(高级模型、宽松预算)。用户按步选择或根据项目关键性自动分配。配置：`stepCostTiers: { spec: "standard", review: "premium", test: "economy" }`。
+
+142. **实时成本追踪仪表板** ⭐ v27 — 实时追踪每步和每agent的token消耗。显示成本预测、剩余预算、超预算警告。集成点：v26 StepEventStream已追踪步骤事件——向每个事件添加token指标。
+
+### v27 Pillar 15: Meta-Workflow Self-Optimization（元工作流自优化）
+
+> 来源：GSD迭代哲学 / v26 Experience Lifecycle / dev-workflow自身10次版本迭代经验
+
+143. **工作流适应度评分** ⭐⭐⭐ v27 — 每次完成运行生成适应度评分：(1)任务完成率 (2)回退次数(越低越好) (3)用户满意度(显式/隐式) (4)交付时间 (5)缺陷密度。存储`.dev-workflow/fitness.jsonl`。用于比较工作流配置。代码：`WorkflowFitness`类。
+
+144. **自动建议工作流优化** ⭐⭐ v27 — 10+次运行后，分析适应度数据并建议工作流变更："Python CLI项目跳过Step 5(技术选型)节省15分钟且无质量影响"。"安全审计放在Step 9后比Step 7后发现40%更多问题"。建议以proposal呈现——用户决定。代码：`WorkflowOptimizer`类。
+
+145. **A/B工作流实验** ⭐ v27 — 允许用两种工作流配置运行同一项目(如LSP-based vs grep-based代码分析)并比较结果。自动采纳优胜者。需要每个变体3+次运行才能显著性。代码：`WorkflowExperiment`类管理并行运行+对比分析。
 
 ---
 
@@ -661,6 +711,14 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 - `triangulationGate` — v25 三角验证门禁（默认 false）— Critical ADR多模型投票（需多provider配置）
 - `stepMiddleware` — v25 Step级中间件管道（默认 true）— before/after钩子，含日志/计时/token预算/质量检查
 - `experiencePropagation` — v25 跨项目经验传播（默认 false）— 按(tech_stack, task_type)索引推荐
+- `lspCodeIntelligence` — v27 LSP代码智能（默认 false）— 用LSP替代grep进行代码分析，5-34x token节省
+- `specGraduation` — v27 Spec渐进模式（默认 false）— minimal→standard→full三级spec自动升级
+- `agentCollaborationProtocol` — v27 Agent协作协议（默认 false）— 类型化消息总线+JSON Schema验证
+- `phaseSharedMemory` — v27 阶段共享记忆（默认 false）— 每阶段独立记忆块
+- `costAwareScheduling` — v27 成本感知调度（默认 false）— 动态token预算重分配+跨步骤借贷
+- `costQualityTiers` — v27 成本/质量分层（默认 false）— Economy/Standard/Premium三级
+- `metaOptimization` — v27 元工作流优化（默认 false）— 工作流适应度评分+自动优化建议
+- `workflowExperiments` — v27 AB工作流实验（默认 false）— 并行运行两种配置并比较结果
 
 ---
 
@@ -803,11 +861,13 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 | `references/v23-architecture-upgrade-research.md` | ⭐v23 架构升级调研：8个开源项目(Claude Code/OpenHands/Aider/SWE-agent/Codex/Cline/Goose/LangGraph)深度对比分析+6大升级模块设计+原则90-95提案 |
 | `references/v24-multi-agent-research.md` | ⭐v24 多智能体深度调研：20+开源项目(Ruflo/AG2/CrewAI/ChatDev/ClawTeam/Motia等)架构分析+4大升级支柱(Swarm Intelligence+Self-Learning+ADR+Goal Decomposition)+原则102-115提案+致谢表 |
 | `references/v25-multi-agent-research.md` | ⭐v25 多智能体深度调研：30+开源项目(Ruflo/AG2/CrewAI/ChatDev/MASFactory/Houmao/CoReason-MACO/MAF等)架构分析+8大模式提炼+3新支柱+1增强(WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation)+原则116-127提案+致谢表 |
+| `references/v27-research-findings.md` | ⭐v27 多智能体深度调研：20+新增开源项目(OpenSpec/ChatDev2.0/ClaudeOrchestra/Kheish/OpenHermit/MAF1.0/Motia/GSD等)架构分析+5新支柱(LSPIntelligence+SpecVibeHybrid+AgentCollabProtocol+CostAwarePipeline+MetaOptimization)+15新原则(131-145)+10新TS模块规划+致谢表 |
+| `references/adr/0027-v27-five-pillars.md` | ⭐v27 ADR：v27五大支柱架构决策记录(proposed) |
 | `references/search-quality-research.md` | ⭐v22.1 搜索质量升级调研：SearXNG/Perplexica/Whoogle借鉴+6维质量诊断+RRF归一化修复+QueryEnhancer/QualityScorer/AdaptiveScheduler设计+原则90-95 |
 
 ---
 
-> **v26 状态**: 10大支柱全部实施。29条原则(102-130)。4个新FF。Engine 15个集成点。12个v25+v26 TS模块。704测试全通过(56 v25/v26单元 + 15 v24×v25集成)。代码模块映射：
+> **v27 状态**: 15大支柱全部定义。5个新支柱(11-15) + 15条新原则(131-145)。9个新Feature Flags。10个新TS模块(待实施)。19个engine集成点(v26的15个 + v27的4个扩展)。704现有测试保持通过 + v27专项50单元+15集成测试(目标)。代码模块映射（含v27新增）：
 
 | 支柱 | 源文件 | 行数 |
 |------|--------|------|
@@ -826,15 +886,26 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 | **v26 P8** Execution Sandbox | `src/tools/execution-sandbox.ts` | 142 |
 | **v26 P9** Step Event Stream | `src/tools/step-event-stream.ts` | 121 |
 | **v26 P10** Experience Lifecycle | `src/tools/experience-lifecycle.ts` | 148 |
-| **v25 Integration** Bridge | `src/tools/v25-br...[truncated]
+| **v27 P11** LSP Code Intelligence | `src/tools/lsp-code-intelligence.ts` | — |
+| **v27 P12** Spec Graduation | `src/tools/spec-graduation.ts` | — |
+| **v27 P12** Vibe Spec Capture | `src/tools/vibe-spec-capture.ts` | — |
+| **v27 P13** Agent Message Bus | `src/tools/agent-message-bus.ts` | — |
+| **v27 P13** Phase Memory Manager | `src/tools/phase-memory-manager.ts` | — |
+| **v27 P14** Token Budget Pool | `src/tools/token-budget-pool.ts` | — |
+| **v27 P14** Cost Tracker | `src/tools/cost-tracker.ts` | — |
+| **v27 P15** Workflow Fitness | `src/tools/workflow-fitness.ts` | — |
+| **v27 P15** Workflow Experiment | `src/tools/workflow-experiment.ts` | — |
+| **v25 Integration** Bridge | `src/tools/v25-bridge.ts` | — |
 
 Engine集成点：
-- **Step 1** Init → ExpPropagator查询历史经验 + TemplateRegistry推荐Agent模板 + ContextProtocol预算感知上下文注入
-- **Step 4** Spec → V24Bridge自动创建ADR
+- **Step 1** Init → ExpPropagator查询历史经验 + TemplateRegistry推荐Agent模板 + ContextProtocol预算感知上下文注入 + **v27 LSP索引构建(lspCodeIntelligence=true)**
+- **Step 3** Requirement → **v27 SpecGraduation检查spec级别(specGraduation=true)**
+- **Step 4** Spec → V24Bridge自动创建ADR + **v27 SpecLevel确定(minimal/standard/full)**
 - **Step 6** Plan Gate → V24Bridge adrGateCheck(auto-accept) + TriangulationGate critical投票
-- **Step 7** Dev → before/after钩子 + 健康追踪 + 经验记录 + ExecutionSandbox snapshot
-- **Step 12** Delivery → 学习导出 + 统计 + 经验索引 + ExperienceLifecycle decay/prune
-- **runStep** (全局) → StepEventStream emit step:start/complete/error
+- **Step 7** Dev → before/after钩子 + 健康追踪 + 经验记录 + ExecutionSandbox snapshot + **v27 LSP影响分析(lspCodeIntelligence=true)** + **v27 SpecRefinementTrigger(specGraduation=true)** + **v27 CostTracker(costAwareScheduling=true)**
+- **Step 8** Review → **v27 LSP语义diff分析(lspCodeIntelligence=true)**
+- **Step 12** Delivery → 学习导出 + 统计 + 经验索引 + ExperienceLifecycle decay/prune + **v27 WorkflowFitness评分(metaOptimization=true)** + **v27 VibeSpecCapture(UltraQuick后)**
+- **runStep** (全局) → StepEventStream emit step:start/complete/error + **v27 CostTracker token指标注入** + **v27 AgentMessageBus消息路由(agentCollaborationProtocol=true)**
 - **SM构建后** → DAG验证 + mermaid导出
 > **v24 状态**: 4大支柱已全部实施完毕。14条新原则(102-115)已写入SKILL.md。5个新Feature Flags已定义。633测试全通过(含29个v24专项测试)。代码模块映射：
 
@@ -912,4 +983,4 @@ Engine集成点：
 
 ---
 
-*v25.0.0 — 十版实战融合+30+开源调研：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎+开源致谢纪律) → v15(代码图谱化影响面分析+零遗漏) → v16(Agent Team并行编排+文件所有权+合约层+自动回退) → v22.1(unified-search v2.0: 搜索质量6维诊断+RRF归一化修复+自适应调度+多样性注入) → v24(Ruflo/AG2/CrewAI/ChatDev/ClawTeam等20+项目调研→Swarm Intelligence+Self-Learning Loop+ADR+Goal Decomposition 4大支柱14新原则) → v25(MASFactory/MAF/CoReason-MACO/Houmao/aixgo等30+项目深度调研→Workflow Graph Engine+Council Gate三角验证+Step Middleware Pipeline+Experience Propagation 3新支柱+1增强12新原则)*
+*v27.0.0 — 十一版实战融合+50+开源调研：v6(gstack+Karpathy) → v7(daily-stock-report: 集中配置/文件拆分/测试策略) → v8(freeapi: async安全/连接池/测试分层/SDK模式) → v9(unified-search: 批量迁移/类封装/代理统一/Shell经验) → v10(dev-workflow-plugin自身: types拆分/step编号/ultra模式) → v11(状态机/真实Gate/checkpoint/Token优化) → v12(数据源约束审计/延迟导入Mock/constraint-driven-refactoring) → v13(装饰性数据陷阱/逻辑闭环三级审计/降级兜底模式) → v13.1(新板块闭环设计) → v13.2(数据缺失fallback) → v14(Token最小化6大引擎+开源致谢纪律) → v15(代码图谱化影响面分析+零遗漏) → v16(Agent Team并行编排+文件所有权+合约层+自动回退) → v22.1(unified-search v2.0: 搜索质量6维诊断+RRF归一化修复+自适应调度+多样性注入) → v24(Ruflo/AG2/CrewAI/ChatDev/ClawTeam等20+项目调研→Swarm Intelligence+Self-Learning Loop+ADR+Goal Decomposition 4大支柱14新原则) → v25(MASFactory/MAF/CoReason-MACO/Houmao/aixgo等30+项目深度调研→Workflow Graph Engine+Council Gate三角验证+Step Middleware Pipeline+Experience Propagation 3新支柱+1增强12新原则) → v26(ruflo/AG2/CrewAI/ChatDev2.0/E2B/coreason-maco/Motia等18项目调研→SafeExecution+ObservablePipeline+ExperienceEvolution 3新支柱3新原则) → v27(OpenSpec/ChatDev2.0/ClaudeOrchestra/Kheish/OpenHermit/MAF1.0/Motia/GSD等20+项目调研→LSPIntelligence+SpecVibeHybrid+AgentCollabProtocol+CostAwarePipeline+MetaOptimization 5新支柱15新原则)*

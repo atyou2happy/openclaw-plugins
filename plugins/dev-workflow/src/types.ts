@@ -252,6 +252,15 @@ export interface FeatureFlags {
   triangulationGate: boolean;
   stepMiddleware: boolean;
   experiencePropagation: boolean;
+  // v27: LSP Intelligence, Spec-Vibe Hybrid, Agent Collab, Cost-Aware, Meta
+  lspCodeIntelligence: boolean;
+  specGraduation: boolean;
+  agentCollaborationProtocol: boolean;
+  phaseSharedMemory: boolean;
+  costAwareScheduling: boolean;
+  costQualityTiers: boolean;
+  metaOptimization: boolean;
+  workflowExperiments: boolean;
 }
 
 // ─── Config ───

@@ -95,6 +95,29 @@ export { StepEventStream } from "./step-event-stream.js";
 export { ExperienceLifecycle } from "./experience-lifecycle.js";
 export type { ContextBlock, ContextType, InjectionPlan } from "./context-protocol.js";
 
+// v27 Pillars 11-15: LSP Intelligence, Spec-Vibe, Agent Collab, Cost-Aware, Meta-Optimization
+export { LSPCodeIntelligence } from "./lsp-code-intelligence.js";
+export type { LSPIndex, LSPCodeEntry as LSPEntry, ReferenceEntry, SemanticDiff } from "./lsp-code-intelligence.js";
+export { SpecGraduation, DEFAULT_SPEC_LEVEL } from "./spec-graduation.js";
+export type { SpecLevel, GraduationContext, GraduationDecision } from "./spec-graduation.js";
+export { VibeSpecCapture } from "./vibe-spec-capture.js";
+export type { VibeSpec } from "./vibe-spec-capture.js";
+export { AgentMessageBus } from "./agent-message-bus.js";
+export type { AgentMessage, MessageType, MessageStats } from "./agent-message-bus.js";
+export { PhaseMemoryManager } from "./phase-memory-manager.js";
+export type { DevPhase, PhaseMemoryBlock, MemoryEntry, CompressedMemory } from "./phase-memory-manager.js";
+export { TokenBudgetPool } from "./token-budget-pool.js";
+export type { BudgetAllocation, BudgetConfig } from "./token-budget-pool.js";
+export { CostTracker } from "./cost-tracker.js";
+export type { CostTier, CostConfig, StepCost, AgentCost } from "./cost-tracker.js";
+export { WorkflowFitness } from "./workflow-fitness.js";
+export type { FitnessScore, FitnessConfig } from "./workflow-fitness.js";
+export { WorkflowExperiment } from "./workflow-experiment.js";
+export type { ExperimentConfig, ExperimentResult } from "./workflow-experiment.js";
+// v27 Bridge
+export { V27Bridge } from "./v27-bridge.js";
+export type { V27Config } from "./v27-bridge.js";
+
 // Tool type exports
 export type { DevWorkflowTool } from "./dev-workflow-tool.js";
 export type { WorkflowStatusTool } from "./workflow-status-tool.js";

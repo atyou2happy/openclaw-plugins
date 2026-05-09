@@ -2,9 +2,9 @@
 
 [中文文档](./README_CN.md)
 
-AI-driven spec-driven development workflow plugin for [OpenClaw](https://github.com/openclaw/openclaw), integrating multi-agent orchestration with 29 principles across 10 pillars.
+AI-driven spec-driven development workflow plugin for [OpenClaw](https://github.com/openclaw/openclaw), integrating multi-agent orchestration with 44 principles across 15 pillars.
 
-> **v26.0.0** — 12 new TypeScript modules (v24-v26), 704 tests, 29 principles (#102-130), 15 engine integration points. Research-driven upgrade from 18 open-source projects including Ruflo, AG2, ChatDev 2.0, E2B, and coreason-maco.
+> **v27.0.0** — 5 new pillars (LSP Intelligence, Spec-Vibe Hybrid, Agent Collab Protocol, Cost-Aware Pipeline, Meta-Optimization), 15 new principles (#131-145), 9 new Feature Flags, 10 new TypeScript modules planned. Research-driven upgrade from 20+ open-source projects including OpenSpec, ChatDev 2.0, Claude Orchestra, Kheish, OpenHermit, MAF 1.0, Motia, and GSD.
 
 ## Features
 
@@ -49,6 +49,16 @@ AI-driven spec-driven development workflow plugin for [OpenClaw](https://github.
 | **9. Observable Pipeline** | `step-event-stream.ts` | coreason-maco | Event-sourced state changes, pub/sub, causal chain tracking |
 | **10. Experience Evolution** | `experience-lifecycle.ts` | ChatDev IER | Acquire → utilize → propagate → expire lifecycle with decay and reinforcement |
 
+### v27 — Pillars 11-15 (Principles #131-145) [PLANNED]
+
+| Pillar | Module | Source | Description |
+|--------|--------|--------|-------------|
+| **11. LSP Code Intelligence** | `lsp-code-intelligence.ts` | LSP Research (5-34x savings) | LSP-based code analysis replacing grep, 92-99% fewer false positives |
+| **12. Spec-Vibe Hybrid** | `spec-graduation.ts` + `vibe-spec-capture.ts` | OpenSpec + GSD | Three-level spec graduation + vibe-to-spec post-capture |
+| **13. Agent Collab Protocol** | `agent-message-bus.ts` + `phase-memory-manager.ts` | ChatDev + OpenHermit | Typed inter-agent messages, phase-level shared memory |
+| **14. Cost-Aware Pipeline** | `token-budget-pool.ts` + `cost-tracker.ts` | 40x Cost Wall + Gas Town | Dynamic budget reallocation, cost/quality tier selection |
+| **15. Meta-Optimization** | `workflow-fitness.ts` + `workflow-experiment.ts` | GSD + v26 ExperienceLifecycle | Workflow fitness scoring, auto-optimization suggestions, A/B experiments |
+
 ## Architecture
 
 ```
@@ -86,25 +96,37 @@ src/
 │   ├── agent-template-registry.ts   # Role templates
 │   ├── context-protocol.ts          # Budget-aware context
 │   ├── v25-bridge.ts                # v25+v26 unified facade
-│   ├── # ── v26 Modules ──
-│   ├── execution-sandbox.ts         # Safe execution + rollback
-│   ├── step-event-stream.ts         # Event-sourced observability
-│   ├── experience-lifecycle.ts      # Experience decay lifecycle
-│   └── index.ts                     # Tool registration + exports
+|   ├── # ── v26 Modules ──
+|   ├── execution-sandbox.ts         # Safe execution + rollback
+|   ├── step-event-stream.ts         # Event-sourced observability
+|   ├── experience-lifecycle.ts      # Experience decay lifecycle
+|   ├── # ── v27 Modules (Planned) ──
+|   ├── lsp-code-intelligence.ts     # LSP-based code analysis
+|   ├── spec-graduation.ts           # Progressive spec refinement
+|   ├── vibe-spec-capture.ts         # Post-hoc spec capture
+|   ├── agent-message-bus.ts         # Typed inter-agent messages
+|   ├── phase-memory-manager.ts      # Phase-level shared memory
+|   ├── token-budget-pool.ts         # Dynamic budget reallocation
+|   ├── cost-tracker.ts              # Real-time cost tracking
+|   ├── workflow-fitness.ts          # Workflow fitness scoring
+|   ├── workflow-experiment.ts       # A/B workflow experiments
+|   └── index.ts                     # Tool registration + exports
 └── hooks/
     └── index.ts                     # Event hooks (4 hooks)
 ```
 
-### Engine Integration Points (15)
+### Engine Integration Points (19)
 
 | Location | Integration |
 |----------|-------------|
-| **Step 1** Init | ExpPropagator (historical experience) + TemplateRegistry (agent templates) + ContextProtocol (budget injection) |
-| **Step 4** Spec | V24Bridge (auto-create ADR) |
+| **Step 1** Init | ExpPropagator (historical experience) + TemplateRegistry (agent templates) + ContextProtocol (budget injection) + **v27 LSP index build** |
+| **Step 3** Requirement | **v27 SpecGraduation (spec level check)** |
+| **Step 4** Spec | V24Bridge (auto-create ADR) + **v27 SpecLevel (minimal/standard/full)** |
 | **Step 6** Plan Gate | V24Bridge (ADR gate) + TriangulationGate (critical ADR voting) |
-| **Step 7** Dev | StepMiddleware (before/after hooks) + HealthMonitor (per-task tracking) + ExecutionSandbox (snapshot) |
-| **Step 12** Delivery | V25Bridge (stats export) + ExpPropagator (experience indexing) + ExperienceLifecycle (decay/prune) |
-| **runStep** (global) | StepEventStream (step:start / step:complete / step:error events) |
+| **Step 7** Dev | StepMiddleware (before/after hooks) + HealthMonitor (per-task tracking) + ExecutionSandbox (snapshot) + **v27 LSP impact analysis + v27 SpecRefinementTrigger + v27 CostTracker** |
+| **Step 8** Review | **v27 LSP semantic diff analysis** |
+| **Step 12** Delivery | V25Bridge (stats export) + ExpPropagator (experience indexing) + ExperienceLifecycle (decay/prune) + **v27 WorkflowFitness + v27 VibeSpecCapture** |
+| **runStep** (global) | StepEventStream (step:start / step:complete / step:error events) + **v27 CostTracker metrics + v27 AgentMessageBus routing** |
 | **Post-SM** | WorkflowGraph (DAG validation + mermaid export) |
 
 ## Installation

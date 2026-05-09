@@ -137,6 +137,15 @@ export const DEFAULT_FEATURE_FLAGS: import("./types.js").FeatureFlags = {
   triangulationGate: false,
   stepMiddleware: true,
   experiencePropagation: false,
+  // v27: LSP Intelligence, Spec-Vibe Hybrid, Agent Collab, Cost-Aware, Meta
+  lspCodeIntelligence: false,
+  specGraduation: false,
+  agentCollaborationProtocol: false,
+  phaseSharedMemory: false,
+  costAwareScheduling: false,
+  costQualityTiers: false,
+  metaOptimization: false,
+  workflowExperiments: false,
 };
 
 // ─── v16: Agent Team Defaults ──
