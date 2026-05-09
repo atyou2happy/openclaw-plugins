@@ -1,12 +1,14 @@
 ---
 name: dev-workflow
-description: AI驱动开发工作流 v25。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验 + 30+开源项目调研。v25：7大支柱26新原则(102-127) — v24(Swarm+Self-Learning+ADR+GoalDecomp) + v25(WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation)。v23：搜索质量升级12原则(90-101)。v22：12链路审计+辨识度/行业/概念进入total_score。
+description: AI驱动开发工作流 v26。需求探索→规格定义→编码→审查→安全审计→测试→交付→回顾全流程。融合GSD/OpenSpec/gstack方法论 + daily-stock-report/freeapi/unified-search 三项目实战经验 + 30+开源项目调研。v26：10大支柱29原则(102-130) — v24(Swarm+Self-Learning+ADR+GoalDecomp) + v25(WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation) + v26(SafeExecution+ObservablePipeline+ExperienceEvolution)。v23：搜索质量升级12原则(90-101)。
 user-invocable: true
 ---
 
-# Dev Workflow v25 — AI驱动开发工作流
+# Dev Workflow v26 — AI驱动开发工作流
 
-> 版本：25.0.0 | 最后更新：2026-05-09 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性)→v20(缩进断裂静默丢失+9链路审计方法论)→v21(SVG→Canvas交互式升级+硬编码限制多层清理)→v22(12链路审计+辨识度/行业/概念进入total_score)→v24(20+开源项目调研→4大支柱14原则: Swarm Intelligence+Self-Learning+ADR+Goal Decomposition)→v25(30+开源项目深度调研→3新支柱+1增强12原则: WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation) 十版经验融合
+> 版本：26.0.0 | 最后更新：2026-05-09 | v6→v7(daily-stock-report)→v8(freeapi)→v9(unified-search)→v10(dev-workflow-plugin自身)→v11(状态机+真实Gate+Token优化)→v12(数据源约束审计+延迟导入Mock)→v13(逻辑闭环三级审计)→v13.1(新板块闭环设计模式)→v13.2(数据缺失fallback)→v14(Token最小化6大引擎)→v15(代码图谱化影响面分析+零遗漏)→v16(Agent Team并行编排)→v17(数据流逻辑闭环+Pipeline顺序纪律)→v18(HTML表格多位置修改P0陷阱+局部变量遮蔽)→v19(逻辑闭环双池注入+字段名静默错配+结果与存储一致性)→v20(缩进断裂静默丢失+9链路审计方法论)→v21(SVG→Canvas交互式升级+硬编码限制多层清理)→v22(12链路审计+辨识度/行业/概念进入total_score)→v24(20+开源项目调研→4大支柱14原则: Swarm Intelligence+Self-Learning+ADR+Goal Decomposition)→v25(30+开源项目深度调研→3新支柱+1增强12原则: WorkflowGraph+CouncilGate+StepMiddleware+ExperiencePropagation) 十版经验融合
+
+> **v26 状态**: 在v25基础上调研18个开源项目(ruflo/AG2/CrewAI/ChatDev2.0/E2B/coreason-maco/Motia等)，新增3大支柱：Pillar 8 Safe Execution(原则#128, E2B沙盒+rollback)、Pillar 9 Observable Pipeline(原则#129, coreason-maco Glass Box事件溯源)、Pillar 10 Experience Evolution(原则#130, ChatDev IER生命周期)。12个v25+v26 TS模块。704测试全通过。15个engine集成点。
 
 > **v25 状态**: 深度调研30+高质量开源项目（Ruflo/AG2/CrewAI/ChatDev/MASFactory/Houmao/CoReason-MACO/MAF等），在v24四支柱基础上新增3大支柱+1增强：Pillar 5 Workflow Graph Engine(原则116-118)、Pillar 6 Council Gate三角验证(原则119-121)、Pillar 7 Step Middleware Pipeline(原则122-124)、Enhancement Experience Propagation(原则125-127)。详见 `references/v25-multi-agent-research.md`
 
@@ -293,6 +295,14 @@ user-invocable: true
 126. **角色模板注册** ⭐⭐ v25 — Agent角色通过模板注册而非硬编码。模板结构：`{name, capabilities, tier, system_prompt_template, tools, model_requirements}`。内置模板：coder/reviewer/security-architect/tester/debugger。用户可通过YAML自定义模板。新增角色只需添加模板文件，无需改routing.ts。借鉴 Claude Orchestra 47 agents + CrewAI Agent(role/goal/backstory)
 
 127. **上下文注入协议** ⭐⭐ v25 — 经验/文档/搜索结果的注入遵循统一协议ContextBlock。每个上下文源声明：type(memory/doc/search)、relevance_score、token_cost。注入时按 relevance_score × (1/token_cost) 排序，在token预算内截断。避免当前经验注入的"一股脑全塞"问题。借鉴 MASFactory ContextBlock + Ruflo RAG memory
+
+### v26 Pillar 8: Safe Execution（安全执行边界）
+
+128. **Snapshot-on-Write + Rollback** ⭐⭐⭐ v26 — Step 7 Dev执行时，每个code change创建内存快照(snapshot)。执行失败时自动回滚到最近快照。快照包含文件列表+校验和，内存级零文件系统依赖。执行有budget门控(默认30s超时)。ExecutionSandbox类：trackFile→createSnapshot→execute→rollback。借鉴 E2B isolated sandbox runtime + ChatDev Docker execution boundary
+
+129. **可观测流水线(Event-Sourced)** ⭐⭐⭐ v26 — 每个Step的状态变更自动发射事件(step:start/complete/error)。事件流支持订阅过滤、因果链追踪(parentId)、时间线重建。所有事件可导出为JSON用于debug/可视化。StepEventStream类：emit→subscribe→getCausalChain→getTimeline。集成在engine的runStep()全局入口，零侵入。借鉴 coreason-maco Glass Box Visualization（实时暴露内部状态）
+
+130. **经验生命周期管理** ⭐⭐ v26 — 经验有保质期：acquire→utilize→propagate→expire。权重按半衰期(默认30天)指数衰减。成功使用reinforce(+0.15)，失败使用penalty(-0.1)。低于dormant阈值(0.3)标记休眠，低于expire阈值(0.1)淘汰。Step 12 Delivery时自动触发decay+prune。ExperienceLifecycle类：record→recordUsage→decay→prune→query。借鉴 ChatDev Iterative Experience Refinement (IER) 四阶段生命周期
 
 ---
 
@@ -797,7 +807,7 @@ README.md（英文）| README_CN.md（中文）| 使用说明
 
 ---
 
-> **v25 状态**: 7大支柱全部实施。26条原则(102-127)。4个新FF。Engine 12个集成点(Step1/4/6/7/12+SM构建后)。12个v25+v26 TS模块。704测试全通过(56 v25/v26单元 + 15 v24×v25集成)。代码模块映射：
+> **v26 状态**: 10大支柱全部实施。29条原则(102-130)。4个新FF。Engine 15个集成点。12个v25+v26 TS模块。704测试全通过(56 v25/v26单元 + 15 v24×v25集成)。代码模块映射：
 
 | 支柱 | 源文件 | 行数 |
 |------|--------|------|
